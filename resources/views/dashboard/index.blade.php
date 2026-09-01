@@ -31,45 +31,8 @@
 <div class="fade-in">
 
   <div class="welcome-block">
-    <h1>@if($event->start_date?->isToday()) Today is the day — @endif{{ $event->title }}</h1>
+    <h1>Hello, {{ optional(auth()->user())->name ?? 'there' }}</h1>
     <p>Single-event command centre for Open Gate Camp. Registrations, fees, pledges, budget and sessions at a glance.</p>
-  </div>
-
-  {{-- Event hero --}}
-  <div class="glass-card" style="margin-bottom:18px">
-    <div style="display:flex;flex-wrap:wrap;gap:18px;align-items:center;justify-content:space-between">
-      <div style="min-width:280px;flex:1">
-        <div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap;margin-bottom:10px">
-          <span class="badge badge-{{ $event->getTypeColor() }}"><span style="font-weight:700">{{ $event->getTypeLabel() }}</span></span>
-          <span class="badge badge-{{ $event->getStatusColor() }} badge-dotted">{{ $event->getStatusLabel() }}</span>
-          @if($event->featured)<span class="badge badge-purple">Featured</span>@endif
-        </div>
-        <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(190px,1fr));gap:8px 18px;font-size:13px;color:var(--text-secondary)">
-          <div><strong style="color:var(--text-primary)">Dates</strong><br>{{ $event->start_date?->format('D, d M Y') }}{{ $event->end_date ? ' – '.$event->end_date->format('D, d M Y') : '' }}</div>
-          <div><strong style="color:var(--text-primary)">Venue</strong><br>{{ $event->venue ?: '—' }}</div>
-          <div><strong style="color:var(--text-primary)">Organizer</strong><br>{{ $event->organizer ?: '—' }}</div>
-          <div><strong style="color:var(--text-primary)">Capacity</strong><br>{{ $capacity > 0 ? $capacity.' seats' : 'Unlimited' }}</div>
-        </div>
-        @if($event->description)
-        <p style="font-size:13px;color:var(--text-secondary);margin-top:12px;line-height:1.55">{{ $event->description }}</p>
-        @endif
-      </div>
-      <div style="width:min(320px,100%)">
-        @if($capacity > 0)
-        <div style="font-size:12px;color:var(--text-secondary);margin-bottom:6px">Seats taken — {{ $stats['total'] }} of {{ $capacity }} ({{ $fillPercent }}% full)</div>
-        <div class="progress-track"><div class="progress-fill" style="width:{{ $fillPercent }}%"></div></div>
-        <div style="font-size:12px;color:var(--text-secondary);margin-top:6px">{{ $seatsLeft }} seat{{ $seatsLeft == 1 ? '' : 's' }} remaining</div>
-        @else
-        <div style="font-size:12px;color:var(--text-secondary);margin-bottom:6px">Registered so far</div>
-        <div class="progress-track"><div class="progress-fill" style="width:{{ min(100, $stats['total']) }}%"></div></div>
-        @endif
-        <div style="display:flex;gap:8px;margin-top:14px;flex-wrap:wrap">
-          <a href="{{ route('events.show', $event) }}" class="btn btn-accent">Open Event</a>
-          <a href="{{ route('attendees.index') }}" class="btn btn-secondary">Registrations</a>
-          <a href="{{ route('pledges.index', ['event' => $event->slug]) }}" class="btn btn-secondary">Pledges</a>
-        </div>
-      </div>
-    </div>
   </div>
 
   {{-- KPI grid --}}
@@ -136,7 +99,7 @@
     </div>
 
     <div class="glass-card">
-      <div class="section-head" style="margin-bottom:14px"><div><h2>Registrations by Status</h2><div class="sub">{{ $event->title }}</div></div></div>
+      <div class="section-head" style="margin-bottom:14px"><div><h2>Registrations by Status</h2><div class="sub">Current registration statuses</div></div></div>
       <div class="chart-wrap" style="height:260px"><canvas id="statusChart"
         data-labels='@json($sLabels)' data-values='@json($sValues)' data-colors='@json($sColors)'></canvas></div>
     </div>
