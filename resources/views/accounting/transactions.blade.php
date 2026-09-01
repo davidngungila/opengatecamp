@@ -26,12 +26,31 @@
   <div class="table-card">
     <div class="table-scroll">
       <table class="data-table">
-        <thead><tr><th>Entry No</th><th>Date</th><th>Account</th><th>Description</th><th style="text-align:right">Debit</th><th style="text-align:right">Credit</th><th style="width:70px">Receipt</th></tr></thead>
+        <thead><tr><th>Entry No</th><th>Date</th><th>Type / Source</th><th>Account</th><th>Description</th><th style="text-align:right">Debit</th><th style="text-align:right">Credit</th><th style="width:70px">Receipt</th></tr></thead>
         <tbody>
           @forelse($lines as $l)
-          <tr>
+          @php
+                $src = $sources[$l->entry->id] ?? null;
+            @endphp
+            <tr>
             <td><a href="{{ route('accounting.journal') }}" style="color:var(--blue-accent);font-weight:600">{{ $l->entry->entry_no }}</a></td>
             <td>{{ $l->entry->entry_date->format('d M Y') }}</td>
+            <td>
+              @if($src && $src['type'])
+                <span class="badge badge-{{ match($src['type']) {
+                    'Registration payment' => 'success',
+                    'Pledge payment' => 'info',
+                    'Contribution/Income' => 'purple',
+                    'Expense' => 'danger',
+                    default => 'neutral',
+                } }} badge-dotted">{{ $src['type'] }}</span>
+                @if($src['label'])
+                <div style="font-size:11px;color:var(--text-tertiary);margin-top:3px;font-weight:600">{{ $src['label'] }}</div>
+                @endif
+              @else
+                <span class="badge badge-neutral badge-dotted">Journal entry</span>
+              @endif
+            </td>
             <td><span class="badge badge-{{ $l->debit > 0 ? 'success' : 'danger' }} badge-dotted">{{ $l->account->code }}</span></td>
             <td>{{ $l->entry->description }}{{ $l->description ? ' — '.$l->description : '' }}</td>
             <td style="text-align:right;font-weight:600;color:{{ $l->debit > 0 ? 'var(--green-accent)' : 'var(--text-muted)' }}">
@@ -46,7 +65,7 @@
             </a></td>
           </tr>
           @empty
-          <tr><td colspan="7"><div class="empty-state"><h3>No transactions found</h3><p>No journal entries match your filter.</p></div></td></tr>
+          <tr><td colspan="8"><div class="empty-state"><h3>No transactions found</h3><p>No journal entries match your filter.</p></div></td></tr>
           @endforelse
         </tbody>
       </table>

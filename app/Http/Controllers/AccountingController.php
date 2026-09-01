@@ -541,9 +541,52 @@ class AccountingController extends Controller
             ->latest('journal_lines.id')
             ->paginate(15);
 
+        // Resolve the source record backing each journal entry so the list
+        // also surfaces registration / pledge / manual payment records.
+        $entries = $lines->pluck('entry')->unique('id');
+        $attendeePays = \App\Models\EventAttendee::with('event')
+            ->whereIn('journal_entry_id', $entries->pluck('id'))->get()
+            ->keyBy('journal_entry_id');
+        $pledgePays = \App\Models\PledgePayment::with(['pledge.event'])
+            ->whereIn('journal_entry_id', $entries->pluck('id'))->get()
+            ->keyBy('journal_entry_id');
+        $receiptPays = \App\Models\ReceiptPayment::with('categoryAccount')
+            ->whereIn('journal_entry_id', $entries->pluck('id'))->get()
+            ->keyBy('journal_entry_id');
+
+        $sources = collect();
+        $entries->each(function ($entry) use (&$sources, $attendeePays, $pledgePays, $receiptPays) {
+            $type = null;
+            $label = null;
+            $amount = null;
+
+            if (isset($attendeePays[$entry->id])) {
+                $a = $attendeePays[$entry->id];
+                $type = 'Registration payment';
+                $label = ($a->name ?? 'Attendee').($a->event ? ' — '.$a->event->title : '');
+                $amount = $a->amount_paid;
+            } elseif (isset($pledgePays[$entry->id])) {
+                $p = $pledgePays[$entry->id];
+                $type = 'Pledge payment';
+                $label = $p->pledge?->name ?? $p->reference ?? 'Pledge';
+                $amount = $p->amount;
+                if ($p->pledge) {
+                    $label .= ' ('.$p->pledge->pledge_no.')';
+                }
+            } elseif (isset($receiptPays[$entry->id])) {
+                $r = $receiptPays[$entry->id];
+                $type = $r->type === 'receipt' ? 'Contribution/Income' : ($r->type === 'payment' ? 'Expense' : ucfirst($r->type));
+                $label = $r->party ?? $r->description ?? '';
+                $amount = $r->amount;
+            }
+
+            $sources[$entry->id] = compact('type', 'label', 'amount');
+        });
+
         return view('accounting.transactions', [
             'fy' => $fy,
             'lines' => $lines,
+            'sources' => $sources,
             'accounts' => Account::orderBy('code')->get(),
             'q' => $q,
             'accountId' => $accountId,
