@@ -21,6 +21,13 @@
 .chart-tabs button{border:none;background:transparent;padding:6px 12px;border-radius:7px;font-size:12px;font-weight:700;color:var(--text-secondary);}
 .chart-tabs button.active{background:var(--white);color:var(--blue-accent);box-shadow:var(--shadow-sm);}
 .chart-wrap{height:280px;position:relative;}
+.grid-3{display:grid;grid-template-columns:repeat(3,1fr);gap:20px;margin-bottom:22px;align-items:start;}
+@media (max-width:1180px){
+  .grid-3{grid-template-columns:1fr 1fr;}
+}
+@media (max-width:860px){
+  .grid-3{grid-template-columns:1fr;}
+}
 
 .quick-actions-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:12px;}
 .qa-btn{

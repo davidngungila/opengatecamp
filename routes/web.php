@@ -92,6 +92,8 @@ Route::middleware('auth')->group(function () {
     Route::put('/pledges/{pledge}', [PledgeController::class, 'update'])->name('pledges.update');
     Route::delete('/pledges/{pledge}', [PledgeController::class, 'destroy'])->name('pledges.destroy');
     Route::post('/pledges/{pledge}/payments', [PledgeController::class, 'recordPayment'])->name('pledges.payments');
+    Route::post('/pledges/{pledge}/remind', [PledgeController::class, 'remind'])->name('pledges.remind');
+    Route::post('/pledges/{pledge}/thanks', [PledgeController::class, 'sendThanks'])->name('pledges.thanks');
 
     Route::get('/calendar-legacy', fn () => redirect()->route('calendar.index'))->name('calendar.legacy');
     Route::get('/messaging', fn () => redirect()->route('messaging.sms'))->name('messaging.index');

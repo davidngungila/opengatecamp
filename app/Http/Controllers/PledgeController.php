@@ -5,9 +5,11 @@ namespace App\Http\Controllers;
 use App\Models\AuditLog;
 use App\Models\Event;
 use App\Models\Member;
+use App\Models\Message;
 use App\Models\Pledge;
 use App\Models\PledgePayment;
 use App\Services\AccountingPostingService;
+use App\Services\SmsService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 
@@ -79,7 +81,75 @@ class PledgeController extends Controller
 
         $pledge = Pledge::create($data);
         AuditLog::record('Created pledge', 'Pledges', "{$pledge->pledge_no} — {$pledge->name} ({$pledge->amount})");
-        return back()->with('success', "Pledge {$pledge->pledge_no} recorded.");
+
+        $notice = "Pledge {$pledge->pledge_no} recorded.";
+        $notice .= $this->sendPledgeSms($pledge, 'thanks');
+
+        return back()->with('success', $notice);
+    }
+
+    public function remind(Pledge $pledge)
+    {
+        $notice = $this->sendPledgeSms($pledge, 'remind');
+
+        return back()->with(str_starts_with($notice, 'Reminder SMS sent') || str_starts_with($notice, 'Thank-you SMS sent') ? 'success' : 'error', $notice);
+    }
+
+    public function sendThanks(Pledge $pledge)
+    {
+        $notice = $this->sendPledgeSms($pledge, 'thanks');
+
+        return back()->with(str_starts_with($notice, 'Thank-you SMS sent') ? 'success' : 'error', $notice);
+    }
+
+    private function sendPledgeSms(Pledge $pledge, string $type): string
+    {
+        if (empty($pledge->phone)) {
+            return ' SMS skipped — no phone number on this pledge.';
+        }
+
+        $sms = new SmsService();
+
+        if (! $sms->isConfigured()) {
+            return ' SMS skipped — SMS API token not configured.';
+        }
+
+        $event = $pledge->event?->title ?? 'Open Gate Camp';
+        $remaining = max(0, (float) $pledge->amount - (float) $pledge->paid_amount);
+
+        if ($type === 'remind') {
+            $msg = empty($remaining) || $pledge->status === 'fulfilled'
+                ? "Asante {$pledge->name}! Umekamilisha ahadi yako ya TZS ".number_format($pledge->amount)
+                    ." kwa \"{$event}\". Mungu akubariki, na asante kwa moyo wako wa kutoa. — Open Gate Camp Mission"
+                : "Reminder {$pledge->name}: ahadi yako ya TZS ".number_format($pledge->amount)
+                    ." kwa \"{$event}\" ina salio la TZS ".number_format($remaining).'.'
+                    .($pledge->due_date ? ' Tarehe ya mwisho '.$pledge->due_date->format('d/m/Y').'.' : '')
+                    .' Tunakuomba ukamilishe ahadi yako. Asante! — Open Gate Camp Mission';
+        } else {
+            $msg = "Shukrani {$pledge->name}, tumepokea ahadi yako ya TZS ".number_format($pledge->amount)
+                ." kwa \"{$event}\". Tunakushukuru kwa moyo wako wa kutoa! Mungu akubariki. — Open Gate Camp Mission";
+        }
+
+        $result = $sms->send($pledge->phone, $msg);
+
+        Message::create([
+            'channel'          => 'sms',
+            'recipients'       => $pledge->name,
+            'phone'            => $pledge->phone,
+            'subject'          => $type === 'remind' ? 'Pledge reminder' : 'Pledge thank-you',
+            'message'          => $msg,
+            'status'           => $result['success'] ? 'sent' : 'failed',
+            'api_message_id'   => $result['api_message_id'],
+            'api_response'     => $result['raw'],
+            'created_by'       => auth()->user()?->name,
+        ]);
+        AuditLog::record($result['success'] ? 'Sent pledge '.$type.' SMS' : 'Failed pledge '.$type.' SMS', 'Communication', "{$pledge->pledge_no} — {$pledge->name} ({$pledge->phone})");
+
+        if ($result['success']) {
+            return $type === 'remind' ? " Reminder SMS sent to {$pledge->name}." : " Thank-you SMS sent to {$pledge->name}.";
+        }
+
+        return ' SMS failed ('.($result['status'] ?? 'error').').';
     }
 
     public function recordPayment(Request $request, Pledge $pledge)

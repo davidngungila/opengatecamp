@@ -142,7 +142,7 @@
     </div>
   </div>
 
-  <div class="two-col" style="grid-template-columns:1fr 1fr 1fr;">
+  <div class="grid-3">
     <div class="glass-card">
       <div class="section-head" style="margin-bottom:10px"><h2>Quick Actions</h2></div>
       <div class="quick-actions-grid" style="grid-template-columns:repeat(2,1fr)">

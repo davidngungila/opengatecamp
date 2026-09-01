@@ -58,6 +58,8 @@
                 </button>
                 <div class="action-menu" id="am-pledge-{{ $pl->id }}">
                   <button type="button" data-record-payment data-id="{{ $pl->id }}" data-name="{{ $pl->name }}" data-amount="{{ $pl->amount }}" data-remaining="{{ $pl->getRemainingAttribute() }}">Record Payment</button>
+                  <form method="POST" action="{{ route('pledges.remind', $pl) }}" style="display:contents">@csrf<button type="submit">Remind (SMS)</button></form>
+                  <form method="POST" action="{{ route('pledges.thanks', $pl) }}" style="display:contents">@csrf<button type="submit">Send Thanks (SMS)</button></form>
                   <button type="button" data-edit-pledge data-id="{{ $pl->id }}" data-amount="{{ $pl->amount }}" data-status="{{ $pl->status }}" data-notes="{{ $pl->notes }}">Edit</button>
                   <form method="POST" action="{{ route('pledges.destroy', $pl) }}" data-confirm
                         data-confirm-title="Delete this pledge?"
