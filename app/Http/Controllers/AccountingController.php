@@ -10,6 +10,8 @@ use App\Models\FinancialYear;
 use App\Models\JournalEntry;
 use App\Models\JournalLine;
 use App\Models\ReceiptPayment;
+use App\Models\Setting;
+use Barryvdh\DomPDF\Facade\Pdf;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 
@@ -546,6 +548,60 @@ class AccountingController extends Controller
             'q' => $q,
             'accountId' => $accountId,
         ]);
+    }
+
+    public function receiptPdf(JournalEntry $entry)
+    {
+        abort_unless($entry->status === 'posted', 404);
+
+        $entry->loadMissing('lines.account');
+
+        $lines = $entry->lines->map(function (JournalLine $l) {
+            return [
+                'code' => $l->account?->code ?? '—',
+                'account' => $l->account?->name ?? '—',
+                'description' => $l->description ?: '—',
+                'debit' => (float) $l->debit,
+                'credit' => (float) $l->credit,
+            ];
+        });
+
+        $amount = max(
+            (float) $entry->lines->sum('debit'),
+            (float) $entry->lines->sum('credit')
+        );
+
+        // Reconstruct a single "money in" transaction (dr cash/asset, cr income/liability)
+        $moneyIn = $entry->lines->every(function (JournalLine $l) {
+            return $l->debit == 0 || $l->credit == 0;
+        });
+
+        $moneyInLines = $moneyIn
+            ? $entry->lines->map(function (JournalLine $l) use ($amount) {
+                $label = ($l->debit > 0 ? 'Received into ' : 'Received as ') . ($l->account?->name ?? 'account');
+                return ['label' => $label, 'amount' => $l->debit > 0 ? $l->debit : $l->credit];
+            })
+            : collect();
+
+        $reference = $entry->reference ?: 'JE-'.$entry->entry_date->format('Ymd');
+        $receiptNo = str_replace('JE-', 'RCP-', (string) $entry->entry_no);
+
+        $org = Setting::get('org.name', 'Open Gate Camp Mission');
+
+        $pdf = Pdf::loadView('accounting.receipt', [
+            'entry' => $entry,
+            'lines' => $lines,
+            'amount' => $amount,
+            'moneyIn' => $moneyIn,
+            'moneyInLines' => $moneyInLines,
+            'receiptNo' => $receiptNo,
+            'reference' => $reference,
+            'org' => $org,
+        ]);
+
+        $filename = 'Receipt-'.preg_replace('/[^A-Za-z0-9-_]/', '', str_replace('JE-', '', $entry->entry_no)).'.pdf';
+
+        return $pdf->download($filename);
     }
 
     private function baseLineQuery(array $between)

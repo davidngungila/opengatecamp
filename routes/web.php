@@ -144,4 +144,5 @@ Route::middleware('auth')->group(function () {
     Route::get('/accounting/reconciliation', [AccountingController::class, 'reconciliation'])->name('accounting.reconciliation');
     Route::post('/accounting/reconciliation', [AccountingController::class, 'storeReconciliation'])->name('accounting.reconciliation.store');
     Route::get('/accounting/transactions', [AccountingController::class, 'transactions'])->name('accounting.transactions');
+    Route::get('/accounting/transactions/{entry}/receipt', [AccountingController::class, 'receiptPdf'])->name('accounting.transactions.receipt');
 });

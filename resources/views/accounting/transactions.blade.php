@@ -26,7 +26,7 @@
   <div class="table-card">
     <div class="table-scroll">
       <table class="data-table">
-        <thead><tr><th>Entry No</th><th>Date</th><th>Account</th><th>Description</th><th style="text-align:right">Debit</th><th style="text-align:right">Credit</th></tr></thead>
+        <thead><tr><th>Entry No</th><th>Date</th><th>Account</th><th>Description</th><th style="text-align:right">Debit</th><th style="text-align:right">Credit</th><th style="width:70px">Receipt</th></tr></thead>
         <tbody>
           @forelse($lines as $l)
           <tr>
@@ -40,9 +40,13 @@
             <td style="text-align:right;font-weight:600;color:{{ $l->credit > 0 ? 'var(--red)' : 'var(--text-muted)' }}">
               {{ $l->credit > 0 ? 'TZS '.number_format($l->credit) : '—' }}
             </td>
+            <td><a href="{{ route('accounting.transactions.receipt', $l->entry) }}" class="btn btn-ghost btn-sm" style="padding:6px 10px" title="Download receipt PDF">
+              <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4"/><path d="M7 10l5 5 5-5M12 15V3"/></svg>
+              <span>PDF</span>
+            </a></td>
           </tr>
           @empty
-          <tr><td colspan="6"><div class="empty-state"><h3>No transactions found</h3><p>No journal entries match your filter.</p></div></td></tr>
+          <tr><td colspan="7"><div class="empty-state"><h3>No transactions found</h3><p>No journal entries match your filter.</p></div></td></tr>
           @endforelse
         </tbody>
       </table>
