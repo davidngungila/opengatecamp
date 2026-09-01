@@ -6,55 +6,70 @@ use App\Models\Budget;
 use App\Models\Event;
 use App\Models\EventAttendee;
 use App\Models\Pledge;
-use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Carbon;
 
 class DashboardController extends Controller
 {
     public function index()
     {
-        $today = now()->startOfDay();
+        $event = Event::where('event_type', 'camp')->orderByDesc('start_date')->first()
+            ?? Event::orderByDesc('start_date')->first();
+
+        if (! $event) {
+            return view('dashboard.index', ['event' => null]);
+        }
+
+        $activeStatuses = ['pending', 'confirmed', 'attended'];
+
+        $registrations = EventAttendee::where('event_id', $event->id);
 
         $stats = [
-            'totalEvents' => Event::count(),
-            'upcomingEvents' => Event::where('start_date', '>=', $today)
-                ->whereNotIn('status', ['completed', 'cancelled'])->count(),
-            'totalRegistrations' => EventAttendee::count(),
-            'confirmedAttendees' => EventAttendee::whereIn('status', ['confirmed', 'attended'])->count(),
-            'attended' => EventAttendee::where('status', 'attended')->count(),
-            'pendingConfirmations' => EventAttendee::where('status', 'pending')->count(),
+            'total' => (clone $registrations)->count(),
+            'confirmed' => (clone $registrations)->whereIn('status', ['confirmed', 'attended'])->count(),
+            'attended' => (clone $registrations)->where('status', 'attended')->count(),
+            'pending' => (clone $registrations)->where('status', 'pending')->count(),
+            'no_show' => (clone $registrations)->where('status', 'no_show')->count(),
+            'cancelled' => (clone $registrations)->where('status', 'cancelled')->count(),
         ];
 
-        $pledgeTotals = Pledge::select(DB::raw('COALESCE(SUM(amount),0) as pledged, COALESCE(SUM(paid_amount),0) as paid'))->first();
-        $pledgeTotals->outstanding = $pledgeTotals->pledged - $pledgeTotals->paid;
+        $feeRows = (clone $registrations)->whereIn('status', $activeStatuses);
+        $feesExpected = (float) (clone $feeRows)->sum('fee_amount');
+        $feesCollected = (float) (clone $feeRows)->sum('amount_paid');
 
-        $budgetTotals = Budget::select(DB::raw('COALESCE(SUM(amount),0) as budget_total'))->first();
+        $pledgeRows = Pledge::where('event_id', $event->id)->whereIn('status', ['pending', 'partial', 'fulfilled']);
+        $pledged = (float) (clone $pledgeRows)->sum('amount');
+        $pledgePaid = (float) (clone $pledgeRows)->sum('paid_amount');
 
-        $monthlySeries = EventAttendee::selectRaw("DATE_FORMAT(registered_on, '%b') as m, COUNT(*) as c")
-            ->where('registered_on', '>=', now()->subMonths(5)->startOfMonth())
-            ->where('registered_on', '<', now()->startOfDay())
-            ->groupBy(DB::raw("DATE_FORMAT(registered_on, '%Y-%m')"), 'm')
-            ->orderBy(DB::raw("DATE_FORMAT(registered_on, '%Y-%m')"))
-            ->pluck('c', 'm')->toArray();
+        $budgetTotal = (float) Budget::where('event_id', $event->id)->sum('amount') ?: (float) ($event->budget_total ?? 0);
 
-        $pledgeByEvent = Pledge::select('event_id', DB::raw('COALESCE(SUM(amount),0) as t'))
-            ->whereNotNull('event_id')->groupBy('event_id')->orderByDesc('t')->limit(6)->get();
+        $latestRegistrations = (clone $registrations)->orderByDesc('registered_on')->take(6)->get();
+        $latestPledges = (clone $pledgeRows)->orderByDesc('amount')->take(5)->get();
+        $sessions = $event->sessions;
 
-        $upcoming = Event::withCount('attendees')
-            ->where('start_date', '>=', $today)
-            ->whereNotIn('status', ['completed', 'cancelled'])
-            ->orderBy('start_date')->take(5)->get();
+        $statusBreakdown = (clone $registrations)->selectRaw('status, COUNT(*) as c')
+            ->groupBy('status')->pluck('c', 'status')->toArray();
 
-        $recent = Event::withCount('attendees')->latest('created_at')->take(5)->get();
+        $trend = [];
+        for ($i = 13; $i >= 0; $i--) {
+            $d = now()->subDays($i);
+            $trend[$d->format('M j')] = 0;
+        }
+        $rows = (clone $registrations)
+            ->selectRaw('DATE(registered_on) as d, COUNT(*) as c')
+            ->where('registered_on', '>=', now()->subDays(13)->startOfDay())
+            ->groupBy('d')->get();
+        foreach ($rows as $r) {
+            $trend[Carbon::parse($r->d)->format('M j')] = (int) $r->c;
+        }
 
-        return view('dashboard.index', [
-            'stats' => $stats,
-            'pledgeTotals' => $pledgeTotals,
-            'budgetTotal' => $budgetTotals->budget_total,
-            'monthlySeries' => $monthlySeries,
-            'pledgeByEvent' => $pledgeByEvent,
-            'upcoming' => $upcoming,
-            'recent' => $recent,
-            'today' => $today,
-        ]);
+        $capacity = (int) $event->capacity;
+        $seatsLeft = $capacity > 0 ? max(0, $capacity - $stats['total']) : null;
+        $fillPercent = $capacity > 0 ? min(100, (int) round($stats['total'] / $capacity * 100)) : null;
+
+        return view('dashboard.index',
+            compact('event', 'stats', 'feesExpected', 'feesCollected', 'pledged', 'pledgePaid',
+                'budgetTotal', 'latestRegistrations', 'latestPledges', 'sessions',
+                'statusBreakdown', 'trend', 'capacity', 'seatsLeft', 'fillPercent')
+        );
     }
 }
