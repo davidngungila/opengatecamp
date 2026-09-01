@@ -15,7 +15,10 @@ class PledgeController extends Controller
 {
     public function index(Request $request)
     {
-        $eventId = $request->query('event_id');
+        $eventSlug = (string) $request->query('event');
+        $eventId = $eventSlug !== ''
+            ? (Event::where('slug', $eventSlug)->value('id') ?? (ctype_digit($eventSlug) ? (int) $eventSlug : null))
+            : null;
         $status = $request->query('status');
         $q = trim((string) $request->query('q'));
 
@@ -47,7 +50,7 @@ class PledgeController extends Controller
             'members' => Member::active()->orderBy('name')->get(),
             'statuses' => Pledge::statuses(),
             'frequencies' => Pledge::frequencies(),
-            'filters' => compact('eventId', 'status', 'q'),
+            'filters' => compact('eventSlug', 'status', 'q'),
             'totals' => $totals,
         ]);
     }

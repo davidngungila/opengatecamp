@@ -66,7 +66,7 @@
         <div style="display:flex;gap:8px;margin-top:14px;flex-wrap:wrap">
           <a href="{{ route('events.show', $event) }}" class="btn btn-accent">Open Event</a>
           <a href="{{ route('attendees.index') }}" class="btn btn-secondary">Registrations</a>
-          <a href="{{ route('pledges.index', ['event_id' => $event->id]) }}" class="btn btn-secondary">Pledges</a>
+          <a href="{{ route('pledges.index', ['event' => $event->slug]) }}" class="btn btn-secondary">Pledges</a>
         </div>
       </div>
     </div>
@@ -148,7 +148,7 @@
       <div class="quick-actions-grid" style="grid-template-columns:repeat(2,1fr)">
         <a class="qa-btn" href="{{ route('events.show', $event) }}"><div class="qa-ico"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="18" rx="2"/><path d="M16 2v4M8 2v4M3 10h18"/></svg></div><span>Event Details</span></a>
         <a class="qa-btn" href="{{ route('attendees.index') }}"><div class="qa-ico"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><path d="M9 11l3 3L22 4"/><path d="M21 12v7a2 2 0 01-2 2H5a2 2 0 01-2-2V5a2 2 0 012-2h11"/></svg></div><span>Registrations</span></a>
-        <a class="qa-btn" href="{{ route('pledges.index', ['event_id' => $event->id]) }}"><div class="qa-ico"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><path d="M12 7v10M15 9.5c0-1.4-1.3-2.5-3-2.5s-3 1-3 2.3c0 3 6 1.4 6 4.3 0 1.4-1.3 2.4-3 2.4s-3-1-3-2.4"/></svg></div><span>Record Pledge</span></a>
+        <a class="qa-btn" href="{{ route('pledges.index', ['event' => $event->slug]) }}"><div class="qa-ico"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><path d="M12 7v10M15 9.5c0-1.4-1.3-2.5-3-2.5s-3 1-3 2.3c0 3 6 1.4 6 4.3 0 1.4-1.3 2.4-3 2.4s-3-1-3-2.4"/></svg></div><span>Record Pledge</span></a>
         <a class="qa-btn" href="{{ route('calendar.index') }}"><div class="qa-ico"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="18" rx="2"/><path d="M16 2v4M8 2v4M3 10h18M3 15h18"/></svg></div><span>Open Calendar</span></a>
         <a class="qa-btn" href="{{ route('messaging.sms') }}"><div class="qa-ico"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><path d="M3 11v3a1 1 0 001 1h2l4 4V6L6 10H4a1 1 0 00-1 1z"/><path d="M15 8a4 4 0 010 8M18 5a8 8 0 010 14"/></svg></div><span>Send Message</span></a>
         <a class="qa-btn" href="{{ route('accounting.index') }}"><div class="qa-ico"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="5" width="20" height="14" rx="2"/><path d="M2 10h20M6 15h4"/></svg></div><span>Financial Reports</span></a>
@@ -169,7 +169,7 @@
     </div>
 
     <div class="glass-card list-card">
-      <div class="section-head" style="margin-bottom:6px"><h2>Top Pledges</h2><a class="link-btn" href="{{ route('pledges.index', ['event_id' => $event->id]) }}">View all</a></div>
+      <div class="section-head" style="margin-bottom:6px"><h2>Top Pledges</h2><a class="link-btn" href="{{ route('pledges.index', ['event' => $event->slug]) }}">View all</a></div>
       @forelse($latestPledges as $pl)
       <div class="mini-row">
         <div class="cell-avatar" style="background:var(--warning-bg);color:var(--warning)">{{ collect(explode(' ', $pl->name))->map(fn($w) => mb_substr($w,0,1))->take(2)->implode('') }}</div>

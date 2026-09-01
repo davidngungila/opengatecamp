@@ -146,7 +146,10 @@ class EventController extends Controller
     // ── Attendees ───────────────────────────────────────
     public function attendees(Request $request)
     {
-        $eventId = $request->query('event_id');
+        $eventSlug = (string) $request->query('event');
+        $eventId = $eventSlug !== ''
+            ? (Event::where('slug', $eventSlug)->value('id') ?? (ctype_digit($eventSlug) ? (int) $eventSlug : null))
+            : null;
         $status = $request->query('status');
         $q = trim((string) $request->query('q'));
 
@@ -168,7 +171,7 @@ class EventController extends Controller
             'statuses' => EventAttendee::statuses(),
             'defaultFee' => 10000,
             'pickupLocations' => ['arusha' => 'Arusha', 'moshi' => 'Moshi'],
-            'filters' => compact('eventId', 'status', 'q'),
+            'filters' => compact('eventSlug', 'status', 'q'),
             'totals' => [
                 'registered' => EventAttendee::count(),
                 'confirmed' => EventAttendee::whereIn('status', ['confirmed', 'attended'])->count(),

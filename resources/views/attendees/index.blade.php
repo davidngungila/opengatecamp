@@ -19,9 +19,9 @@
   <form class="toolbar" method="GET" action="{{ route('attendees.index') }}">
     <div class="tfield grow"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="7"/><path d="M21 21l-4.3-4.3"/></svg>
       <input name="q" value="{{ $v('q') }}" placeholder="Search by name, phone, email..."></div>
-    <select class="filter-select" name="event_id" onchange="this.form.submit()">
+    <select class="filter-select" name="event" onchange="this.form.submit()">
       <option value="">All Events</option>
-      @foreach($events as $e)<option value="{{ $e->id }}" {{ $v('eventId')==$e->id ? 'selected' : '' }}>{{ $e->title }}</option>@endforeach
+      @foreach($events as $e)<option value="{{ $e->slug }}" {{ $v('event')==$e->slug ? 'selected' : '' }}>{{ $e->title }}</option>@endforeach
     </select>
     <select class="filter-select" name="status" onchange="this.form.submit()">
       <option value="">All Status</option>
