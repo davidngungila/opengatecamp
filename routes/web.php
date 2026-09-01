@@ -72,15 +72,15 @@ Route::middleware('auth')->group(function () {
 
     Route::get('/events', [EventController::class, 'index'])->name('events.index');
     Route::post('/events', [EventController::class, 'store'])->name('events.store');
-    Route::get('/events/{event}', [EventController::class, 'show'])->name('events.show');
-    Route::put('/events/{event}', [EventController::class, 'update'])->name('events.update');
-    Route::patch('/events/{event}/status', [EventController::class, 'toggleStatus'])->name('events.status');
-    Route::delete('/events/{event}', [EventController::class, 'destroy'])->name('events.destroy');
-    Route::post('/events/{event}/sessions', [EventController::class, 'storeSession'])->name('events.sessions.store');
-    Route::delete('/events/{event}/sessions/{session}', [EventController::class, 'destroySession'])->name('events.sessions.destroy');
-    Route::post('/events/{event}/attendees', [EventController::class, 'storeAttendee'])->name('events.attendees.store');
-    Route::put('/events/{event}/attendees/{attendee}', [EventController::class, 'updateAttendee'])->name('events.attendees.update');
-    Route::delete('/events/{event}/attendees/{attendee}', [EventController::class, 'destroyAttendee'])->name('events.attendees.destroy');
+    Route::get('/events/{event:slug}', [EventController::class, 'show'])->name('events.show');
+    Route::put('/events/{event:slug}', [EventController::class, 'update'])->name('events.update');
+    Route::patch('/events/{event:slug}/status', [EventController::class, 'toggleStatus'])->name('events.status');
+    Route::delete('/events/{event:slug}', [EventController::class, 'destroy'])->name('events.destroy');
+    Route::post('/events/{event:slug}/sessions', [EventController::class, 'storeSession'])->name('events.sessions.store');
+    Route::delete('/events/{event:slug}/sessions/{session}', [EventController::class, 'destroySession'])->name('events.sessions.destroy');
+    Route::post('/events/{event:slug}/attendees', [EventController::class, 'storeAttendee'])->name('events.attendees.store');
+    Route::put('/events/{event:slug}/attendees/{attendee}', [EventController::class, 'updateAttendee'])->name('events.attendees.update');
+    Route::delete('/events/{event:slug}/attendees/{attendee}', [EventController::class, 'destroyAttendee'])->name('events.attendees.destroy');
     Route::get('/calendar', [EventController::class, 'calendar'])->name('calendar.index');
     Route::get('/attendees', [EventController::class, 'attendees'])->name('attendees.index');
     Route::post('/attendees', [EventController::class, 'storeAttendeeGlobal'])->name('attendees.store');

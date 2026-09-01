@@ -37,9 +37,13 @@ class PledgeController extends Controller
                 ->get()->sum(fn ($p) => $p->getRemainingAttribute()),
         ];
 
+        $campEvent = Event::where('event_type', 'camp')->orderByDesc('start_date')->first()
+            ?? Event::orderByDesc('start_date')->first();
+
         return view('pledges.index', [
             'pledges' => $pledges,
             'events' => Event::orderByDesc('start_date')->get(),
+            'campEvent' => $campEvent,
             'members' => Member::active()->orderBy('name')->get(),
             'statuses' => Pledge::statuses(),
             'frequencies' => Pledge::frequencies(),
@@ -51,7 +55,7 @@ class PledgeController extends Controller
     public function store(Request $request)
     {
         $data = $request->validate([
-            'event_id' => 'required|exists:events,id',
+            'event_id' => 'nullable|exists:events,id',
             'name' => 'required|string|max:255',
             'email' => 'nullable|email',
             'phone' => 'nullable|string|max:20',
@@ -61,6 +65,9 @@ class PledgeController extends Controller
             'pledge_date' => 'required|date',
             'due_date' => 'nullable|date|after_or_equal:pledge_date',
         ]);
+
+        $data['event_id'] = $data['event_id'] ?? (Event::where('event_type', 'camp')->orderByDesc('start_date')->first()
+            ?? Event::orderByDesc('start_date')->first())?->id;
 
         $data['pledge_no'] = Pledge::nextPledgeNo();
         $data['paid_amount'] = 0;

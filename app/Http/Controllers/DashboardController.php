@@ -33,7 +33,8 @@ class DashboardController extends Controller
         ];
 
         $feeRows = (clone $registrations)->whereIn('status', $activeStatuses);
-        $feesExpected = (float) (clone $feeRows)->sum('fee_amount');
+        $defaultFee = (float) ($event->registration_fee ?: 10000);
+        $feesExpected = (float) (clone $feeRows)->selectRaw('COALESCE(SUM(COALESCE(NULLIF(fee_amount, 0), ?)), 0) as t', [$defaultFee])->value('t');
         $feesCollected = (float) (clone $feeRows)->sum('amount_paid');
 
         $pledgeRows = Pledge::where('event_id', $event->id)->whereIn('status', ['pending', 'partial', 'fulfilled']);

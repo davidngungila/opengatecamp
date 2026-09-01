@@ -85,16 +85,17 @@
 <div class="modal-overlay" id="pledgeModal">
   <div class="modal-box md">
     <div class="modal-head">
-      <div><h3>Record Pledge</h3><p>Capture a giving pledge for an event or campaign</p></div>
+      <div><h3>Record Pledge</h3><p>Captured automatically against {{ $campEvent?->title ?? 'Open Gate Camp' }}</p></div>
       <button type="button" class="modal-close" data-modal-close><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><path d="M18 6L6 18M6 6l12 12"/></svg></button>
     </div>
     <form method="POST" action="{{ route('pledges.store') }}">
       @csrf
       <div class="modal-body">
         <div class="form-grid">
-          <div class="field full"><label>Event / Campaign</label><select name="event_id" required>
-            @foreach($events as $e)<option value="{{ $e->id }}" @if(old('event_id')==$e->id) selected @endif>{{ $e->title }} — {{ $e->getTypeLabel() }} · {{ $e->start_date?->format('d M Y') }}@if($e->end_date && $e->end_date->ne($e->start_date)) – {{ $e->end_date->format('d M Y') }}@endif @if($e->venue)({{ $e->venue }})@endif</option>@endforeach
-          </select></div>
+          <div class="field full"><label>Event / Campaign</label>
+            <input type="hidden" name="event_id" value="{{ $campEvent?->id }}">
+            <div style="background:var(--blue-light);color:var(--blue-accent);border-radius:10px;padding:10px 12px;font-size:13px;font-weight:700">{{ $campEvent?->title ?? 'Open Gate Camp' }} · {{ $campEvent?->start_date?->format('d M Y') }}</div>
+          </div>
           <div class="field"><label>Name</label><input name="name" placeholder="Full name" value="{{ old('name') }}" required></div>
           <div class="field"><label>Phone</label><input name="phone" placeholder="+255 7XX XXX XXX" value="{{ old('phone') }}"></div>
           <div class="field full"><label>Email</label><input name="email" placeholder="email@example.com" value="{{ old('email') }}"></div>

@@ -26,7 +26,13 @@ class Event extends Model
     {
         static::creating(function (Event $event) {
             if (empty($event->slug)) {
-                $event->slug = Str::slug($event->title).'-'.Str::random(4);
+                $base = Str::slug($event->title);
+                $slug = $base;
+                $i = 2;
+                while (static::where('slug', $slug)->exists()) {
+                    $slug = $base.'-'.$i++;
+                }
+                $event->slug = $slug;
             }
         });
     }

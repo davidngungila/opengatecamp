@@ -379,7 +379,7 @@ document.addEventListener('DOMContentLoaded', function(){
       document.getElementById('editAttendeeMethod').value = d.method || '';
       document.getElementById('editAttendeeNotes').value = d.notes || '';
       var form = document.getElementById('editAttendeeForm');
-      form.action = "{{ url('/events') }}/{{ $event->id }}/attendees/" + d.id;
+      form.action = "{{ url('/events') }}/{{ $event->slug }}/attendees/" + d.id;
       openModalById('editAttendeeModal');
     });
   });
