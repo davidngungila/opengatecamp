@@ -1,6 +1,6 @@
 ﻿@extends('layouts.app')
 
-@section('title', 'Cash & Bank â€” Open Gate Camp Mission')
+@section('title', 'Cash & Bank — Open Gate Camp Mission')
 @section('crumb', 'Finance / Financial Accounting / Cash & Bank')
 @section('page_title', 'Cash & Bank Management')
 
@@ -13,7 +13,7 @@
   <div class="stat-grid" style="grid-template-columns:repeat(auto-fit, minmax(220px, 1fr));margin-bottom:24px">
     @foreach($balances as $b)
     <div class="glass-card" style="padding:18px 20px;text-align:center">
-      <div style="font-size:11px;text-transform:uppercase;letter-spacing:1px;color:var(--text-muted);margin-bottom:6px">{{ $b['account']->code }} â€” {{ $b['account']->name }}</div>
+      <div style="font-size:11px;text-transform:uppercase;letter-spacing:1px;color:var(--text-muted);margin-bottom:6px">{{ $b['account']->code }} — {{ $b['account']->name }}</div>
       <div style="font-size:26px;font-weight:700;color:var(--blue-accent)">TZS {{ number_format($b['balance']) }}</div>
     </div>
     @endforeach
@@ -32,8 +32,8 @@
           {{ $m->debit > 0 ? 'IN' : 'OUT' }}
         </div>
         <div class="m-body">
-          <p>{{ $m->entry->entry_no }} â€” {{ Str::limit($m->entry->description, 40) }}</p>
-          <span>{{ $m->account->code }} Â· {{ $m->entry->entry_date->format('d M Y') }}</span>
+          <p>{{ $m->entry->entry_no }} — {{ Str::limit($m->entry->description, 40) }}</p>
+          <span>{{ $m->account->code }} · {{ $m->entry->entry_date->format('d M Y') }}</span>
         </div>
         <span style="font-weight:700;color:{{ $m->debit > 0 ? 'var(--green-accent)' : 'var(--red)' }}">
           {{ $m->debit > 0 ? '+' : '-' }} TZS {{ number_format(max($m->debit, $m->credit)) }}

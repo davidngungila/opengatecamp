@@ -1,6 +1,6 @@
 ﻿@extends('layouts.app')
 
-@section('title', 'Bank Reconciliation â€” Open Gate Camp Mission')
+@section('title', 'Bank Reconciliation — Open Gate Camp Mission')
 @section('crumb', 'Finance / Financial Accounting / Bank Reconciliation')
 @section('page_title', 'Bank Reconciliation')
 
@@ -15,9 +15,9 @@
     <form method="GET" action="{{ route('accounting.reconciliation') }}" class="form-grid" style="grid-template-columns:1fr 1fr auto;align-items:end;gap:12px">
       <div class="field"><label>Bank Account</label>
         <select name="account">
-          <option value="">â€” Select account â€”</option>
+          <option value="">— Select account —</option>
           @foreach($bankAccounts as $a)
-            <option value="{{ $a->id }}" {{ $selected && $selected->id===$a->id ? 'selected' : '' }}>{{ $a->code }} â€” {{ $a->name }}</option>
+            <option value="{{ $a->id }}" {{ $selected && $selected->id===$a->id ? 'selected' : '' }}>{{ $a->code }} — {{ $a->name }}</option>
           @endforeach
         </select>
       </div>
@@ -34,7 +34,7 @@
     </div>
     <div class="glass-card" style="text-align:center;padding:20px">
       <div style="font-size:11px;text-transform:uppercase;letter-spacing:1px;color:var(--text-muted);margin-bottom:6px">Account</div>
-      <div style="font-size:16px;font-weight:600">{{ $selected->code }} â€” {{ $selected->name }}</div>
+      <div style="font-size:16px;font-weight:600">{{ $selected->code }} — {{ $selected->name }}</div>
       <div style="font-size:12px;color:var(--text-muted);margin-top:4px">As of {{ \Carbon\Carbon::parse($asOf)->format('d M Y') }}</div>
     </div>
     <div class="glass-card" style="text-align:center;padding:20px;border:2px solid var(--green-accent)">
@@ -51,7 +51,7 @@
         <tbody>
           @forelse($reconciliations as $r)
           <tr>
-            <td><b>{{ $r->account->code }}</b> â€” {{ $r->account->name }}</td>
+            <td><b>{{ $r->account->code }}</b> — {{ $r->account->name }}</td>
             <td>{{ $r->statement_date->format('d M Y') }}</td>
             <td style="text-align:right">TZS {{ number_format((float) $r->statement_balance) }}</td>
             <td style="text-align:right">TZS {{ number_format((float) $r->ledger_balance) }}</td>
@@ -59,7 +59,7 @@
               TZS {{ number_format(abs((float) $r->difference)) }}
               {{ abs((float) $r->difference) < 0.01 ? '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6L9 17l-5-5"/></svg>' : '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M10.29 3.86L1.82 18a2 2 0 001.71 3h16.94a2 2 0 001.71-3L13.71 3.86a2 2 0 00-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>' }}
             </td>
-            <td>{{ $r->notes ?? 'â€”' }}</td>
+            <td>{{ $r->notes ?? '—' }}</td>
             <td>{{ $r->created_by }}</td>
           </tr>
           @empty
@@ -83,7 +83,7 @@
         <div class="form-grid">
           <div class="field full"><label>Bank Account *</label>
             <select name="account_id" required>
-              @foreach($bankAccounts as $a)<option value="{{ $a->id }}">{{ $a->code }} â€” {{ $a->name }}</option>@endforeach
+              @foreach($bankAccounts as $a)<option value="{{ $a->id }}">{{ $a->code }} — {{ $a->name }}</option>@endforeach
             </select>
           </div>
           <div class="field"><label>Statement Date *</label><input type="date" name="statement_date" value="{{ $asOf }}" required></div>

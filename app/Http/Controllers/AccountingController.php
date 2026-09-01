@@ -46,9 +46,9 @@ class AccountingController extends Controller
         ]);
 
         Account::create($data);
-        AuditLog::record('Created account', 'Financial Accounting', "{$data['code']} â€” {$data['name']}");
+        AuditLog::record('Created account', 'Financial Accounting', "{$data['code']} — {$data['name']}");
 
-        return redirect()->route('accounting.accounts')->with('success', "Account {$data['code']} â€” {$data['name']} created successfully.");
+        return redirect()->route('accounting.accounts')->with('success', "Account {$data['code']} — {$data['name']} created successfully.");
     }
 
     public function updateAccount(Request $request, Account $account)
@@ -60,7 +60,7 @@ class AccountingController extends Controller
         ]);
 
         $account->update($data);
-        AuditLog::record('Updated account', 'Financial Accounting', "{$account->code} â€” {$account->name}");
+        AuditLog::record('Updated account', 'Financial Accounting', "{$account->code} — {$account->name}");
 
         return redirect()->route('accounting.accounts')->with('success', 'Account updated successfully.');
     }
@@ -71,7 +71,7 @@ class AccountingController extends Controller
             return back()->with('error', 'This account has journal activity and cannot be deleted.');
         }
 
-        AuditLog::record('Deleted account', 'Financial Accounting', "{$account->code} â€” {$account->name}");
+        AuditLog::record('Deleted account', 'Financial Accounting', "{$account->code} — {$account->name}");
         $account->delete();
 
         return back()->with('success', 'Account deleted successfully.');
@@ -157,7 +157,7 @@ class AccountingController extends Controller
         });
 
         AuditLog::record('Posted journal entry', 'Financial Accounting',
-            "{$entry->entry_no} on {$data['entry_date']} â€” Dr/Cr TZS ".number_format($totalDebit, 2));
+            "{$entry->entry_no} on {$data['entry_date']} — Dr/Cr TZS ".number_format($totalDebit, 2));
 
         return redirect()->route('accounting.journal')
             ->with('success', "Journal entry {$entry->entry_no} recorded successfully (balanced at TZS ".number_format($totalDebit, 2).").");
@@ -166,7 +166,7 @@ class AccountingController extends Controller
     public function destroyJournal(JournalEntry $entry)
     {
         AuditLog::record('Deleted journal entry', 'Financial Accounting',
-            "{$entry->entry_no} â€” ".number_format((float) $entry->lines()->sum('debit'), 2));
+            "{$entry->entry_no} — ".number_format((float) $entry->lines()->sum('debit'), 2));
         $no = $entry->entry_no;
         $entry->delete();
 
@@ -363,7 +363,7 @@ class AccountingController extends Controller
         });
 
         AuditLog::record(($type === 'receipt' ? 'Recorded receipt' : 'Recorded payment'), 'Financial Accounting',
-            "{$entry->doc_no} â€” {$entry->party} TZS ".number_format((float) $entry->amount, 2));
+            "{$entry->doc_no} — {$entry->party} TZS ".number_format((float) $entry->amount, 2));
 
         return redirect()->back()->with('success',
             ($type === 'receipt' ? 'Receipt' : 'Payment').' '.$entry->doc_no.' of TZS '.number_format((float) $entry->amount).' recorded successfully.');
@@ -372,7 +372,7 @@ class AccountingController extends Controller
     public function destroyDocument(ReceiptPayment $doc)
     {
         AuditLog::record('Deleted '.$doc->type.' document', 'Financial Accounting',
-            "{$doc->doc_no} â€” {$doc->party} TZS ".number_format((float) $doc->amount));
+            "{$doc->doc_no} — {$doc->party} TZS ".number_format((float) $doc->amount));
         $entry = JournalEntry::find($doc->journal_entry_id);
         $doc->delete();
         if ($entry) {
@@ -450,7 +450,7 @@ class AccountingController extends Controller
             ['amount' => $data['amount']]
         );
 
-        AuditLog::record('Saved budget line', 'Financial Accounting â€” Budgets',
+        AuditLog::record('Saved budget line', 'Financial Accounting — Budgets',
             $budget->account->name.' = TZS '.number_format((float) $budget->amount).($budget->event ? " ({$budget->event->title})" : ''));
 
         return back()->with('success', "Budget for {$budget->account->name} saved successfully.");
@@ -458,7 +458,7 @@ class AccountingController extends Controller
 
     public function destroyBudget(Budget $budget)
     {
-        AuditLog::record('Deleted budget line', 'Financial Accounting â€” Budgets', $budget->account->name);
+        AuditLog::record('Deleted budget line', 'Financial Accounting — Budgets', $budget->account->name);
         $budget->delete();
 
         return back()->with('success', 'Budget line removed successfully.');
@@ -513,7 +513,7 @@ class AccountingController extends Controller
             'created_by' => auth()->user()?->name ?? 'Daniel Mwinuka',
         ]);
 
-        AuditLog::record('Saved bank reconciliation', 'Financial Accounting â€” Reconciliation',
+        AuditLog::record('Saved bank reconciliation', 'Financial Accounting — Reconciliation',
             $rec->account->code." as of {$rec->statement_date}, diff TZS ".number_format((float) $rec->difference, 2));
 
         $status = abs((float) $rec->difference) < 0.01 ? 'Account reconciled successfully.' : "Reconciliation saved with difference of TZS ".number_format(abs((float) $rec->difference), 2).'.';

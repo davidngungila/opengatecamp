@@ -111,7 +111,11 @@
           <div class="field"><label>Full Name</label><input name="name" id="regName" placeholder="Full name" value="{{ old('name') }}" required></div>
           <div class="field"><label>Phone</label><input name="phone" id="regPhone" placeholder="+255 7XX XXX XXX" value="{{ old('phone') }}"></div>
           <div class="field full"><label>Email</label><input name="email" id="regEmail" placeholder="email@example.com" value="{{ old('email') }}"></div>
-          <div class="field"><label>Amount to Pay (TZS)</label><input type="number" step="0.01" min="0" name="fee_amount" id="regFee" placeholder="Fee amount" value="{{ old('fee_amount') }}"></div>
+          <div class="field"><label>Amount to Pay (TZS)</label><input type="number" name="fee_amount" id="regFee" value="{{ old('fee_amount', $defaultFee ?? 10000) }}" readonly style="background:var(--blue-light);font-weight:700;color:var(--navy-900)"></div>
+          <div class="field"><label>Pickup Location</label><select name="pickup_location" required>
+            <option value="">— Select —</option>
+            @foreach($pickupLocations ?? [] as $pk => $pl)<option value="{{ $pk }}" @if(old('pickup_location')===$pk) selected @endif>{{ $pl }}</option>@endforeach
+          </select></div>
           <div class="field"><label>Amount Paid (TZS)</label><input type="number" step="0.01" min="0" name="amount_paid" value="{{ old('amount_paid', 0) }}"></div>
           <div class="field"><label>Payment Method</label><select name="payment_method">
             <option value="">— Select —</option>

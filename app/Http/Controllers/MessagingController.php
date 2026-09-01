@@ -124,8 +124,8 @@ class MessagingController extends Controller
                 'phone'    => $m->phone,
                 'type'     => $m->member_type,
                 'status'   => $m->status,
-                'group'    => $m->group?->name ?? 'â€”',
-                'ministry' => $m->ministry?->name ?? 'â€”',
+                'group'    => $m->group?->name ?? '—',
+                'ministry' => $m->ministry?->name ?? '—',
             ]),
         ]);
     }
@@ -202,7 +202,7 @@ class MessagingController extends Controller
 
         AuditLog::record(
             $status === 'sent' ? 'Sent message' : ($status === 'failed' ? 'Failed to send message' : 'Saved message draft'),
-            'Communication â€” Messaging',
+            'Communication — Messaging',
             ucfirst($data['channel']).' to '.$data['recipients'].($phoneList ? ' ('.$phoneList.')' : '')
         );
 
@@ -229,7 +229,7 @@ class MessagingController extends Controller
         Setting::put('sms.api_token', $data['api_token']);
         Setting::put('sms.sender_id', $data['sender_id'] ?: 'TMCS MoCU');
 
-        AuditLog::record('Updated SMS API settings', 'Communication â€” Settings', 'Sender: '.($data['sender_id'] ?: 'TMCS MoCU'));
+        AuditLog::record('Updated SMS API settings', 'Communication — Settings', 'Sender: '.($data['sender_id'] ?: 'TMCS MoCU'));
 
         return back()->with('success', 'SMS API settings saved successfully. You can now send SMS messages.');
     }

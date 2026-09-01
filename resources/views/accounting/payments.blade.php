@@ -1,6 +1,6 @@
 ﻿@extends('layouts.app')
 
-@section('title', 'Payments â€” Open Gate Camp Mission')
+@section('title', 'Payments — Open Gate Camp Mission')
 @section('crumb', 'Finance / Financial Accounting / Payments')
 @section('page_title', 'Payments & Expenses')
 
@@ -11,7 +11,7 @@
 @section('content')
 <div class="fade-in">
   <div class="section-head">
-    <div><h2>Payments &amp; Expense Management</h2><div class="sub">@if($fy) Period: {{ $fy->name }}. @else All periods. @endif Every payment posts Dr Expense Â· Cr Cash/Bank.</div></div>
+    <div><h2>Payments &amp; Expense Management</h2><div class="sub">@if($fy) Period: {{ $fy->name }}. @else All periods. @endif Every payment posts Dr Expense · Cr Cash/Bank.</div></div>
     <button type="button" class="btn btn-accent" data-modal-open="paymentModal">+ Record Payment</button>
   </div>
 
@@ -28,7 +28,7 @@
             <td><span class="badge badge-danger badge-dotted">{{ $d->categoryAccount?->name }}</span></td>
             <td>{{ $d->moneyAccount?->name }}</td>
             <td style="text-align:right"><b>TZS {{ number_format((float) $d->amount) }}</b></td>
-            <td>{{ $d->journalEntry?->entry_no ?? 'â€”' }}</td>
+            <td>{{ $d->journalEntry?->entry_no ?? '—' }}</td>
             <td>
               <div class="action-menu-wrap">
                 <button type="button" class="action-trigger" onclick="toggleActionMenu('am-pay-{{ $d->id }}')">
@@ -54,7 +54,7 @@
       </table>
     </div>
     <div class="table-footer">
-      <span class="tf-info">Showing {{ $docs->firstItem() ?? 0 }}â€“{{ $docs->lastItem() ?? 0 }} of {{ $docs->total() }} payments Â· Total TZS {{ number_format($totalPay) }}</span>
+      <span class="tf-info">Showing {{ $docs->firstItem() ?? 0 }}“{{ $docs->lastItem() ?? 0 }} of {{ $docs->total() }} payments · Total TZS {{ number_format($totalPay) }}</span>
       <div class="pagination">{{ $docs->links() }}</div>
     </div>
   </div>
@@ -63,7 +63,7 @@
 <div class="modal-overlay" id="paymentModal">
   <div class="modal-box md">
     <div class="modal-head">
-      <div><h3>Record Payment</h3><p>Dr Expense Â· Cr Cash/Bank â€” auto-balanced</p></div>
+      <div><h3>Record Payment</h3><p>Dr Expense · Cr Cash/Bank — auto-balanced</p></div>
       <button type="button" class="modal-close" data-modal-close><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><path d="M18 6L6 18M6 6l12 12"/></svg></button>
     </div>
     <form method="POST" action="{{ route('accounting.payments.store') }}">
@@ -76,12 +76,12 @@
           <div class="field full"><label>Paid To *</label><input name="party" required placeholder="Vendor, payee, or beneficiary"></div>
           <div class="field full"><label>Expense Account *</label>
             <select name="category_account_id" required>
-              @foreach($categoryAccounts as $ca)<option value="{{ $ca->id }}">{{ $ca->code }} â€” {{ $ca->name }}</option>@endforeach
+              @foreach($categoryAccounts as $ca)<option value="{{ $ca->id }}">{{ $ca->code }} — {{ $ca->name }}</option>@endforeach
             </select>
           </div>
           <div class="field"><label>Paid From *</label>
             <select name="money_account_id" required>
-              @foreach($moneyAccounts as $ma)<option value="{{ $ma->id }}">{{ $ma->code }} â€” {{ $ma->name }}</option>@endforeach
+              @foreach($moneyAccounts as $ma)<option value="{{ $ma->id }}">{{ $ma->code }} — {{ $ma->name }}</option>@endforeach
             </select>
           </div>
           <div class="field"><label>Method</label>

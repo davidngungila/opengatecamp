@@ -1,6 +1,6 @@
 ﻿@extends('layouts.app')
 
-@section('title', 'Journal Entries â€” Open Gate Camp Mission')
+@section('title', 'Journal Entries — Open Gate Camp Mission')
 @section('crumb', 'Finance / Financial Accounting / Journal Entries')
 @section('page_title', 'Journal Entries')
 
@@ -21,8 +21,8 @@
           <tr>
             <td><b>{{ $e->entry_no }}</b></td>
             <td>{{ $e->entry_date->format('d M Y') }}</td>
-            <td>{{ Str::limit($e->description ?? 'â€”', 46) }}</td>
-            <td>{{ $e->reference ?? 'â€”' }}</td>
+            <td>{{ Str::limit($e->description ?? '—', 46) }}</td>
+            <td>{{ $e->reference ?? '—' }}</td>
             <td>{{ $e->lines->count() }}</td>
             <td>TZS {{ number_format($total) }}</td>
             <td><span class="badge badge-{{ $e->status==='posted' ? 'success' : 'neutral' }} badge-dotted">{{ ucfirst($e->status) }}</span></td>
@@ -51,7 +51,7 @@
       </table>
     </div>
     <div class="table-footer">
-      <span class="tf-info">Showing {{ $entries->firstItem() ?? 0 }}â€“{{ $entries->lastItem() ?? 0 }} of {{ $entries->total() }} entries</span>
+      <span class="tf-info">Showing {{ $entries->firstItem() ?? 0 }}“{{ $entries->lastItem() ?? 0 }} of {{ $entries->total() }} entries</span>
       <div class="pagination">{{ $entries->links() }}</div>
     </div>
   </div>
@@ -67,10 +67,10 @@ function showEntry(id){
   var data=window.__jeData[id];
   if(!data) return;
   var rows=data.lines.map(function(l){
-    return '<tr><td>'+l.code+'</td><td>'+l.name+'</td><td>'+(l.desc||'')+'</td><td style="text-align:right">'+(l.debit?Number(l.debit).toLocaleString():'â€”')+'</td><td style="text-align:right">'+(l.credit?Number(l.credit).toLocaleString():'â€”')+'</td></tr>';
+    return '<tr><td>'+l.code+'</td><td>'+l.name+'</td><td>'+(l.desc||'')+'</td><td style="text-align:right">'+(l.debit?Number(l.debit).toLocaleString():'—')+'</td><td style="text-align:right">'+(l.credit?Number(l.credit).toLocaleString():'—')+'</td></tr>';
   }).join('');
   document.getElementById('entryModalRoot').innerHTML=
-    '<div class="modal-overlay open" id="jeView"><div class="modal-box md"><div class="modal-head"><div><h3>'+data.no+'</h3><p>'+data.date+' â€” '+(data.desc||'')+'</p></div>'+
+    '<div class="modal-overlay open" id="jeView"><div class="modal-box md"><div class="modal-head"><div><h3>'+data.no+'</h3><p>'+data.date+' — '+(data.desc||'')+'</p></div>'+
     '<button type="button" class="modal-close" data-modal-close><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><path d="M18 6L6 18M6 6l12 12"/></svg></button></div>'+
     '<div class="modal-body"><div class="table-scroll"><table class="data-table" style="min-width:0"><thead><tr><th>Code</th><th>Account</th><th>Description</th><th style="text-align:right">Debit</th><th style="text-align:right">Credit</th></tr></thead><tbody>'+rows+'</tbody>'+
     '<tfoot><tr style="font-weight:800;background:var(--blue-light)"><td colspan="3">TOTALS</td><td style="text-align:right">'+Number(data.dr).toLocaleString()+'</td><td style="text-align:right">'+Number(data.cr).toLocaleString()+'</td></tr></tfoot></table></div></div>'+

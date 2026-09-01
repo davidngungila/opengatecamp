@@ -1,5 +1,5 @@
 ﻿@extends('layouts.app')
-@section('title', 'Document Categories â€” Open Gate Camp Mission')
+@section('title', 'Document Categories — Open Gate Camp Mission')
 @section('crumb', 'Management / Document Categories')
 @section('page_title', 'Document Categories')
 
@@ -37,7 +37,7 @@
               </div>
             </td>
             <td><code style="font-size:12px;background:rgba(15,23,42,.04);padding:2px 8px;border-radius:4px">{{ $cat->slug }}</code></td>
-            <td style="max-width:300px;color:var(--text-secondary);font-size:13px">{{ $cat->description ?? 'â€”' }}</td>
+            <td style="max-width:300px;color:var(--text-secondary);font-size:13px">{{ $cat->description ?? '—' }}</td>
             <td>
               <span class="badge badge-info badge-dotted" style="font-size:10px">{{ $cat->documents_count }} {{ Str::plural('file', $cat->documents_count) }}</span>
             </td>
@@ -83,7 +83,7 @@
     </div>
     @if($categories->hasPages())
     <div class="table-footer">
-      <span class="tf-info">Showing {{ $categories->firstItem() }}â€“{{ $categories->lastItem() }} of {{ $categories->total() }}</span>
+      <span class="tf-info">Showing {{ $categories->firstItem() }}“{{ $categories->lastItem() }} of {{ $categories->total() }}</span>
       <div class="pagination">{{ $categories->links() }}</div>
     </div>
     @endif

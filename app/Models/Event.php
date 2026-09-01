@@ -10,7 +10,7 @@ class Event extends Model
     protected $fillable = [
         'title', 'slug', 'event_type', 'description', 'venue', 'location',
         'start_date', 'end_date', 'start_time', 'end_time', 'status',
-        'capacity', 'registration_fee', 'featured', 'cover_emoji', 'organizer',
+        'capacity', 'registration_fee', 'featured', 'organizer',
         'budget_id', 'created_by',
     ];
 

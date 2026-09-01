@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>@yield('title', 'Member Portal â€” Open Gate Camp Mission')</title>
+<title>@yield('title', 'Member Portal — Open Gate Camp Mission')</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;600;700;800&display=swap" rel="stylesheet">
 @include('partials.styles-core')
@@ -84,6 +84,8 @@
   </div>
   <div class="portal-nav-links">
     <a href="{{ route('portal.dashboard') }}" class="{{ request()->routeIs('portal.dashboard') ? 'active' : '' }}">Dashboard</a>
+    <a href="{{ route('portal.registrations') }}" class="{{ request()->routeIs('portal.registrations') ? 'active' : '' }}">Registrations</a>
+    <a href="{{ route('portal.pledges') }}" class="{{ request()->routeIs('portal.pledges') ? 'active' : '' }}">Pledges</a>
     <a href="{{ route('portal.profile') }}" class="{{ request()->routeIs('portal.profile') ? 'active' : '' }}">Profile</a>
     <a href="{{ route('portal.family') }}" class="{{ request()->routeIs('portal.family') ? 'active' : '' }}">Family</a>
     <a href="{{ route('portal.contributions') }}" class="{{ request()->routeIs('portal.contributions') ? 'active' : '' }}">Contributions</a>

@@ -22,6 +22,8 @@ class Member extends Model
     public function group() { return $this->belongsTo(Group::class); }
     public function ministry() { return $this->belongsTo(Ministry::class); }
     public function activations() { return $this->hasMany(MemberActivation::class); }
+    public function eventAttendees() { return $this->hasMany(EventAttendee::class); }
+    public function pledges() { return $this->hasMany(Pledge::class); }
 
     public function scopeActive($query)
     {

@@ -1,5 +1,5 @@
 ﻿@extends('layouts.app')
-@section('title', 'Documents â€” Open Gate Camp Mission')
+@section('title', 'Documents — Open Gate Camp Mission')
 @section('crumb', 'Management / Documents')
 @section('page_title', 'Document Center')
 
@@ -72,7 +72,7 @@
                 <div class="cu-name">{{ $d->title }}</div>
               </div>
             </td>
-            <td><span class="badge badge-info badge-dotted" style="font-size:10px;border-color:{{ $d->category?->color ?? '#2563EB' }};color:{{ $d->category?->color ?? '#2563EB' }}">{{ $d->category?->name ?? 'â€”' }}</span></td>
+            <td><span class="badge badge-info badge-dotted" style="font-size:10px;border-color:{{ $d->category?->color ?? '#2563EB' }};color:{{ $d->category?->color ?? '#2563EB' }}">{{ $d->category?->name ?? '—' }}</span></td>
             <td>{{ $d->file_size_formatted }}</td>
             <td>{{ $d->created_at->format('d M Y') }}</td>
             <td>
@@ -119,7 +119,7 @@
     </div>
     @if($documents->hasPages())
     <div class="table-footer">
-      <span class="tf-info">Showing {{ $documents->firstItem() }}â€“{{ $documents->lastItem() }} of {{ $documents->total() }}</span>
+      <span class="tf-info">Showing {{ $documents->firstItem() }}“{{ $documents->lastItem() }} of {{ $documents->total() }}</span>
       <div class="pagination">{{ $documents->links() }}</div>
     </div>
     @endif

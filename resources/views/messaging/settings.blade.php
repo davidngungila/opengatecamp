@@ -1,5 +1,5 @@
 ﻿@extends('layouts.app')
-@section('title', 'Settings â€” Open Gate Camp Mission')
+@section('title', 'Settings — Open Gate Camp Mission')
 @section('crumb', 'Communication / Messaging / Settings')
 @section('page_title', 'Messaging Settings')
 

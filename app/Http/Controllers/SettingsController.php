@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Models\AuditLog;
+use App\Models\Account;
 use App\Models\FinancialYear;
 use App\Models\Role;
 use App\Models\Setting;
@@ -16,13 +17,16 @@ class SettingsController extends Controller
     public function index(Request $request)
     {
         $tab = $request->query('tab', 'general');
-        $valid = ['general', 'appearance', 'notifications', 'security', 'backup', 'audit', 'financial-years'];
+        $valid = ['general', 'appearance', 'notifications', 'security', 'backup', 'audit', 'financial-years', 'accounting'];
 
         return view('settings.index', [
             'tab' => in_array($tab, $valid) ? $tab : 'general',
             'auditLogs' => AuditLog::latest()->paginate(10, ['*'], 'page', $request->query('page', 1)),
             'years' => FinancialYear::orderByDesc('start_date')->get(),
             'adminUser' => User::whereHas('role', fn ($q) => $q->where('name', 'Super Administrator'))->first(),
+            'cashAccounts' => Account::where('is_cash', true)->orderBy('code')->get(),
+            'incomeAccounts' => Account::where('type', 'income')->orderBy('code')->get(),
+            'expenseAccounts' => Account::where('type', 'expense')->orderBy('code')->get(),
         ]);
     }
 
@@ -62,6 +66,31 @@ class SettingsController extends Controller
         AuditLog::record('Updated notification preferences', 'Settings');
 
         return back()->with('success', 'Notification preferences saved successfully.');
+    }
+
+    public function updateAccounting(Request $request)
+    {
+        $data = $request->validate([
+            'acct_default_cash' => 'nullable|exists:accounts,code',
+            'acct_default_bank' => 'nullable|exists:accounts,code',
+            'acct_default_mobile' => 'nullable|exists:accounts,code',
+            'acct_pledge_income' => 'nullable|exists:accounts,code',
+            'acct_attendee_income' => 'nullable|exists:accounts,code',
+        ]);
+
+        foreach ([
+            'acct_default_cash' => 'acct.default_cash',
+            'acct_default_bank' => 'acct.default_bank',
+            'acct_default_mobile' => 'acct.default_mobile',
+            'acct_pledge_income' => 'acct.pledge_income',
+            'acct_attendee_income' => 'acct.attendee_income',
+        ] as $field => $key) {
+            Setting::put($key, $data[$field] ?? null);
+        }
+
+        AuditLog::record('Updated accounting account defaults', 'Settings — Accounting');
+
+        return back()->with('success', 'Accounting defaults saved successfully.');
     }
 
     public function updateSecurity(Request $request)

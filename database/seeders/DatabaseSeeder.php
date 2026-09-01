@@ -36,14 +36,10 @@ class DatabaseSeeder extends Seeder
 
         foreach ([
             'Super Administrator' => Role::PERMISSIONS,
-            'Administrator' => Role::PERMISSIONS,
-            'Chaplain' => ['members.view', 'members.manage', 'events.manage', 'events.complete', 'reports.view', 'reports.export', 'audit.view'],
-            'Secretary' => ['members.view', 'members.manage', 'events.manage', 'pledges.manage', 'communication.send', 'documents.view', 'documents.manage', 'reports.view', 'reports.export'],
-            'Finance Officer' => ['finance.view', 'finance.manage', 'reports.view', 'reports.export'],
-            'Ministry Leader' => ['members.view', 'events.manage', 'communication.send'],
-            'Group Leader' => ['members.view'],
-            'Data Entry' => ['members.view', 'members.manage'],
-            'Auditor' => ['finance.view', 'reports.view', 'reports.export', 'audit.view'],
+            'Chairperson' => Role::PERMISSIONS,
+            'Secretary' => ['members.view', 'members.manage', 'events.manage', 'events.complete', 'pledges.manage', 'communication.send', 'documents.view', 'documents.manage', 'reports.view', 'reports.export', 'audit.view'],
+            'Treasurer' => ['members.view', 'pledges.manage', 'finance.view', 'finance.manage', 'finance.approve', 'documents.view', 'reports.view', 'reports.export', 'audit.view'],
+            'Committee Member' => ['members.view', 'events.manage', 'communication.send', 'documents.view', 'reports.view'],
         ] as $roleName => $permissions) {
             Role::updateOrCreate(['name' => $roleName], ['permissions' => $permissions]);
         }
@@ -60,11 +56,11 @@ class DatabaseSeeder extends Seeder
         );
         User::updateOrCreate(
             ['email' => 'finance@opengatecamp.org'],
-            ['name' => 'Peter Mwakalinga', 'password' => Hash::make('password'), 'role_id' => Role::where('name', 'Finance Officer')->value('id'), 'status' => 'Active']
+            ['name' => 'Peter Mwakalinga', 'password' => Hash::make('password'), 'role_id' => Role::where('name', 'Treasurer')->value('id'), 'status' => 'Active']
         );
         User::updateOrCreate(
             ['email' => 'programs@opengatecamp.org'],
-            ['name' => 'Mary Massawe', 'password' => Hash::make('password'), 'role_id' => Role::where('name', 'Ministry Leader')->value('id'), 'status' => 'Suspended']
+            ['name' => 'Mary Massawe', 'password' => Hash::make('password'), 'role_id' => Role::where('name', 'Committee Member')->value('id'), 'status' => 'Suspended']
         );
 
         Setting::put('church.name', 'Open Gate Camp Mission');
@@ -86,6 +82,12 @@ class DatabaseSeeder extends Seeder
 
         Setting::put('sms.api_token', '8b4d46ca83411b8457e0fb8c3a77d02a');
         Setting::put('sms.sender_id', 'TMCS MoCU');
+
+        Setting::put('acct.default_cash', '1010');
+        Setting::put('acct.default_bank', '1000');
+        Setting::put('acct.default_mobile', '1020');
+        Setting::put('acct.pledge_income', '4020');
+        Setting::put('acct.attendee_income', '4040');
 
         $groupNames = ['St. Cecilia Choir', 'Young Adults', 'Legion of Mary', 'St. Vincent de Paul', 'Catholic Women Assoc.', 'Men of Open Gate', 'Altar Servers', 'Bible Study Circle'];
         foreach ($groupNames as $g) {
@@ -139,22 +141,22 @@ class DatabaseSeeder extends Seeder
             ]);
         }
 
-        $eventsData = [
-            ['OGM-CAMP-2026', 'Open Gate Summer Camp', 'camp', 'Annual youth camp at Morogoro base camp.', 'Open Gate Base Camp', 'Morogoro', now()->subMonths(2)->toDateString(), now()->subMonths(2)->addDays(6)->toDateString(), '06:00', '17:30', 'completed', '⛺', 'Daniel Mwinuka'],
-            ['OGM-CONF-2026', 'Leadership Conference', 'conference', 'Equipping camp leaders for mission work.', 'Open Gate Conference Hall', 'Morogoro', now()->addDays(14)->toDateString(), now()->addDays(16)->toDateString(), '08:00', '18:00', 'open_registration', '🎤', 'Grace Kileo'],
-            ['OGM-MISS-2026', 'Coastal Mission Trip', 'mission_trip', 'Service mission to villages along the coast.', 'Coastal Villages', 'Dar es Salaam region', now()->addMonths(2)->toDateString(), now()->addMonths(2)->addDays(9)->toDateString(), '05:30', '19:00', 'planned', '🚌', 'Daniel Mwinuka'],
-            ['OGM-YTR-2026', 'Youth Evangelism Training', 'training', 'Practical evangelism skills for young leaders.', 'Open Gate Training Centre', 'Morogoro', now()->addDays(45)->toDateString(), now()->addDays(47)->toDateString(), '09:00', '16:00', 'planned', '📖', 'Mary Massawe'],
-            ['OGM-SUN-2026', 'Sunday Camp Worship', 'worship', 'Gathering worship service for camp families.', 'Open Gate Grounds', 'Morogoro', now()->next()->startOfDay()->toDateString(), now()->next()->startOfDay()->toDateString(), '09:00', '12:00', 'open_registration', '🕊️', 'Daniel Mwinuka'],
+$eventsData = [
+            ['OGM-CAMP-2026', 'Open Gate Summer Camp', 'camp', 'Annual youth camp at Morogoro base camp.', 'Open Gate Base Camp', 'Morogoro', now()->subMonths(2)->toDateString(), now()->subMonths(2)->addDays(6)->toDateString(), '06:00', '17:30', 'completed', 'Daniel Mwinuka'],
+            ['OGM-CONF-2026', 'Leadership Conference', 'conference', 'Equipping camp leaders for mission work.', 'Open Gate Conference Hall', 'Morogoro', now()->addDays(14)->toDateString(), now()->addDays(16)->toDateString(), '08:00', '18:00', 'open_registration', 'Grace Kileo'],
+            ['OGM-MISS-2026', 'Coastal Mission Trip', 'mission_trip', 'Service mission to villages along the coast.', 'Coastal Villages', 'Dar es Salaam region', now()->addMonths(2)->toDateString(), now()->addMonths(2)->addDays(9)->toDateString(), '05:30', '19:00', 'planned', 'Daniel Mwinuka'],
+            ['OGM-YTR-2026', 'Youth Evangelism Training', 'training', 'Practical evangelism skills for young leaders.', 'Open Gate Training Centre', 'Morogoro', now()->addDays(45)->toDateString(), now()->addDays(47)->toDateString(), '09:00', '16:00', 'planned', 'Mary Massawe'],
+            ['OGM-SUN-2026', 'Sunday Camp Worship', 'worship', 'Gathering worship service for camp families.', 'Open Gate Grounds', 'Morogoro', now()->next()->startOfDay()->toDateString(), now()->next()->startOfDay()->toDateString(), '09:00', '12:00', 'open_registration', 'Daniel Mwinuka'],
         ];
 
         $events = [];
-        foreach ($eventsData as [$no, $title, $type, $desc, $venue, $location, $start, $end, $startTime, $endTime, $status, $emoji, $organizer]) {
+        foreach ($eventsData as [$no, $title, $type, $desc, $venue, $location, $start, $end, $startTime, $endTime, $status, $organizer]) {
             $events[] = Event::updateOrCreate(
                 ['title' => $title],
                 [
                     'event_type' => $type, 'description' => $desc, 'venue' => $venue, 'location' => $location,
                     'start_date' => $start, 'end_date' => $end, 'start_time' => $startTime, 'end_time' => $endTime,
-                    'status' => $status, 'capacity' => 120, 'featured' => $type === 'camp', 'cover_emoji' => $emoji,
+                    'status' => $status, 'capacity' => 120, 'featured' => $type === 'camp',
                     'organizer' => $organizer, 'created_by' => Setting::get('church.chaplain'),
                 ]
             );

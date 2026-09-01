@@ -1,6 +1,6 @@
 ﻿@extends('layouts.app')
 
-@section('title', 'New Journal Entry â€” Open Gate Camp Mission')
+@section('title', 'New Journal Entry — Open Gate Camp Mission')
 @section('crumb', 'Finance / Financial Accounting / New Journal Entry')
 @section('page_title', 'New Journal Entry')
 
@@ -61,9 +61,9 @@ var accounts=@json($accounts->map(fn($a)=>['id'=>$a->id,'code'=>$a->code,'name'=
 var lineIdx=0;
 
 function accountOptions(selected){
-  return '<option value="">â€” Select â€”</option>'+accounts.map(function(a){
+  return '<option value="">— Select —</option>'+accounts.map(function(a){
     var sel=Number(selected)===a.id?' selected':'';
-    return '<option value="'+a.id+'"'+sel+'>'+a.code+' â€” '+a.name+'</option>';
+    return '<option value="'+a.id+'"'+sel+'>'+a.code+' — '+a.name+'</option>';
   }).join('');
 }
 function addLine(pref){
@@ -97,7 +97,7 @@ window.__beforeConfirm=function(form){
   var cr=parseFloat(document.getElementById('totalCr').textContent.replace(/,/g,''))||0;
   var diff=Math.round((dr-cr)*100)/100;
   if(dr<=0){ toast('Enter at least one amount.','error'); return false; }
-  if(diff!==0){ toast('Not balanced â€” debits TZS '+dr.toLocaleString()+' vs credits TZS '+cr.toLocaleString()+'.','error'); return false; }
+  if(diff!==0){ toast('Not balanced — debits TZS '+dr.toLocaleString()+' vs credits TZS '+cr.toLocaleString()+'.','error'); return false; }
   form.setAttribute('data-confirm-message','Posting double entry of TZS '+dr.toLocaleString()+' (Dr = Cr). Continue?');
   return true;
 };

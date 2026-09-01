@@ -56,8 +56,9 @@ class AuthController extends Controller
             });
 
             if ($member) {
-                // Find or create user for this member
-                $user = User::where('phone', $member->phone)->first();
+                // Reuse existing linked account, otherwise find by phone
+                $user = User::where('member_id', $member->id)->first()
+                    ?? User::where('phone', $member->phone)->first();
 
                 if (! $user) {
                     $email = $member->email ?: ($member->phone . '@opengatecamp.local');

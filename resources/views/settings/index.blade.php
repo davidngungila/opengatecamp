@@ -1,6 +1,6 @@
 ﻿@extends('layouts.app')
 
-@section('title', 'Settings â€” Open Gate Camp Mission')
+@section('title', 'Settings — Open Gate Camp Mission')
 @section('crumb', 'System / Settings')
 @section('page_title', 'Settings')
 
@@ -8,6 +8,7 @@
     $sections = [
         ['general', 'General / Church Profile'],
         ['notifications', 'Notifications'],
+        ['accounting', 'Accounting'],
         ['financial-years', 'Financial Years'],
         ['security', 'Security'],
         ['backup', 'Backup'],
@@ -60,6 +61,65 @@
           @endforeach
           <div class="flex" style="justify-content:flex-end;margin-top:16px">
             <button type="submit" class="btn btn-accent">Save Preferences</button>
+          </div>
+        </form>
+      </div>
+
+      @elseif($tab === 'accounting')
+      <div class="solid-card">
+        <h2 style="font-size:14.5px;margin:0 0 6px">Account Defaults for Automatic Double-Entry</h2>
+        <p style="font-size:12.5px;color:var(--text-tertiary);margin:0 0 14px">Pledge payments, attendee registration payments and attendee fee payments are posted automatically to the journal. Choose the cash / bank / mobile-money accounts (debit) and the income accounts (credit) used for each.</p>
+        <form method="POST" action="{{ route('settings.accounting') }}">
+          @csrf
+          <div class="form-grid">
+            <div class="field">
+              <label>Cash on Hand (petty payments)</label>
+              <select name="acct_default_cash">
+                <option value="">— Select —</option>
+                @foreach($cashAccounts as $a)
+                <option value="{{ $a->code }}" @if($s('acct.default_cash')===$a->code) selected @endif>{{ $a->code }} — {{ $a->name }}</option>
+                @endforeach
+              </select>
+            </div>
+            <div class="field">
+              <label>Bank account (bank payments)</label>
+              <select name="acct_default_bank">
+                <option value="">— Select —</option>
+                @foreach($cashAccounts as $a)
+                <option value="{{ $a->code }}" @if($s('acct.default_bank')===$a->code) selected @endif>{{ $a->code }} — {{ $a->name }}</option>
+                @endforeach
+              </select>
+            </div>
+            <div class="field">
+              <label>Mobile money float (mobile payments)</label>
+              <select name="acct_default_mobile">
+                <option value="">— Select —</option>
+                @foreach($cashAccounts as $a)
+                <option value="{{ $a->code }}" @if($s('acct.default_mobile')===$a->code) selected @endif>{{ $a->code }} — {{ $a->name }}</option>
+                @endforeach
+              </select>
+            </div>
+            <div class="field">
+              <label>Pledge income account (credit)</label>
+              <select name="acct_pledge_income">
+                <option value="">— Select —</option>
+                @foreach($incomeAccounts as $a)
+                <option value="{{ $a->code }}" @if($s('acct.pledge_income')===$a->code) selected @endif>{{ $a->code }} — {{ $a->name }}</option>
+                @endforeach
+              </select>
+            </div>
+            <div class="field">
+              <label>Attendee fee income account (credit)</label>
+              <select name="acct_attendee_income">
+                <option value="">— Select —</option>
+                @foreach($incomeAccounts as $a)
+                <option value="{{ $a->code }}" @if($s('acct.attendee_income')===$a->code) selected @endif>{{ $a->code }} — {{ $a->name }}</option>
+                @endforeach
+              </select>
+            </div>
+          </div>
+          <div class="flex" style="justify-content:flex-end;margin-top:16px">
+            <button type="submit" class="btn btn-accent">Save Accounting Defaults</button>
           </div>
         </form>
       </div>
@@ -171,8 +231,8 @@
               <tr>
                 <td>{{ $log->user_name }}</td>
                 <td>{{ $log->action }}</td>
-                <td>{{ $log->module ?? 'â€”' }}</td>
-                <td>{{ Str::limit($log->details ?? 'â€”', 40) }}</td>
+                <td>{{ $log->module ?? '—' }}</td>
+                <td>{{ Str::limit($log->details ?? '—', 40) }}</td>
                 <td>{{ $log->ip }}</td>
                 <td>{{ $log->created_at?->format('d M Y H:i') }}</td>
               </tr>
@@ -183,7 +243,7 @@
           </table>
         </div>
         <div class="table-footer">
-          <span class="tf-info">Showing {{ $auditLogs->firstItem() ?? 0 }}â€“{{ $auditLogs->lastItem() ?? 0 }} of {{ $auditLogs->total() }} entries</span>
+          <span class="tf-info">Showing {{ $auditLogs->firstItem() ?? 0 }}“{{ $auditLogs->lastItem() ?? 0 }} of {{ $auditLogs->total() }} entries</span>
           <div class="flex gap-8 settings-actions-cell" style="align-items:center">
             {{ $auditLogs->links() }}
             <form method="POST" action="{{ route('settings.audit.clear') }}"

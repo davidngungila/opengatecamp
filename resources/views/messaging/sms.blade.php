@@ -1,5 +1,5 @@
 ﻿@extends('layouts.app')
-@section('title', 'SMS â€” Open Gate Camp Mission')
+@section('title', 'SMS — Open Gate Camp Mission')
 @section('crumb', 'Communication / Messaging / SMS')
 @section('page_title', 'SMS Messaging')
 
@@ -10,7 +10,7 @@
     @if($smsConfigured)
       <span class="badge badge-success" style="font-size:11px">API Ready</span>
     @else
-      <a href="{{ route('messaging.settings') }}" class="badge badge-danger" style="font-size:11px;text-decoration:none">API not configured â€” go to Settings</a>
+      <a href="{{ route('messaging.settings') }}" class="badge badge-danger" style="font-size:11px;text-decoration:none">API not configured — go to Settings</a>
     @endif
   </div>
   @include('messaging._tabs', ['active' => 'sms'])

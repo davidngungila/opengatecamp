@@ -1,6 +1,6 @@
 ﻿@extends('layouts.app')
 
-@section('title', 'Balance Sheet â€” Open Gate Camp Mission')
+@section('title', 'Balance Sheet — Open Gate Camp Mission')
 @section('crumb', 'Finance / Financial Accounting / Balance Sheet')
 @section('page_title', 'Balance Sheet')
 
@@ -15,7 +15,7 @@
     <div class="solid-card">
       <h2 style="font-size:15px;margin:0 0 12px">Assets</h2>
       @forelse($assets['accounts'] as $r)
-        <div class="info-row"><span>{{ $r['account']->code }} â€” {{ $r['account']->name }}</span><b>TZS {{ number_format($r['amount'], 2) }}</b></div>
+        <div class="info-row"><span>{{ $r['account']->code }} — {{ $r['account']->name }}</span><b>TZS {{ number_format($r['amount'], 2) }}</b></div>
       @empty
         <p class="text-muted" style="font-size:13px">No asset accounts with activity.</p>
       @endforelse
@@ -26,7 +26,7 @@
       <div class="solid-card" style="margin-bottom:18px">
         <h2 style="font-size:15px;margin:0 0 12px">Liabilities</h2>
         @forelse($liabilities['accounts'] as $r)
-          <div class="info-row"><span>{{ $r['account']->code }} â€” {{ $r['account']->name }}</span><b>TZS {{ number_format($r['amount'], 2) }}</b></div>
+          <div class="info-row"><span>{{ $r['account']->code }} — {{ $r['account']->name }}</span><b>TZS {{ number_format($r['amount'], 2) }}</b></div>
         @empty
           <p class="text-muted" style="font-size:13px">No liability accounts with activity.</p>
         @endforelse
@@ -36,7 +36,7 @@
       <div class="solid-card">
         <h2 style="font-size:15px;margin:0 0 12px">Equity</h2>
         @forelse($equity['accounts'] as $r)
-          <div class="info-row"><span>{{ $r['account']->code }} â€” {{ $r['account']->name }}</span><b>TZS {{ number_format($r['amount'], 2) }}</b></div>
+          <div class="info-row"><span>{{ $r['account']->code }} — {{ $r['account']->name }}</span><b>TZS {{ number_format($r['amount'], 2) }}</b></div>
         @empty
           <p class="text-muted" style="font-size:13px">No equity accounts with activity.</p>
         @endforelse

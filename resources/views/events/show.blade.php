@@ -22,7 +22,7 @@
   <div class="solid-card" style="margin-bottom:18px">
     <div class="flex" style="align-items:flex-start;justify-content:space-between;gap:16px;flex-wrap:wrap">
       <div class="flex" style="align-items:center;gap:14px">
-        <div class="ec-ico" style="background:{{ $tc[0] }};color:{{ $tc[1] }};width:52px;height:52px;font-size:24px">{{ $event->cover_emoji ?? '🗓️' }}</div>
+        <div class="ec-ico" style="background:{{ $tc[0] }};color:{{ $tc[1] }};width:52px;height:52px">@include('partials.event-icon', ['type' => $event->event_type, 'size' => 26])</div>
         <div>
           <div class="flex gap-8" style="align-items:center;flex-wrap:wrap">
             <h2 style="margin:0;font-size:20px">{{ $event->title }}</h2>
@@ -225,15 +225,17 @@
       @csrf
       <div class="modal-body">
         <div class="form-grid">
-          <div class="field full"><label>Select Member (optional)</label><select name="member_id" id="attendeeMemberSelect">
-            <option value="">— New attendee (type name below) —</option>
-            @foreach($members as $m)<option value="{{ $m->id }}" data-name="{{ $m->name }}" data-phone="{{ $m->phone }}" data-email="{{ $m->email }}">{{ $m->member_no }} — {{ $m->name }}</option>@endforeach
-          </select></div>
-          <div class="field"><label>Full Name</label><input name="name" id="attendeeName" placeholder="Attendee name" value="{{ old('name') }}"></div>
-          <div class="field"><label>Phone</label><input name="phone" id="attendeePhone" placeholder="+255 7XX XXX XXX" value="{{ old('phone') }}"></div>
+          <div class="field"><label>Full Name</label><input name="name" id="attendeeName" placeholder="Attendee name" value="{{ old('name') }}" required></div>
+          <div class="field"><label>Phone</label><input name="phone" id="attendeePhone" placeholder="+255 7XX XXX XXX" value="{{ old('phone') }}" required></div>
           <div class="field full"><label>Email</label><input name="email" id="attendeeEmail" placeholder="email@example.com" value="{{ old('email') }}"></div>
           <div class="field"><label>Amount Paid (TZS)</label><input type="number" step="0.01" name="amount_paid" value="{{ old('amount_paid', $event->registration_fee) }}"></div>
+          <div class="field"><label>Fee Amount (TZS)</label><input type="number" name="fee_amount" value="{{ old('fee_amount', ($event->registration_fee > 0 ? $event->registration_fee : 10000)) }}" readonly style="background:var(--blue-light);font-weight:700;color:var(--navy-900)"></div>
           <div class="field"><label>Payment Method</label><select name="payment_method"><option value="" disabled>Select</option><option>cash</option><option>bank</option><option>mobile</option></select></div>
+          <div class="field"><label>Pickup Location</label><select name="pickup_location" required>
+            <option value="">— Select —</option>
+            <option value="arusha" @if(old('pickup_location')==='arusha') selected @endif>Arusha</option>
+            <option value="moshi" @if(old('pickup_location')==='moshi') selected @endif>Moshi</option>
+          </select></div>
           <div class="field"><label>Status</label><select name="status"><option value="pending">Pending</option><option value="confirmed">Confirmed</option><option value="attended">Attended</option><option value="no_show">No Show</option><option value="cancelled">Cancelled</option></select></div>
           <div class="field full"><label>Notes</label><textarea name="notes" placeholder="Dietary, accessibility, transport notes..."></textarea></div>
         </div>
@@ -286,11 +288,7 @@
       <input type="hidden" name="event_id" value="{{ $event->id }}">
       <div class="modal-body">
         <div class="form-grid">
-          <div class="field full"><label>Pledger</label><select name="member_id">
-            <option value="">— Add new person below —</option>
-            @foreach($members as $m)<option value="{{ $m->id }}" @if(old('member_id')==$m->id) selected @endif>{{ $m->member_no }} — {{ $m->name }}</option>@endforeach
-          </select></div>
-          <div class="field"><label>Name</label><input name="name" placeholder="Full name" value="{{ old('name') }}"></div>
+          <div class="field"><label>Name</label><input name="name" placeholder="Full name" value="{{ old('name') }}" required></div>
           <div class="field"><label>Phone</label><input name="phone" placeholder="+255 7XX XXX XXX" value="{{ old('phone') }}"></div>
           <div class="field full"><label>Email</label><input name="email" placeholder="email@example.com" value="{{ old('email') }}"></div>
           <div class="field"><label>Amount (TZS)</label><input type="number" step="0.01" name="amount" value="{{ old('amount') }}" required></div>
@@ -357,7 +355,6 @@
           <div class="field"><label>Capacity</label><input type="number" name="capacity" value="{{ $event->capacity }}"></div>
           <div class="field"><label>Registration Fee</label><input type="number" step="0.01" name="registration_fee" value="{{ $event->registration_fee }}"></div>
           <div class="field"><label>Organizer</label><input name="organizer" value="{{ $event->organizer }}"></div>
-          <div class="field"><label>Emoji</label><input name="cover_emoji" value="{{ $event->cover_emoji }}" placeholder="🗓️"></div>
           <div class="field full"><label>Description</label><textarea name="description">{{ $event->description }}</textarea></div>
         </div>
       </div>
@@ -373,18 +370,6 @@
 @push('scripts')
 <script>
 document.addEventListener('DOMContentLoaded', function(){
-  var memberSelect = document.getElementById('attendeeMemberSelect');
-  if(memberSelect){
-    memberSelect.addEventListener('change', function(){
-      var opt = memberSelect.selectedOptions[0];
-      if(opt && opt.value){
-        document.getElementById('attendeeName').value = opt.dataset.name || '';
-        document.getElementById('attendeePhone').value = opt.dataset.phone || '';
-        document.getElementById('attendeeEmail').value = opt.dataset.email || '';
-      }
-    });
-  }
-
   document.querySelectorAll('[data-edit-attendee]').forEach(function(btn){
     btn.addEventListener('click', function(){
       var d = btn.dataset;

@@ -51,7 +51,7 @@
     @endphp
     <div class="entity-card">
       <div class="ec-top">
-        <div class="ec-ico" style="background:{{ $tc[0] }};color:{{ $tc[1] }}">{{ $e->cover_emoji ?? '🗓️' }}</div>
+        <div class="ec-ico" style="background:{{ $tc[0] }};color:{{ $tc[1] }}">@include('partials.event-icon', ['type' => $e->event_type, 'size' => 22])</div>
         <div>
           <h4>{{ $e->title }}</h4>
           <div class="ec-sub">{{ $e->start_date?->format('d M Y') }} @if($e->end_date && $e->end_date->ne($e->start_date)) – {{ $e->end_date->format('d M Y') }}@endif · {{ $e->venue ?? $e->location ?? 'TBD' }}</div>

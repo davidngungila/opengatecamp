@@ -5,7 +5,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Sign In â€” Open Gate Camp Mission Management System</title>
+<title>Sign In — Open Gate Camp Mission Management System</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;600;700;800&display=swap" rel="stylesheet">
 <style>
@@ -73,7 +73,7 @@
       </div>
       <div class="field" style="margin-top:14px">
         <label>Password</label>
-        <input type="password" name="password" placeholder="â€¢â€¢â€¢â€¢â€¢â€¢â€¢â€¢" required>
+        <input type="password" name="password" placeholder="••••••••" required>
       </div>
       <div class="field-check" style="margin-top:14px">
         <input type="checkbox" class="checkbox" id="remember" name="remember">
@@ -86,7 +86,7 @@
 
     <div class="demo-hint">
       <p>Admin — <code>camp.director@opengatecamp.org</code> / <code>password</code></p>
-      <p style="margin-top:4px">Member â€” phone <code>+255 622 239 304</code> / <code>password</code></p>
+      <p style="margin-top:4px">Member — phone <code>+255 715 234 881</code> / <code>password</code></p>
     </div>
   </div>
 </div>
@@ -112,12 +112,12 @@ function detectLoginType(el) {
 
   if (isEmail) {
     icon.className = 'login-icon email-icon';
-    icon.innerHTML = 'âœ‰';
+    icon.innerHTML = '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 6h16a1 1 0 011 1v10a1 1 0 01-1 1H4a1 1 0 01-1-1V7a1 1 0 011-1z"/><polyline points="3 7 12 13 21 7"/></svg>';
     hint.textContent = 'Signing in with email';
   } else if (isPhone) {
     icon.className = 'login-icon phone-icon';
-    icon.innerHTML = 'ðŸ“ž';
-    hint.textContent = 'Signing in with phone â€” default password: password';
+    icon.innerHTML = '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 16.9v3a2 2 0 01-2.2 2 19.8 19.8 0 01-8.6-3.1 19.5 19.5 0 01-6-6A19.8 19.8 0 012.1 4.2 2 2 0 014.1 2h3a2 2 0 012 1.7c.1 1 .4 2 .7 2.9a2 2 0 01-.5 2.1L8 10a16 16 0 006 6l1.3-1.3a2 2 0 012.1-.5c.9.3 1.9.6 2.9.7a2 2 0 011.7 2z"/></svg>';
+    hint.textContent = 'Signing in with phone — default password: password';
   } else {
     icon.className = 'login-icon';
     icon.innerHTML = '';

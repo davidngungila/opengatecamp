@@ -123,7 +123,7 @@ class MemberController extends Controller
         $member = Member::create($data);
         $this->maybeAutoActivate($member);
 
-        AuditLog::record('Created member', 'Members', "{$member->member_no} â€” {$member->name}");
+        AuditLog::record('Created member', 'Members', "{$member->member_no} — {$member->name}");
 
         if ($request->input('action') === 'again') {
             return redirect()->route('members.edit', $member)->with('success', 'Member saved. You can register another one.');
@@ -136,14 +136,14 @@ class MemberController extends Controller
     {
         $member->update($this->validated($request));
 
-        AuditLog::record('Updated member', 'Members', "{$member->member_no} â€” {$member->name}");
+        AuditLog::record('Updated member', 'Members', "{$member->member_no} — {$member->name}");
 
         return redirect()->route('members.index')->with('success', "Member {$member->name} updated successfully.");
     }
 
     public function destroy(Member $member)
     {
-        AuditLog::record('Deleted member', 'Members', "{$member->member_no} â€” {$member->name}");
+        AuditLog::record('Deleted member', 'Members', "{$member->member_no} — {$member->name}");
         $name = $member->name;
         $member->delete();
 

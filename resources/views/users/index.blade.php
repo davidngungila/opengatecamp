@@ -1,6 +1,6 @@
 ﻿@extends('layouts.app')
 
-@section('title', 'Users & Roles â€” Open Gate Camp Mission')
+@section('title', 'Users & Roles — Open Gate Camp Mission')
 @section('crumb', 'System / Users & Roles')
 @section('page_title', 'Users & Roles')
 
@@ -12,7 +12,7 @@
 @section('content')
 <div class="fade-in">
   <div class="section-head">
-    <div><h2>Users &amp; Roles</h2><div class="sub">{{ $users->count() }} system users Â· {{ $roles->count() }} roles</div></div>
+    <div><h2>Users &amp; Roles</h2><div class="sub">{{ $users->count() }} system users · {{ $roles->count() }} roles</div></div>
     @if($tab === 'users')
       <button type="button" class="btn btn-accent" data-modal-open="userModal" onclick="resetUserModal()">+ Add User</button>
     @endif
@@ -38,8 +38,8 @@
                 <div><div class="cu-name">{{ $u->name }}</div><div class="cu-sub">{{ $u->email }}</div></div>
               </div>
             </td>
-            <td><span class="badge badge-purple badge-dotted">{{ $u->role?->name ?? 'â€”' }}</span></td>
-            <td>{{ $u->phone ?? 'â€”' }}</td>
+            <td><span class="badge badge-purple badge-dotted">{{ $u->role?->name ?? '—' }}</span></td>
+            <td>{{ $u->phone ?? '—' }}</td>
             <td><span class="badge badge-{{ $u->status==='Active' ? 'success' : 'danger' }} badge-dotted">{{ $u->status }}</span></td>
             <td>{{ $u->last_login_at?->diffForHumans() ?? 'Never' }}</td>
             <td>

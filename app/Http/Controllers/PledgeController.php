@@ -7,6 +7,7 @@ use App\Models\Event;
 use App\Models\Member;
 use App\Models\Pledge;
 use App\Models\PledgePayment;
+use App\Services\AccountingPostingService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 
@@ -50,9 +51,8 @@ class PledgeController extends Controller
     public function store(Request $request)
     {
         $data = $request->validate([
-            'event_id' => 'nullable|exists:events,id',
-            'member_id' => 'nullable|exists:members,id',
-            'name' => 'required_without:member_id|nullable|string|max:255',
+            'event_id' => 'required|exists:events,id',
+            'name' => 'required|string|max:255',
             'email' => 'nullable|email',
             'phone' => 'nullable|string|max:20',
             'amount' => 'required|numeric|min:1',
@@ -61,13 +61,6 @@ class PledgeController extends Controller
             'pledge_date' => 'required|date',
             'due_date' => 'nullable|date|after_or_equal:pledge_date',
         ]);
-
-        if (empty($data['name']) && ! empty($data['member_id'])) {
-            $member = Member::findOrFail($data['member_id']);
-            $data['name'] = $member->name;
-            $data['email'] = $data['email'] ?? $member->email;
-            $data['phone'] = $data['phone'] ?? $member->phone;
-        }
 
         $data['pledge_no'] = Pledge::nextPledgeNo();
         $data['paid_amount'] = 0;
@@ -95,6 +88,18 @@ class PledgeController extends Controller
         $payment = DB::transaction(function () use ($data, $pledge) {
             $data['pledge_id'] = $pledge->id;
             $data['recorded_by'] = auth()->user()?->name;
+
+            $posting = app(AccountingPostingService::class);
+            $entry = $posting->postMoneyIn([
+                'date' => $data['pay_date'],
+                'description' => 'Pledge payment '.$pledge->pledge_no.' — '.$pledge->name,
+                'reference' => $data['reference'] ?? null,
+                'amount' => $data['amount'],
+                'method' => $data['method'],
+                'incomeAccount' => $posting->incomeAccount('acct.pledge_income', '4020'),
+            ]);
+
+            $data['journal_entry_id'] = $entry->id;
             $payment = PledgePayment::create($data);
 
             $paid = $pledge->payments()->sum('amount');

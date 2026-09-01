@@ -1,13 +1,13 @@
 ﻿@extends('layouts.app')
 
-@section('title', 'Members â€” Open Gate Camp Mission')
+@section('title', 'Members — Open Gate Camp Mission')
 @section('crumb', 'People / Members')
 @section('page_title', 'Members')
 
 @section('content')
 <div class="fade-in">
   <div class="section-head">
-    <div><h2>Members</h2><div class="sub">{{ $members->total() }} of {{ $total }} member records @if(request()->boolean('all_time')) Â· all periods @endif</div></div>
+    <div><h2>Members</h2><div class="sub">{{ $members->total() }} of {{ $total }} member records @if(request()->boolean('all_time')) · all periods @endif</div></div>
     <div class="flex gap-8">
       @if($fy && $unactivatedCount > 0)
       <form method="POST" action="{{ route('members.activateAll') }}"
@@ -68,12 +68,12 @@
             <td>
               <div class="cell-user">
                 <div class="cell-avatar">{{ collect(explode(' ', $m->name))->map(fn($w) => mb_substr($w,0,1))->take(2)->implode('') }}</div>
-                <div><div class="cu-name">{{ $m->name }}</div><div class="cu-sub">{{ $m->member_no }} Â· {{ $typeLabel }}</div></div>
+                <div><div class="cu-name">{{ $m->name }}</div><div class="cu-sub">{{ $m->member_no }} · {{ $typeLabel }}</div></div>
               </div>
             </td>
             <td>{{ $m->phone }}</td>
-            <td>{{ $m->group?->name ?? 'â€”' }}</td>
-            <td>{{ $m->ministry?->name ?? 'â€”' }}</td>
+            <td>{{ $m->group?->name ?? '—' }}</td>
+            <td>{{ $m->ministry?->name ?? '—' }}</td>
             <td><span class="badge badge-{{ $m->status==='Active' ? 'success' : ($m->status==='New' ? 'info' : 'neutral') }} badge-dotted">{{ $m->status }}</span>
               @if($needsActivation)<span class="badge badge-warning badge-dotted" style="margin-left:6px">Not Activated</span>@endif
             </td>
@@ -111,7 +111,7 @@
       </table>
     </div>
     <div class="table-footer">
-      <span class="tf-info">Showing {{ $members->firstItem() ?? 0 }}â€“{{ $members->lastItem() ?? 0 }} of {{ $members->total() }} records</span>
+      <span class="tf-info">Showing {{ $members->firstItem() ?? 0 }}“{{ $members->lastItem() ?? 0 }} of {{ $members->total() }} records</span>
       <div class="pagination">
         {{ $members->links() }}
       </div>
@@ -154,7 +154,7 @@
             <div class="field" id="staffTypeField">
               <label>Category (Non-Student) *</label>
               <select name="staff_type">
-                <option value="">â€” Select â€”</option>
+                <option value="">— Select —</option>
                 @foreach(['staff' => 'Staff', 'non_staff' => 'Non-Staff'] as $stKey => $stLabel)
                   <option value="{{ $stKey }}" {{ $v('staff_type')===$stKey ? 'selected' : '' }}>{{ $stLabel }}</option>
                 @endforeach
@@ -186,7 +186,7 @@
         <div id="memPane-church" data-tab-pane="memberModal" class="hidden">
           <div class="form-grid">
             <div class="field"><label>Family</label>
-              <select name="family_id"><option value="">â€” None â€”</option>
+              <select name="family_id"><option value="">— None —</option>
                 @foreach($families as $f)<option value="{{ $f->id }}" {{ $v('family_id')==$f->id ? 'selected' : '' }}>{{ $f->name }}</option>@endforeach
               </select>
             </div>
@@ -196,12 +196,12 @@
               </select>
             </div>
             <div class="field"><label>Group</label>
-              <select name="group_id"><option value="">â€” None â€”</option>
+              <select name="group_id"><option value="">— None —</option>
                 @foreach($groups as $g)<option value="{{ $g->id }}" {{ $v('group_id')===($g->id) ? 'selected' : '' }}>{{ $g->name }}</option>@endforeach
               </select>
             </div>
             <div class="field"><label>Ministry</label>
-              <select name="ministry_id"><option value="">â€” None â€”</option>
+              <select name="ministry_id"><option value="">— None —</option>
                 @foreach($ministries as $m2)<option value="{{ $m2->id }}" {{ $v('ministry_id')==$m2->id ? 'selected' : '' }}>{{ $m2->name }}</option>@endforeach
               </select>
             </div>

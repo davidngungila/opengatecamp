@@ -1,6 +1,6 @@
 ﻿@extends('layouts.app')
 
-@section('title', 'Financial Accounting â€” Open Gate Camp Mission')
+@section('title', 'Financial Accounting — Open Gate Camp Mission')
 @section('crumb', 'Finance / Financial Accounting')
 @section('page_title', 'Financial Accounting')
 
@@ -42,7 +42,7 @@
       @forelse($recentEntries as $e)
       <div class="mini-row">
         <div class="m-ico" style="background:var(--blue-light);color:var(--blue-accent)">{{ $e->lines->count() }}L</div>
-        <div class="m-body"><p>{{ $e->entry_no }} Â· {{ $e->description ?? 'Journal entry' }}</p><span>{{ $e->entry_date->format('d M Y') }} Â· Dr/Cr TZS {{ number_format((float) $e->lines->sum('debit'), 0) }}</span></div>
+        <div class="m-body"><p>{{ $e->entry_no }} · {{ $e->description ?? 'Journal entry' }}</p><span>{{ $e->entry_date->format('d M Y') }} · Dr/Cr TZS {{ number_format((float) $e->lines->sum('debit'), 0) }}</span></div>
         <span class="badge badge-{{ $e->status==='posted' ? 'success' : 'neutral' }} badge-dotted">{{ ucfirst($e->status) }}</span>
       </div>
       @empty

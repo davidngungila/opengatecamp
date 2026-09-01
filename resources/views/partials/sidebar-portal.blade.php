@@ -27,6 +27,19 @@
 
     <div class="nav-group">
       <div class="tooltip-wrap">
+        <button type="button" class="nav-parent {{ in_array($portalPage,['registrations','pledges']) ? 'expanded' : '' }}" onclick="toggleNavGroup(this)">
+          <span class="nav-icon"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3l9 9h-3v6h-4v-4h-4v4H6v-6H3l9-9z"/></svg></span>
+          <span class="nav-label">My Camp</span>
+          <svg class="chevron" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4"><path d="M9 18l6-6-6-6"/></svg>
+        </button>
+        <span class="tt">My Camp</span>
+      </div>
+      <div class="nav-children {{ in_array($portalPage,['registrations','pledges']) ? 'open' : '' }}">
+        <a href="{{ route('portal.registrations') }}" class="nav-child {{ $portalPage==='registrations' ? 'active' : '' }}">Registrations</a>
+        <a href="{{ route('portal.pledges') }}" class="nav-child {{ $portalPage==='pledges' ? 'active' : '' }}">Pledges</a>
+      </div>
+
+      <div class="tooltip-wrap">
         <button type="button" class="nav-parent {{ in_array($portalPage,['profile','settings']) ? 'expanded' : '' }}" onclick="toggleNavGroup(this)">
           <span class="nav-icon"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="8" r="4"/><path d="M4 21c0-4.4 3.6-7 8-7s8 2.6 8 7"/></svg></span>
           <span class="nav-label">My Account</span>

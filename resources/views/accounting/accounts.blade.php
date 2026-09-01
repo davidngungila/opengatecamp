@@ -1,6 +1,6 @@
 ﻿@extends('layouts.app')
 
-@section('title', 'Chart of Accounts â€” Open Gate Camp Mission')
+@section('title', 'Chart of Accounts — Open Gate Camp Mission')
 @section('crumb', 'Finance / Financial Accounting / Chart of Accounts')
 @section('page_title', 'Chart of Accounts')
 
@@ -47,7 +47,7 @@
                           data-id="{{ $a->id }}" data-code="{{ $a->code }}" data-name="{{ $a->name }}" data-type="{{ $a->type }}">Edit</button>
                   <form method="POST" action="{{ route('accounting.accounts.destroy', $a) }}"
                         data-confirm data-confirm-title="Delete this account?"
-                        data-confirm-message="{{ $a->code }} â€” {{ $a->name }} will be removed."
+                        data-confirm-message="{{ $a->code }} — {{ $a->name }} will be removed."
                         data-confirm-label="Delete Account">
                     @csrf @method('DELETE')
                     <button type="submit" class="danger">Delete</button>

@@ -1,6 +1,6 @@
 ﻿@extends('layouts.app')
 
-@section('title', $member->name.' â€” Open Gate Camp Mission')
+@section('title', $member->name.' — Open Gate Camp Mission')
 @section('crumb', 'People / Members / Profile')
 @section('page_title', $member->name)
 
@@ -49,12 +49,12 @@
       <div class="two-col" style="margin-bottom:0">
         <div class="solid-card">
           <h2 style="font-size:14.5px;margin:0 0 10px">Summary</h2>
-          <div class="info-row"><span>Age</span><b>{{ $member->date_of_birth?->age ?? 'â€”' }} {{ $member->date_of_birth ? 'years' : '' }}</b></div>
+          <div class="info-row"><span>Age</span><b>{{ $member->date_of_birth?->age ?? '—' }} {{ $member->date_of_birth ? 'years' : '' }}</b></div>
           <div class="info-row"><span>Gender</span><b>{{ $member->gender }}</b></div>
-          <div class="info-row"><span>Group</span><b>{{ $member->group?->name ?? 'â€”' }}</b></div>
-          <div class="info-row"><span>Ministry</span><b>{{ $member->ministry?->name ?? 'â€”' }}</b></div>
-          <div class="info-row"><span>Address</span><b>{{ $member->address ?? 'â€”' }}</b></div>
-          <div class="info-row"><span>Joined</span><b>{{ $member->joined_on?->format('d M Y') ?? 'â€”' }}</b></div>
+          <div class="info-row"><span>Group</span><b>{{ $member->group?->name ?? '—' }}</b></div>
+          <div class="info-row"><span>Ministry</span><b>{{ $member->ministry?->name ?? '—' }}</b></div>
+          <div class="info-row"><span>Address</span><b>{{ $member->address ?? '—' }}</b></div>
+          <div class="info-row"><span>Joined</span><b>{{ $member->joined_on?->format('d M Y') ?? '—' }}</b></div>
         </div>
         <div class="solid-card">
           <h2 style="font-size:14.5px;margin:0 0 10px">Event Participation</h2>
@@ -73,7 +73,7 @@
         <div class="field"><label>Member ID</label><input value="{{ $member->member_no }}" readonly></div>
         <div class="field"><label>Gender</label><input value="{{ $member->gender }}" readonly></div>
         <div class="field"><label>Date of Birth</label><input value="{{ $member->date_of_birth?->format('d M Y') }}" readonly></div>
-        <div class="field"><label>Marital Status</label><input value="{{ $member->marital_status ?? 'â€”' }}" readonly></div>
+        <div class="field"><label>Marital Status</label><input value="{{ $member->marital_status ?? '—' }}" readonly></div>
         <div class="field"><label>Phone</label><input value="{{ $member->phone }}" readonly></div>
         <div class="field full"><label>Address</label><input value="{{ $member->address }}" readonly></div>
       </div></div>
@@ -82,22 +82,22 @@
     <div id="tab-church" data-tab-pane="profileTabs" class="hidden">
       <div class="card-grid">
         <div class="entity-card">
-          <div class="ec-top"><div class="ec-ico" style="background:var(--blue-light);color:var(--blue-accent)"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 9l9-7 9 7v11a2 2 0 01-2 2H5a2 2 0 01-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg></div><div><h4>{{ $member->family?->name ?? 'No family linked' }}</h4><div class="ec-sub">Head: {{ $member->family?->head ?? 'â€”' }}</div></div></div>
+          <div class="ec-top"><div class="ec-ico" style="background:var(--blue-light);color:var(--blue-accent)"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 9l9-7 9 7v11a2 2 0 01-2 2H5a2 2 0 01-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg></div><div><h4>{{ $member->family?->name ?? 'No family linked' }}</h4><div class="ec-sub">Head: {{ $member->family?->head ?? '—' }}</div></div></div>
         </div>
         <div class="entity-card">
-          <div class="ec-top"><div class="ec-ico" style="background:var(--blue-light);color:var(--blue-accent)"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M17 21v-2a4 4 0 00-4-4H5a4 4 0 00-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 00-3-3.87"/><path d="M16 3.13a4 4 0 010 7.75"/></svg></div><div><h4>{{ $member->group?->name ?? 'No group' }}</h4><div class="ec-sub">{{ $member->group?->meeting_schedule ?? 'â€”' }}</div></div></div>
+          <div class="ec-top"><div class="ec-ico" style="background:var(--blue-light);color:var(--blue-accent)"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M17 21v-2a4 4 0 00-4-4H5a4 4 0 00-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 00-3-3.87"/><path d="M16 3.13a4 4 0 010 7.75"/></svg></div><div><h4>{{ $member->group?->name ?? 'No group' }}</h4><div class="ec-sub">{{ $member->group?->meeting_schedule ?? '—' }}</div></div></div>
         </div>
         <div class="entity-card">
-          <div class="ec-top"><div class="ec-ico" style="background:var(--purple-bg);color:var(--purple)"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg></div><div><h4>{{ $member->ministry?->name ?? 'No ministry' }}</h4><div class="ec-sub">Member since {{ $member->joined_on?->format('M Y') ?? 'â€”' }}</div></div></div>
+          <div class="ec-top"><div class="ec-ico" style="background:var(--purple-bg);color:var(--purple)"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg></div><div><h4>{{ $member->ministry?->name ?? 'No ministry' }}</h4><div class="ec-sub">Member since {{ $member->joined_on?->format('M Y') ?? '—' }}</div></div></div>
         </div>
       </div>
     </div>
 
     <div id="tab-emergency" data-tab-pane="profileTabs" class="hidden">
       <div class="solid-card"><div class="form-grid">
-        <div class="field"><label>Contact Name</label><input value="{{ $member->emergency_name ?? 'â€”' }}" readonly></div>
-        <div class="field"><label>Relationship</label><input value="{{ $member->emergency_relationship ?? 'â€”' }}" readonly></div>
-        <div class="field"><label>Phone Number</label><input value="{{ $member->emergency_phone ?? 'â€”' }}" readonly></div>
+        <div class="field"><label>Contact Name</label><input value="{{ $member->emergency_name ?? '—' }}" readonly></div>
+        <div class="field"><label>Relationship</label><input value="{{ $member->emergency_relationship ?? '—' }}" readonly></div>
+        <div class="field"><label>Phone Number</label><input value="{{ $member->emergency_phone ?? '—' }}" readonly></div>
       </div></div>
     </div>
 

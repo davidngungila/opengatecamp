@@ -28,6 +28,10 @@ Route::middleware('auth')->group(function () {
         Route::get('/profile', [MemberPortalController::class, 'profile'])->name('profile');
         Route::put('/profile', [MemberPortalController::class, 'updateProfile'])->name('profile.update');
         Route::get('/family', [MemberPortalController::class, 'family'])->name('family');
+        Route::get('/registrations', [MemberPortalController::class, 'registrations'])->name('registrations');
+        Route::post('/registrations', [MemberPortalController::class, 'storeAttendee'])->name('registrations.store');
+        Route::get('/pledges', [MemberPortalController::class, 'pledges'])->name('pledges');
+        Route::post('/pledges', [MemberPortalController::class, 'storePledge'])->name('pledges.store');
         Route::get('/contributions', [MemberPortalController::class, 'contributions'])->name('contributions');
         Route::get('/activations', [MemberPortalController::class, 'activations'])->name('activations');
         Route::get('/settings', [MemberPortalController::class, 'settings'])->name('settings');
@@ -57,6 +61,7 @@ Route::middleware('auth')->group(function () {
     Route::get('/settings', [SettingsController::class, 'index'])->name('settings.index');
     Route::post('/settings/general', [SettingsController::class, 'updateGeneral'])->name('settings.general');
     Route::post('/settings/notifications', [SettingsController::class, 'updateNotifications'])->name('settings.notifications');
+    Route::post('/settings/accounting', [SettingsController::class, 'updateAccounting'])->name('settings.accounting');
     Route::post('/settings/security', [SettingsController::class, 'updateSecurity'])->name('settings.security');
     Route::post('/settings/financial-years', [SettingsController::class, 'storeYear'])->name('settings.years.store');
     Route::put('/settings/financial-years/{year}', [SettingsController::class, 'updateYear'])->name('settings.years.update');

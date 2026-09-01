@@ -21,7 +21,7 @@
       <input name="q" value="{{ $v('q') }}" placeholder="Search by name, pledge no, phone..."></div>
     <select class="filter-select" name="event_id" onchange="this.form.submit()">
       <option value="">All Events</option>
-      @foreach($events as $e)<option value="{{ $e->id }}" {{ $v('eventId')==$e->id ? 'selected' : '' }}>{{ $e->title }}</option>@endforeach
+      @foreach($events as $e)<option value="{{ $e->id }}" {{ $v('eventId')==$e->id ? 'selected' : '' }}>{{ $e->title }} · {{ $e->start_date?->format('d M Y') }} @if($e->end_date && $e->end_date->ne($e->start_date))–{{ $e->end_date->format('d M Y') }}@endif</option>@endforeach
     </select>
     <select class="filter-select" name="status" onchange="this.form.submit()">
       <option value="">All Status</option>
@@ -92,13 +92,8 @@
       @csrf
       <div class="modal-body">
         <div class="form-grid">
-          <div class="field full"><label>Event / Campaign</label><select name="event_id">
-            <option value="">— General (no specific event) —</option>
-            @foreach($events as $e)<option value="{{ $e->id }}" @if(old('event_id')==$e->id) selected @endif>{{ $e->title }}</option>@endforeach
-          </select></div>
-          <div class="field full"><label>Member (optional)</label><select name="member_id">
-            <option value="">— Add new person below —</option>
-            @foreach($members as $m)<option value="{{ $m->id }}" @if(old('member_id')==$m->id) selected @endif>{{ $m->member_no }} — {{ $m->name }}</option>@endforeach
+          <div class="field full"><label>Event / Campaign</label><select name="event_id" required>
+            @foreach($events as $e)<option value="{{ $e->id }}" @if(old('event_id')==$e->id) selected @endif>{{ $e->title }} — {{ $e->getTypeLabel() }} · {{ $e->start_date?->format('d M Y') }}@if($e->end_date && $e->end_date->ne($e->start_date)) – {{ $e->end_date->format('d M Y') }}@endif @if($e->venue)({{ $e->venue }})@endif</option>@endforeach
           </select></div>
           <div class="field"><label>Name</label><input name="name" placeholder="Full name" value="{{ old('name') }}" required></div>
           <div class="field"><label>Phone</label><input name="phone" placeholder="+255 7XX XXX XXX" value="{{ old('phone') }}"></div>

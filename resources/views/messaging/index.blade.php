@@ -1,6 +1,6 @@
 ﻿@extends('layouts.app')
 
-@section('title', 'Messaging â€” Open Gate Camp Mission')
+@section('title', 'Messaging — Open Gate Camp Mission')
 @section('crumb', 'Communication / Messaging')
 @section('page_title', 'Messaging Center')
 
@@ -14,7 +14,7 @@
   <div class="section-head">
     <h2>Messaging Center</h2>
     @if($tab === 'sms' && ! $smsConfigured)
-      <span class="badge badge-danger" style="font-size:11px">SMS API not configured â€” go to Settings tab</span>
+      <span class="badge badge-danger" style="font-size:11px">SMS API not configured — go to Settings tab</span>
     @endif
     @if($tab === 'sms' && $smsConfigured)
       <span class="badge badge-success" style="font-size:11px">SMS API ready</span>

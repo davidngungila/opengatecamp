@@ -8,8 +8,8 @@ class EventAttendee extends Model
 {
     protected $fillable = [
         'event_id', 'member_id', 'name', 'phone', 'email', 'status',
-        'amount_paid', 'fee_amount', 'payment_method', 'notes', 'registered_on',
-        'checked_in_by', 'checked_in_at',
+        'amount_paid', 'fee_amount', 'payment_method', 'pickup_location', 'notes', 'registered_on',
+        'checked_in_by', 'checked_in_at', 'journal_entry_id',
     ];
 
     protected $casts = [
@@ -21,6 +21,7 @@ class EventAttendee extends Model
 
     public function event() { return $this->belongsTo(Event::class); }
     public function member() { return $this->belongsTo(Member::class); }
+    public function journalEntry() { return $this->belongsTo(JournalEntry::class); }
 
     public static function statuses(): array
     {

@@ -1,6 +1,6 @@
 ﻿@extends('layouts.app')
 
-@section('title', 'Trial Balance â€” Open Gate Camp Mission')
+@section('title', 'Trial Balance — Open Gate Camp Mission')
 @section('crumb', 'Finance / Financial Accounting / Trial Balance')
 @section('page_title', 'Trial Balance')
 
@@ -21,8 +21,8 @@
             <td>{{ $r['account']->code }}</td>
             <td>{{ $r['account']->name }}</td>
             <td><span class="badge badge-neutral badge-dotted">{{ ucfirst($r['account']->type) }}</span></td>
-            <td style="text-align:right">{{ $r['debit'] > 0 ? number_format($r['debit'], 2) : 'â€”' }}</td>
-            <td style="text-align:right">{{ $r['credit'] > 0 ? number_format($r['credit'], 2) : 'â€”' }}</td>
+            <td style="text-align:right">{{ $r['debit'] > 0 ? number_format($r['debit'], 2) : '—' }}</td>
+            <td style="text-align:right">{{ $r['credit'] > 0 ? number_format($r['credit'], 2) : '—' }}</td>
           </tr>
           @empty
           <tr><td colspan="5"><div class="empty-state"><h3>No postings yet</h3><p>Post journal entries to build the trial balance.</p></div></td></tr>

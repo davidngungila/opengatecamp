@@ -9,6 +9,7 @@ use App\Models\EventSession;
 use App\Models\Member;
 use App\Models\Message;
 use App\Models\Pledge;
+use App\Services\AccountingPostingService;
 use App\Services\SmsService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
@@ -165,6 +166,8 @@ class EventController extends Controller
             'events' => Event::orderByDesc('start_date')->get(),
             'members' => Member::active()->orderBy('name')->get(),
             'statuses' => EventAttendee::statuses(),
+            'defaultFee' => 10000,
+            'pickupLocations' => ['arusha' => 'Arusha', 'moshi' => 'Moshi'],
             'filters' => compact('eventId', 'status', 'q'),
             'totals' => [
                 'registered' => EventAttendee::count(),
@@ -185,6 +188,7 @@ class EventController extends Controller
             'amount_paid' => 'nullable|numeric|min:0',
             'fee_amount' => 'nullable|numeric|min:0',
             'payment_method' => 'nullable|in:cash,bank,mobile',
+            'pickup_location' => 'nullable|in:arusha,moshi',
             'status' => 'required|in:pending,confirmed,attended,no_show,cancelled',
             'notes' => 'nullable|string',
             'send_sms' => 'nullable|in:1,on,true',
@@ -208,7 +212,29 @@ class EventController extends Controller
 
         $data['event_id'] = $event->id;
         $data['registered_on'] = now()->toDateString();
-        $attendee = $event->attendees()->create($data);
+
+        if (empty($data['fee_amount'])) {
+            $data['fee_amount'] = (float) $event->registration_fee > 0 ? $event->registration_fee : 10000;
+        }
+
+        $attendee = DB::transaction(function () use ($data, $event) {
+            $attendee = $event->attendees()->create($data);
+
+            if ((float) ($data['amount_paid'] ?? 0) > 0 && ! empty($data['payment_method'])) {
+                $posting = app(AccountingPostingService::class);
+                $entry = $posting->postMoneyIn([
+                    'date' => now()->toDateString(),
+                    'description' => 'Attendee registration payment — '.$data['name'].' ('.$event->title.')',
+                    'amount' => $data['amount_paid'],
+                    'method' => $data['payment_method'],
+                    'incomeAccount' => $posting->incomeAccount('acct.attendee_income', '4040'),
+                ]);
+
+                $attendee->update(['journal_entry_id' => $entry->id]);
+            }
+
+            return $attendee;
+        });
 
         AuditLog::record('Registered attendee', 'Events', "{$event->title} — {$data['name']}");
 
@@ -254,8 +280,23 @@ class EventController extends Controller
         unset($data['notify_sms']);
 
         $amount = (float) $data['amount'];
-        $attendee->increment('amount_paid', $amount);
-        $attendee->update(['payment_method' => $data['method']]);
+
+        DB::transaction(function () use ($attendee, $data, $amount) {
+            $posting = app(AccountingPostingService::class);
+            $entry = $posting->postMoneyIn([
+                'date' => $data['pay_date'],
+                'description' => 'Attendee payment — '.$attendee->name
+                    .($attendee->event ? ' ('.$attendee->event->title.')' : ''),
+                'reference' => $data['reference'] ?? null,
+                'amount' => $amount,
+                'method' => $data['method'],
+                'incomeAccount' => $posting->incomeAccount('acct.attendee_income', '4040'),
+            ]);
+
+            $attendee->increment('amount_paid', $amount);
+            $attendee->update(['payment_method' => $data['method'], 'journal_entry_id' => $entry->id]);
+        });
+
         $attendee->refresh();
 
         AuditLog::record('Recorded attendee payment', 'Events', "{$attendee->event?->title} — {$attendee->name} (+{$amount})");
@@ -360,7 +401,9 @@ class EventController extends Controller
             'phone' => 'nullable|string|max:20',
             'email' => 'nullable|email',
             'amount_paid' => 'nullable|numeric|min:0',
+            'fee_amount' => 'nullable|numeric|min:0',
             'payment_method' => 'nullable|in:cash,bank,mobile',
+            'pickup_location' => 'nullable|in:arusha,moshi',
             'status' => 'required|in:pending,confirmed,attended,no_show,cancelled',
             'notes' => 'nullable|string',
         ]);
@@ -374,7 +417,29 @@ class EventController extends Controller
 
         $data['event_id'] = $event->id;
         $data['registered_on'] = now()->toDateString();
-        $event->attendees()->create($data);
+
+        if (empty($data['fee_amount'])) {
+            $data['fee_amount'] = (float) $event->registration_fee > 0 ? $event->registration_fee : 10000;
+        }
+
+        $attendee = DB::transaction(function () use ($data, $event) {
+            $attendee = $event->attendees()->create($data);
+
+            if ((float) ($data['amount_paid'] ?? 0) > 0 && ! empty($data['payment_method'])) {
+                $posting = app(AccountingPostingService::class);
+                $entry = $posting->postMoneyIn([
+                    'date' => now()->toDateString(),
+                    'description' => 'Attendee registration payment — '.$data['name'].' ('.$event->title.')',
+                    'amount' => $data['amount_paid'],
+                    'method' => $data['payment_method'],
+                    'incomeAccount' => $posting->incomeAccount('acct.attendee_income', '4040'),
+                ]);
+
+                $attendee->update(['journal_entry_id' => $entry->id]);
+            }
+
+            return $attendee;
+        });
 
         AuditLog::record('Registered attendee', 'Events', "{$event->title} — {$data['name']}");
         return back()->with('success', "Attendee {$data['name']} registered.");
@@ -452,7 +517,6 @@ class EventController extends Controller
             'capacity' => 'nullable|integer|min:0',
             'registration_fee' => 'nullable|numeric|min:0',
             'featured' => 'nullable|boolean',
-            'cover_emoji' => 'nullable|string|max:32',
             'organizer' => 'nullable|string|max:255',
         ]);
     }

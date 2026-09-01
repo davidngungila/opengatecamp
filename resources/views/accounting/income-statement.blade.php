@@ -1,6 +1,6 @@
 ﻿@extends('layouts.app')
 
-@section('title', 'Income Statement â€” Open Gate Camp Mission')
+@section('title', 'Income Statement — Open Gate Camp Mission')
 @section('crumb', 'Finance / Financial Accounting / Income Statement')
 @section('page_title', 'Income Statement')
 
@@ -15,7 +15,7 @@
     <div class="solid-card">
       <h2 style="font-size:15px;margin:0 0 12px">Income</h2>
       @forelse($income['accounts'] as $r)
-        <div class="info-row"><span>{{ $r['account']->code }} â€” {{ $r['account']->name }}</span><b>TZS {{ number_format($r['amount'], 2) }}</b></div>
+        <div class="info-row"><span>{{ $r['account']->code }} — {{ $r['account']->name }}</span><b>TZS {{ number_format($r['amount'], 2) }}</b></div>
       @empty
         <p class="text-muted" style="font-size:13px">No income recorded.</p>
       @endforelse
@@ -25,7 +25,7 @@
     <div class="solid-card">
       <h2 style="font-size:15px;margin:0 0 12px">Expenses</h2>
       @forelse($expense['accounts'] as $r)
-        <div class="info-row"><span>{{ $r['account']->code }} â€” {{ $r['account']->name }}</span><b>TZS {{ number_format($r['amount'], 2) }}</b></div>
+        <div class="info-row"><span>{{ $r['account']->code }} — {{ $r['account']->name }}</span><b>TZS {{ number_format($r['amount'], 2) }}</b></div>
       @empty
         <p class="text-muted" style="font-size:13px">No expenses recorded.</p>
       @endforelse

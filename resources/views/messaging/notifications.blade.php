@@ -1,5 +1,5 @@
 ﻿@extends('layouts.app')
-@section('title', 'Notifications â€” Open Gate Camp Mission')
+@section('title', 'Notifications — Open Gate Camp Mission')
 @section('crumb', 'Communication / Messaging / Notifications')
 @section('page_title', 'Notifications')
 
@@ -20,7 +20,7 @@
       <div class="m-ico" style="background:var(--info-bg);color:var(--info)"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 8a6 6 0 10-12 0c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.7 21a2 2 0 01-3.4 0"/></svg></div>
       <div class="m-body">
         <p>{{ $n->action }}</p>
-        <span>{{ $n->section }} Â· {{ $n->created_at ? $n->created_at->diffForHumans() : '' }}</span>
+        <span>{{ $n->section }} · {{ $n->created_at ? $n->created_at->diffForHumans() : '' }}</span>
       </div>
       <span class="badge badge-info badge-dotted" style="font-size:10px">{{ $n->created_at?->format('d M Y') }}</span>
     </div>
