@@ -1,0 +1,213 @@
+﻿@extends('layouts.app')
+
+@section('title', 'Users & Roles â€” Open Gate Camp Mission')
+@section('crumb', 'System / Users & Roles')
+@section('page_title', 'Users & Roles')
+
+@php
+    $tab = $tab ?? 'users';
+    $initials = fn($name) => collect(explode(' ', str_replace(['Fr. ','Dr. '], '', $name)))->map(fn($w) => mb_substr($w,0,1))->take(2)->implode('');
+@endphp
+
+@section('content')
+<div class="fade-in">
+  <div class="section-head">
+    <div><h2>Users &amp; Roles</h2><div class="sub">{{ $users->count() }} system users Â· {{ $roles->count() }} roles</div></div>
+    @if($tab === 'users')
+      <button type="button" class="btn btn-accent" data-modal-open="userModal" onclick="resetUserModal()">+ Add User</button>
+    @endif
+  </div>
+
+  <div class="tabs-bar">
+    <a href="{{ route('users.index', ['tab' => 'users']) }}" class="tab-btn {{ $tab==='users' ? 'active' : '' }}">Users</a>
+    <a href="{{ route('users.index', ['tab' => 'roles']) }}" class="tab-btn {{ $tab==='roles' ? 'active' : '' }}">Roles</a>
+    <a href="{{ route('users.index', ['tab' => 'permissions']) }}" class="tab-btn {{ $tab==='permissions' ? 'active' : '' }}">Permissions</a>
+  </div>
+
+  @if($tab === 'users')
+  <div class="table-card">
+    <div class="table-scroll">
+      <table class="data-table">
+        <thead><tr><th>User</th><th>Role</th><th>Phone</th><th>Status</th><th>Last Login</th><th style="width:60px">Actions</th></tr></thead>
+        <tbody>
+          @forelse($users as $i => $u)
+          <tr>
+            <td>
+              <div class="cell-user">
+                <div class="cell-avatar">{{ $initials($u->name) }}</div>
+                <div><div class="cu-name">{{ $u->name }}</div><div class="cu-sub">{{ $u->email }}</div></div>
+              </div>
+            </td>
+            <td><span class="badge badge-purple badge-dotted">{{ $u->role?->name ?? 'â€”' }}</span></td>
+            <td>{{ $u->phone ?? 'â€”' }}</td>
+            <td><span class="badge badge-{{ $u->status==='Active' ? 'success' : 'danger' }} badge-dotted">{{ $u->status }}</span></td>
+            <td>{{ $u->last_login_at?->diffForHumans() ?? 'Never' }}</td>
+            <td>
+              <div class="action-menu-wrap">
+                <button type="button" class="action-trigger" onclick="toggleActionMenu('am-users-{{ $u->id }}')">
+                  <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><circle cx="12" cy="5" r=".6"/><circle cx="12" cy="12" r=".6"/><circle cx="12" cy="19" r=".6"/></svg>
+                </button>
+                <div class="action-menu" id="am-users-{{ $u->id }}">
+                  <button type="button" data-edit-user
+                          data-id="{{ $u->id }}" data-name="{{ $u->name }}" data-email="{{ $u->email }}"
+                          data-phone="{{ $u->phone }}" data-role="{{ $u->role_id }}" data-status="{{ $u->status }}">Edit Role / Profile</button>
+                  <form method="POST" action="{{ route('users.password', $u) }}">
+                    @csrf @method('PATCH')
+                    <button type="submit">Reset Password</button>
+                  </form>
+                  <form method="POST" action="{{ route('users.suspend', $u) }}">
+                    @csrf @method('PATCH')
+                    <button type="submit">{{ $u->status === 'Active' ? 'Suspend' : 'Re-activate' }}</button>
+                  </form>
+                  <form method="POST" action="{{ route('users.destroy', $u) }}"
+                        data-confirm data-confirm-title="Delete this user?"
+                        data-confirm-message="{{ $u->name }} will permanently lose access to the system."
+                        data-confirm-label="Delete User">
+                    @csrf @method('DELETE')
+                    <button type="submit" class="danger">Delete</button>
+                  </form>
+                </div>
+              </div>
+            </td>
+          </tr>
+          @empty
+          <tr><td colspan="6"><div class="empty-state"><h3>No users yet</h3><p>Invite your first team member.</p></div></td></tr>
+          @endforelse
+        </tbody>
+      </table>
+    </div>
+  </div>
+
+  @elseif($tab === 'roles')
+  <div class="card-grid">
+    @foreach($roles as $r)
+    <div class="entity-card">
+      <div class="ec-top">
+        <div class="ec-ico" style="background:var(--purple-bg);color:var(--purple)"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg></div>
+        <div><h4>{{ $r->name }}</h4><div class="ec-sub">{{ is_array($r->permissions) ? count($r->permissions) : 0 }} permissions granted</div></div>
+      </div>
+      <div class="ec-stats">
+        <div class="ec-stat"><b>{{ $r->users_count }}</b><span>Users</span></div>
+        <div class="ec-stat"><b>{{ $r->is_super ? 'All access' : count($r->permissions ?? []).' / '.count($permissions) }}</b><span>Access</span></div>
+      </div>
+      <div class="flex gap-8" style="margin-top:14px">
+        <a class="btn btn-secondary btn-sm" style="flex:1" href="{{ route('users.index', ['tab'=>'permissions']) }}#role-{{ $r->id }}">Edit Permissions</a>
+      </div>
+    </div>
+    @endforeach
+  </div>
+
+  @else
+  <div class="glass-card">
+    <div class="section-head"><div><h2 style="font-size:15px">Role Permission Matrix</h2><div class="sub">Tick the permissions each role may use, then save.</div></div></div>
+    <div class="table-scroll" style="max-height:480px;overflow-y:auto;border:1px solid var(--border);border-radius:14px">
+      <table class="data-table">
+        <thead><tr><th>Permission</th>@foreach($roles as $r)<th style="text-align:center">{{ Str::limit($r->name, 12) }}</th>@endforeach</tr></thead>
+        <tbody>
+          @foreach($permissions as $perm)
+          <tr>
+            <td><code style="font-size:12px">{{ $perm }}</code></td>
+            @foreach($roles as $r)
+              <td style="text-align:center">
+                <input type="checkbox" class="checkbox perm-box"
+                       data-role="{{ $r->id }}" data-perm="{{ $perm }}"
+                       {{ ($r->is_super || in_array($perm, $r->permissions ?? [])) ? 'checked' : '' }}
+                       {{ $r->is_super ? 'disabled' : '' }}>
+              </td>
+            @endforeach
+          </tr>
+          @endforeach
+        </tbody>
+      </table>
+    </div>
+    <div class="flex gap-8" style="justify-content:flex-end;margin-top:14px">
+      <button type="button" class="btn btn-accent" onclick="savePermissions(this)">Save Permissions</button>
+    </div>
+  </div>
+  @endif
+</div>
+
+<div class="modal-overlay" id="userModal">
+  <div class="modal-box md">
+    <div class="modal-head">
+      <div><h3 id="userModalTitle">Add User</h3><p id="userModalSub">Invite a new team member with a temporary password</p></div>
+      <button type="button" class="modal-close" data-modal-close><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><path d="M18 6L6 18M6 6l12 12"/></svg></button>
+    </div>
+    <form id="userForm" method="POST" action="{{ route('users.store') }}">
+      @csrf
+      <div class="modal-body">
+        <div class="form-grid">
+          <div class="field"><label>Full Name *</label><input name="name" required placeholder="e.g. Grace Kileo"></div>
+          <div class="field"><label>Email *</label><input type="email" name="email" required placeholder="email@stjoseph.church"></div>
+          <div class="field"><label>Role</label>
+            <select name="role_id">
+              @foreach($roles->where('name', '!==', 'Super Administrator') as $r)
+                <option value="{{ $r->id }}">{{ $r->name }}</option>
+              @endforeach
+            </select>
+          </div>
+          <div class="field"><label>Status</label>
+            <select name="status"><option>Active</option><option>Suspended</option></select>
+          </div>
+          <div class="field full"><label>Phone</label><input name="phone" placeholder="+255 7XX XXX XXX"></div>
+        </div>
+      </div>
+      <div class="modal-foot">
+        <button type="button" class="btn btn-secondary" data-modal-close>Cancel</button>
+        <button type="submit" class="btn btn-accent">Save User</button>
+      </div>
+    </form>
+  </div>
+</div>
+@endsection
+
+@push('scripts')
+<script>
+function resetUserModal(){
+  var form=document.getElementById('userForm');
+  form.reset();
+  form.action='{{ url('/users') }}';
+  var m=form.querySelector('#_umethod'); if(m) m.remove();
+  document.getElementById('userModalTitle').textContent='Add User';
+}
+document.addEventListener('click', function(e){
+  if(!e.target.closest('[data-edit-user]')) return;
+  var b=e.target.closest('[data-edit-user]');
+  var form=document.getElementById('userForm');
+  form.action='{{ url('/users') }}/'+b.dataset.id;
+  form.querySelector('[name=name]').value=b.dataset.name||'';
+  form.querySelector('[name=email]').value=b.dataset.email||'';
+  form.querySelector('[name=phone]').value=b.dataset.phone||'';
+  form.querySelector('[name=role_id]').value=b.dataset.role||'';
+  form.querySelector('[name=status]').value=b.dataset.status||'Active';
+  var m=document.createElement('input');
+  m.type='hidden'; m.name='_method'; m.value='PUT'; m.id='_umethod';
+  form.appendChild(m);
+  document.getElementById('userModalTitle').textContent='Edit User';
+  openModalById('userModal');
+});
+function savePermissions(btn){
+  var boxes=document.querySelectorAll('.perm-box:checked:not([disabled])');
+  var byRole={};
+  boxes.forEach(function(cb){
+    (byRole[cb.dataset.role]=byRole[cb.dataset.role]||[]).push(cb.dataset.perm);
+  });
+  var queue=Object.keys(byRole);
+  if(queue.length===0){ toast('No changes detected','info'); return; }
+  toast('Saving permissions for '+queue.length+' role(s)...','info');
+  (function next(){
+    var roleId=queue.shift();
+    if(roleId===undefined){ setTimeout(function(){ location.reload(); },600); return; }
+    fetch('{{ url('/roles') }}/'+roleId+'/permissions', {
+      method:'PUT',
+      headers:{
+        'Content-Type':'application/json',
+        'X-CSRF-TOKEN':'{{ csrf_token() }}',
+        'Accept':'application/json'
+      },
+      body: JSON.stringify({ permissions: byRole[roleId] })
+    }).then(next).catch(function(){ toast('Failed to save permissions','error'); });
+  })();
+}
+</script>
+@endpush

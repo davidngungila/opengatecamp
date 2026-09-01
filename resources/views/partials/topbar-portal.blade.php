@@ -1,0 +1,88 @@
+<header class="topbar">
+  <div class="topbar-left">
+    <button type="button" class="icon-btn" onclick="onSidebarToggleClick()" aria-label="Toggle sidebar">
+      <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M4 6h16M4 12h16M4 18h16"/></svg>
+    </button>
+    <div class="crumb-wrap">
+      <div class="page-title">@yield('crumb', 'Member Portal')</div>
+    </div>
+  </div>
+  <div class="topbar-right">
+    @php
+        $fyAll = \App\Models\FinancialYear::orderByDesc('start_date')->get();
+        $fyCurrent = \App\Models\FinancialYear::current();
+    @endphp
+    <select class="filter-select" style="min-width:170px;font-weight:700" title="Financial year filter"
+            onchange="if(this.value!=='') location.href=this.value">
+      <option value="{{ route('settings.years.switch', 0) }}" {{ $fyCurrent ? '' : 'selected' }}>All periods</option>
+      @foreach($fyAll as $y)
+        <option value="{{ route('settings.years.switch', $y->id) }}" {{ ($fyCurrent?->id === $y->id) ? 'selected' : '' }}>
+          {{ str_replace(' ', '', $y->name) }}
+        </option>
+      @endforeach
+    </select>
+
+    <div style="position:relative">
+      <button type="button" class="icon-btn" data-panel-toggle="notifPanel" onclick="togglePanel('notifPanel')" title="Notifications">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 8a6 6 0 10-12 0c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.7 21a2 2 0 01-3.4 0"/></svg>
+      </button>
+      <div class="dropdown-panel" id="notifPanel">
+        <div class="dropdown-header"><strong>Notifications</strong></div>
+        <div class="dropdown-list">
+          <div class="notif-item">
+            <div class="n-ico" style="background:var(--info-bg);color:var(--info)">
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><line x1="12" y1="16" x2="12" y2="12"/><line x1="12" y1="8" x2="12.01" y2="8"/></svg>
+            </div>
+            <div class="n-body"><p>Welcome to your member portal</p><span>Just now</span></div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div style="position:relative">
+      <button type="button" class="user-chip" data-panel-toggle="userPanel" onclick="togglePanel('userPanel')">
+        <div class="avatar">{{ substr(Auth::user()->name ?? 'M', 0, 2) }}</div>
+        <div class="u-meta">
+          <div class="u-name">{{ Auth::user()->name }}</div>
+          <div class="u-role">Member</div>
+        </div>
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M6 9l6 6 6-6"/></svg>
+      </button>
+      <div class="dropdown-panel" id="userPanel">
+        <a class="menu-item" href="{{ route('portal.profile') }}">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 21v-2a4 4 0 00-4-4H8a4 4 0 00-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
+          My Profile
+        </a>
+        <a class="menu-item" href="{{ route('portal.settings') }}">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.7 1.7 0 00.3 1.9l.1.1a2 2 0 11-2.8 2.8l-.1-.1a1.7 1.7 0 00-1.9-.3 1.7 1.7 0 00-1 1.6V21a2 2 0 01-4 0v-.1a1.7 1.7 0 00-1-1.6 1.7 1.7 0 00-1.9.3l-.1.1a2 2 0 11-2.8-2.8l.1-.1a1.7 1.7 0 00.3-1.9 1.7 1.7 0 00-1.6-1H3a2 2 0 010-4h.1a1.7 1.7 0 001.6-1 1.7 1.7 0 00-.3-1.9l-.1-.1a2 2 0 112.8-2.8l.1.1a1.7 1.7 0 001.9.3H9a1.7 1.7 0 001-1.6V3a2 2 0 014 0v.1a1.7 1.7 0 001 1.6 1.7 1.7 0 001.9-.3l.1-.1a2 2 0 112.8 2.8l-.1.1a1.7 1.7 0 00-.3 1.9V9a1.7 1.7 0 001.6 1H21a2 2 0 010 4h-.1a1.7 1.7 0 00-1.6 1z"/></svg>
+          Account Settings
+        </a>
+        <a class="menu-item" href="{{ route('portal.contributions') }}">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="1" x2="12" y2="23"/><path d="M17 5H9.5a3.5 3.5 0 000 7h5a3.5 3.5 0 010 7H6"/></svg>
+          My Contributions
+        </a>
+        <div class="menu-divider"></div>
+        <form method="POST" action="{{ route('logout') }}">@csrf
+          <button type="submit" class="menu-item danger" style="width:100%;border:none;background:none;cursor:pointer">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 21H5a2 2 0 01-2-2V5a2 2 0 012-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" y1="12" x2="9" y2="12"/></svg>
+            Logout
+          </button>
+        </form>
+      </div>
+    </div>
+  </div>
+</header>
+
+<div class="modal-overlay" id="confirmModal">
+  <div class="modal-box sm">
+    <div class="modal-body" style="text-align:center;padding-top:32px">
+      <div class="confirm-icon"><svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M10.3 3.9L1.8 18a2 2 0 001.7 3h17a2 2 0 001.7-3L13.7 3.9a2 2 0 00-3.4 0z"/><path d="M12 9v4M12 17h.01"/></svg></div>
+      <h3 style="font-size:17px;margin:0 0 8px;" data-confirm-title>Are you sure?</h3>
+      <p style="color:var(--text-secondary);font-size:13.5px;margin:0;" data-confirm-message>This action cannot be undone.</p>
+    </div>
+    <div class="modal-foot">
+      <button type="button" class="btn btn-secondary" data-modal-close>Cancel</button>
+      <button type="button" class="btn btn-danger" data-confirm-submit data-confirm-label>Confirm</button>
+    </div>
+  </div>
+</div>
