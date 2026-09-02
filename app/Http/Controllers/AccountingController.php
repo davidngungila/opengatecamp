@@ -692,12 +692,11 @@ class AccountingController extends Controller
 
         $mpdf = new \Mpdf\Mpdf([
             'mode' => 'utf-8',
-            'format' => [80, 350],         // 80mm wide, generous height so content is never clipped
+            'format' => [80, 350],
             'margin_left'  => 4,
             'margin_right' => 4,
             'margin_top'   => 3,
             'margin_bottom' => 3,
-            'fontDir' => [__DIR__.'/../../vendor/mpdf/mpdf/ttfonts', storage_path('fonts')],
             'tempDir' => storage_path('app/private/mpdf'),
         ]);
         $mpdf->WriteHTML($html);
