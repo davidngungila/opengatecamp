@@ -61,7 +61,6 @@
           <div class="empty-state" style="padding:34px 16px">
             <h3>No event registrations yet</h3>
             <p>This member will appear in event attendee lists once registered for an event.</p>
-            <a class="btn btn-secondary btn-sm" href="{{ route('events.index') }}">Browse Events</a>
           </div>
         </div>
       </div>

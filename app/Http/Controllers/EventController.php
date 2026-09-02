@@ -17,41 +17,6 @@ use Illuminate\Support\Str;
 
 class EventController extends Controller
 {
-    public function index(Request $request)
-    {
-        $type = $request->query('type');
-        $status = $request->query('status');
-        $q = trim((string) $request->query('q'));
-
-        $query = Event::withCount([
-            'attendees as registered_count',
-            'attendees as confirmed_count' => fn ($qr) => $qr->whereIn('status', ['confirmed', 'attended']),
-            'pledges as pledge_count',
-        ]);
-
-        $query->when($type, fn ($qr) => $qr->where('event_type', $type))
-            ->when($status, fn ($qr) => $qr->where('status', $status))
-            ->when($q !== '', fn ($qr) => $qr->where(fn ($w) => $w
-                ->where('title', 'like', "%{$q}%")
-                ->orWhere('venue', 'like', "%{$q}%")
-                ->orWhere('location', 'like', "%{$q}%")));
-
-        $events = $query->orderByDesc('start_date')->paginate(9)->withQueryString();
-
-        $upcoming = Event::whereIn('status', ['planned', 'open_registration', 'ongoing'])
-            ->whereDate('start_date', '>=', now()->today()->subDay())
-            ->count();
-
-        return view('events.index', [
-            'events' => $events,
-            'types' => Event::types(),
-            'statuses' => Event::statuses(),
-            'upcomingCount' => $upcoming,
-            'totalAttendees' => EventAttendee::count(),
-            'filters' => compact('type', 'status', 'q'),
-        ]);
-    }
-
     public function show(Event $event)
     {
         $event->load(['sessions', 'attendees', 'pledges']);
@@ -85,7 +50,7 @@ class EventController extends Controller
         $event = Event::create($data);
 
         AuditLog::record('Created event', 'Events', "{$event->title} ({$event->event_type})");
-        return redirect()->route('events.index')->with('success', "Event {$event->title} created successfully.");
+        return redirect()->route('events.show', $event)->with('success', "Event {$event->title} created successfully.");
     }
 
     public function update(Request $request, Event $event)
@@ -102,7 +67,7 @@ class EventController extends Controller
         AuditLog::record('Deleted event', 'Events', $event->title);
         $title = $event->title;
         $event->delete();
-        return redirect()->route('events.index')->with('success', "Event {$title} deleted successfully.");
+        return redirect()->route('dashboard')->with('success', "Event {$title} deleted successfully.");
     }
 
     public function toggleStatus(Event $event, Request $request)

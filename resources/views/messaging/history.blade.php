@@ -9,7 +9,6 @@
     <h2>Message History</h2>
     <span class="badge badge-neutral">{{ $messages->total() }} total</span>
   </div>
-  @include('messaging._tabs', ['active' => 'history'])
 
   @if(session('error'))
   <div style="background:#fef2f2;border:1px solid #fecaca;border-radius:8px;padding:12px 16px;margin-bottom:18px;color:#991b1b;font-size:13.5px">{{ session('error') }}</div>

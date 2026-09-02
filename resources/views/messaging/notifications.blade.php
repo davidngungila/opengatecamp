@@ -8,7 +8,6 @@
   <div class="section-head">
     <h2>Notifications</h2>
   </div>
-  @include('messaging._tabs', ['active' => 'notifications'])
 
   <div class="glass-card">
     <h2 style="font-size:14.5px;margin:0 0 14px">Recent System Notifications</h2>

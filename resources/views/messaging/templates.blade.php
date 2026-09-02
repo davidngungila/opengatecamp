@@ -8,7 +8,6 @@
   <div class="section-head">
     <h2>Message Templates</h2>
   </div>
-  @include('messaging._tabs', ['active' => 'templates'])
 
   <div class="msg-templates">
     @php

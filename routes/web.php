@@ -88,7 +88,7 @@ Route::middleware(['auth', 'committee.readonly'])->group(function () {
     Route::delete('/settings/audit', [SettingsController::class, 'clearAudit'])->name('settings.audit.clear');
     Route::get('/settings/backup', [SettingsController::class, 'backup'])->name('settings.backup');
 
-    Route::get('/events', [EventController::class, 'index'])->name('events.index');
+    Route::get('/events', fn () => redirect()->route('dashboard'))->name('events.index');
     Route::post('/events', [EventController::class, 'store'])->name('events.store');
     Route::get('/events/{event:slug}', [EventController::class, 'show'])->name('events.show');
     Route::put('/events/{event:slug}', [EventController::class, 'update'])->name('events.update');

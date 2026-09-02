@@ -9,7 +9,6 @@
     <h2>Message Detail</h2>
     <a href="{{ route('messaging.history') }}" class="btn btn-secondary btn-sm">&larr; Back to History</a>
   </div>
-  @include('messaging._tabs', ['active' => 'history'])
 
   <div class="glass-card" style="margin-top:20px;padding:22px 26px">
     {{-- Header row --}}

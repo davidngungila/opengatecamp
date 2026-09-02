@@ -12,14 +12,38 @@ class CheckInController extends Controller
 {
     /**
      * Admission desk: scan a ticket (QR) or enter the 6-character ticket code.
+     * Also shows the full list of admitted / not-yet-admitted attendees with search.
      */
     public function index(Request $request)
     {
-        return view('admission.index', [
+        return view('admission.index', array_merge($this->listData($request), [
             'code' => (string) $request->query('code'),
             'attendee' => null,
             'result' => null,
-        ]);
+        ]));
+    }
+
+    private function listData(Request $request): array
+    {
+        $tab = $request->query('tab', 'admitted');
+        $q   = trim((string) $request->query('q'));
+
+        $base = fn ($query) => $query->with('event')
+            ->when($q !== '', fn ($qr) => $qr->where(fn ($w) => $w
+                ->where('name', 'like', "%{$q}%")
+                ->orWhere('phone', 'like', "%{$q}%")
+                ->orWhere('ticket_no', 'like', "%{$q}%")
+                ->orWhere('fellowship', 'like', "%{$q}%")));
+
+        $admitted    = $base(EventAttendee::whereNotNull('checked_in_at'))->latest('checked_in_at')->paginate(15);
+        $notAdmitted = $base(EventAttendee::whereNull('checked_in_at'))->latest()->paginate(15);
+
+        return [
+            'admitted'    => $admitted,
+            'notAdmitted' => $notAdmitted,
+            'tab' => in_array($tab, ['admitted', 'pending'], true) ? $tab : 'admitted',
+            'q'   => $q,
+        ];
     }
 
     /**
@@ -30,15 +54,17 @@ class CheckInController extends Controller
         $data = $request->validate(['code' => 'required|string|max:255']);
         $attendee = $this->resolveAttendee($data['code']);
 
+        $lists = $this->listData($request);
+
         if (! $attendee) {
-            return view('admission.index', [
+            return view('admission.index', $lists + [
                 'code' => $data['code'],
                 'attendee' => null,
                 'result' => 'not_found',
             ]);
         }
 
-        return view('admission.index', [
+        return view('admission.index', $lists + [
             'code' => $data['code'],
             'attendee' => $attendee,
             'result' => 'found',
@@ -70,7 +96,7 @@ class CheckInController extends Controller
         AuditLog::record('Admitted attendee (scan)', 'Admission',
             "{$attendee->name} — ticket {$attendee->getTicketNo()} ({$attendee->event?->title})");
 
-        return view('admission.index', [
+        return view('admission.index', $this->listData($request) + [
             'code' => $data['code'],
             'attendee' => $attendee->fresh()->load('event'),
             'result' => 'admitted',

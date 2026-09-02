@@ -114,6 +114,7 @@
                 <a href="{{ route('messaging.sms') }}" class="nav-child {{ request()->routeIs('messaging.sms') ? 'active' : '' }}">SMS</a>
                 <a href="{{ route('messaging.email') }}" class="nav-child {{ request()->routeIs('messaging.email') ? 'active' : '' }}">Email</a>
                 <a href="{{ route('messaging.templates') }}" class="nav-child {{ request()->routeIs('messaging.templates') ? 'active' : '' }}">Templates</a>
+                <a href="{{ route('messaging.history') }}" class="nav-child {{ request()->routeIs('messaging.history') || request()->routeIs('messaging.show') ? 'active' : '' }}">History</a>
                 <a href="{{ route('messaging.notifications') }}" class="nav-child {{ request()->routeIs('messaging.notifications') ? 'active' : '' }}">Notification Logs</a>
                 <a href="{{ route('messaging.settings') }}" class="nav-child {{ request()->routeIs('messaging.settings') ? 'active' : '' }}">Settings</a>
             </div>
