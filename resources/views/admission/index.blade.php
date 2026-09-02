@@ -18,11 +18,13 @@
   .scan-hint{margin:10px 0 0;font-size:12.5px;color:var(--text-tertiary);text-align:center;}
 
   /* ── Camera ──────────────────────────────── */
-  .cam-head{display:flex;align-items:center;justify-content:space-between;gap:10px;margin-bottom:12px;}
   .cam-view{position:relative;background:#000;border-radius:12px;overflow:hidden;}
-  .cam-view video{width:100%;max-height:340px;display:block;}
+  .cam-view video{width:100%;max-height:380px;display:block;}
   .cam-view canvas{position:absolute;inset:0;width:100%;height:100%;opacity:0;}
   .cam-view #camOverlay{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;color:#94a3b8;font-size:14px;font-weight:600;background:rgba(0,0,0,.35);pointer-events:none;}
+  .cam-torch{position:absolute;right:12px;bottom:12px;display:flex;align-items:center;gap:6px;padding:8px 13px;border:none;border-radius:10px;background:rgba(15,23,42,.65);color:#fff;font-size:13px;font-weight:700;cursor:pointer;backdrop-filter:blur(4px);transition:background .15s;}
+  .cam-torch:hover{background:rgba(15,23,42,.85);}
+  .cam-torch.on{background:rgba(250,204,21,.95);color:#1e293b;}
 
   /* ── Result ──────────────────────────────── */
   .result-card{text-align:center;padding:28px 22px;border-radius:14px;}
@@ -71,23 +73,34 @@
         </button>
       </div>
     </form>
-    <button type="button" id="camToggle" class="btn btn-secondary btn-sm" style="margin-top:12px;width:100%;justify-content:center">
+    <button type="button" data-modal-open="camModal" class="btn btn-secondary btn-sm" style="margin-top:12px;width:100%;justify-content:center">
       <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:-3px;margin-right:6px"><path d="M1 4l22 14M1 20l22-14"/><rect x="3" y="5" width="18" height="15" rx="2"/><circle cx="17.5" cy="13.5" r="1"/></svg>
       Scan with Camera
     </button>
     <p class="scan-hint">Accepts the 6-char code, the printed <code>*CODE*</code> barcode, or the full QR payload</p>
   </div>
 
-  {{-- Camera --}}
-  <div class="glass-card scan-card" id="camBox" style="display:none;margin-bottom:16px">
-    <div class="cam-head">
-      <div class="sub" id="camStatus">Starting camera...</div>
-      <button type="button" id="camStop" class="btn btn-ghost btn-sm danger">Stop</button>
-    </div>
-    <div class="cam-view">
-      <video id="camVideo" playsinline muted></video>
-      <canvas id="camCanvas"></canvas>
-      <div id="camOverlay">Point at the ticket QR code</div>
+  {{-- Camera modal --}}
+  <div class="modal-overlay" id="camModal">
+    <div class="modal-box md">
+      <div class="modal-head">
+        <div><h3>Scan with Camera</h3><p id="camStatus">Starting camera...</p></div>
+        <button type="button" class="modal-close" data-modal-close><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><path d="M18 6L6 18M6 6l12 12"/></svg></button>
+      </div>
+      <div class="modal-body">
+        <div class="cam-view">
+          <video id="camVideo" playsinline muted></video>
+          <canvas id="camCanvas"></canvas>
+          <div id="camOverlay">Point at the ticket QR code</div>
+          <button type="button" id="torchToggle" class="cam-torch" title="Toggle torch / flash" aria-pressed="false">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor" style="vertical-align:-4px"><path d="M9 2h6v4h.5A2.5 2.5 0 0 1 18 8.5V10h1a2 2 0 0 1 2 2v9H3v-9a2 2 0 0 1 2-2h1V8.5A2.5 2.5 0 0 1 8.5 6H9V2zm0 6h6V6h-6v2z"/></svg>
+            <span>Torch</span>
+          </button>
+        </div>
+      </div>
+      <div class="modal-foot">
+        <button type="button" class="btn btn-secondary" data-modal-close>Close</button>
+      </div>
     </div>
   </div>
 
@@ -169,23 +182,42 @@
   var form = document.getElementById('lookupForm');
   if(input){ input.focus(); }
 
-  var camToggle = document.getElementById('camToggle');
-  var camStop  = document.getElementById('camStop');
-  var camBox   = document.getElementById('camBox');
-  var video    = document.getElementById('camVideo');
-  var canvas   = document.getElementById('camCanvas');
-  var camStatus= document.getElementById('camStatus');
-  var scanning = false, stream = null, raf = null, lastDecode = '';
+  var modal   = document.getElementById('camModal');
+  var video   = document.getElementById('camVideo');
+  var canvas  = document.getElementById('camCanvas');
+  var camStatus = document.getElementById('camStatus');
+  var torchBtn  = document.getElementById('torchToggle');
+  var scanning = false, stream = null, raf = null, lastDecode = '', torchOn = false;
 
   function normalize(code){ return String(code||'').trim(); }
   function submitCode(code){ if(code){ input.value = code; form.submit(); } }
+
+  function setTorch(on){
+    if(!stream) return;
+    var track = stream.getVideoTracks()[0];
+    if(track && 'applyConstraints' in track){
+      track.applyConstraints({advanced:[{torch: on}]}).then(function(){
+        torchOn = on;
+        torchBtn.classList.toggle('on', on);
+        torchBtn.setAttribute('aria-pressed', on ? 'true':'false');
+      }).catch(function(){});
+    }
+    torchOn = on;
+    torchBtn.classList.toggle('on', on);
+    torchBtn.setAttribute('aria-pressed', on ? 'true':'false');
+  }
+  if(torchBtn){
+    torchBtn.addEventListener('click', function(){ setTorch(!torchOn); });
+  }
 
   function stopCam(){
     scanning = false;
     if(raf){ cancelAnimationFrame(raf); raf = null; }
     if(stream){ stream.getTracks().forEach(function(t){ t.stop(); }); stream = null; }
     video.srcObject = null;
-    camBox.style.display = 'none';
+    torchOn = false;
+    torchBtn.classList.remove('on');
+    torchBtn.setAttribute('aria-pressed','false');
   }
 
   function tick(){
@@ -202,7 +234,7 @@
           var n = normalize(code.data);
           if(n && n !== lastDecode){
             lastDecode = n;
-            camStatus.textContent = 'Scanned: '+n+' — looking up...';
+            camStatus.textContent = 'Scanned — looking up...';
             submitCode(n);
             return;
           }
@@ -217,7 +249,7 @@
       camStatus.textContent = 'Camera not supported in this browser.';
       return;
     }
-    camBox.style.display = 'block';
+    lastDecode = '';
     camStatus.textContent = 'Requesting camera permission...';
     navigator.mediaDevices.getUserMedia({video:{facingMode:'environment', width:{ideal:1280}, height:{ideal:720}}, audio:false})
       .then(function(s){
@@ -225,7 +257,6 @@
         video.srcObject = s;
         video.play();
         scanning = true;
-        lastDecode = '';
         camStatus.textContent = 'Scanner ready — point at the QR code';
         raf = requestAnimationFrame(tick);
       })
@@ -234,8 +265,19 @@
       });
   }
 
-  if(camToggle){ camToggle.addEventListener('click', startCam); }
-  if(camStop){ camStop.addEventListener('click', stopCam); }
+  // Start camera when the modal is opened via its launch button, stop it when closed.
+  var openBtn = document.querySelector('[data-modal-open="camModal"]');
+  if(openBtn){ openBtn.addEventListener('click', function(){ startCam(); }); }
+
+  if(modal){
+    var mo = new MutationObserver(function(){
+      if(!modal.classList.contains('open')) stopCam();
+    });
+    mo.observe(modal, {attributes:true, attributeFilter:['class']});
+    modal.addEventListener('click', function(e){
+      if(e.target === modal) stopCam(); // click on backdrop
+    });
+  }
 })();
 </script>
 @endpush
