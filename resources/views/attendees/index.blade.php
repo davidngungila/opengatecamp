@@ -54,7 +54,9 @@
             data-checked-in="{{ $a->checked_in_at ? 'Yes' : 'No' }}"
             data-fellowship="{{ $a->fellowship ?? '—' }}"
             data-pickup="{{ $a->pickupLocation?->name ?? '—' }}"
-            data-notes="{{ $a->notes }}">
+            data-notes="{{ $a->notes }}"
+            data-can-ticket="{{ $a->hasCompletedContribution() ? '1' : '0' }}"
+            data-ticket="{{ $a->hasCompletedContribution() ? $a->getTicketNo() : '' }}">
             <td>
               <div class="cell-user">
                 <div class="cell-avatar">{{ collect(explode(' ', $a->name ?? '?'))->map(fn($w) => mb_substr($w,0,1))->take(2)->implode('') }}</div>
@@ -193,6 +195,40 @@
         <div class="info-row"><span>Checked In</span><b id="attDetailsCheckedIn">—</b></div>
         <div class="info-row full"><span>Notes</span><b id="attDetailsNotes" style="white-space:normal">—</b></div>
       </div>
+
+      <div class="payments-head" style="margin:18px 0 10px">
+        <span>Quick Actions</span>
+      </div>
+      <div class="drawer-actions">
+        <button type="button" class="daction" id="attActPayment">
+          <span class="daction-ico" style="background:rgba(16,185,129,.12);color:var(--success)">
+            <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="5" width="20" height="14" rx="2"/><circle cx="12" cy="12" r="3"/></svg>
+          </span>
+          <span class="daction-txt"><b>Record Payment</b><small>Log a fee payment for this attendee</small></span>
+          <span class="daction-arrow">›</span>
+        </button>
+        <button type="button" class="daction" id="attActSms">
+          <span class="daction-ico" style="background:rgba(59,130,246,.12);color:var(--blue-accent)">
+            <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 11.5a8.38 8.38 0 01-.9 3.8 8.5 8.5 0 01-7.6 4.7 8.38 8.38 0 01-3.8-.9L3 21l1.9-5.7a8.38 8.38 0 01-.9-3.8 8.5 8.5 0 014.7-7.6 8.38 8.38 0 013.8-.9h.5a8.48 8.48 0 018 8v.5z"/></svg>
+          </span>
+          <span class="daction-txt"><b>Send SMS</b><small>Send a text message to this attendee</small></span>
+          <span class="daction-arrow">›</span>
+        </button>
+        <a href="javascript:void(0)" class="daction" id="attActTicket" style="display:none">
+          <span class="daction-ico" style="background:rgba(139,92,246,.12);color:purple">
+            <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M2 9a3 3 0 010 6v2a2 2 0 002 2h16a2 2 0 002-2v-2a3 3 0 000-6V7a2 2 0 00-2-2H4a2 2 0 00-2 2z"/><path d="M13 5v2M13 17v2M13 11v2"/></svg>
+          </span>
+          <span class="daction-txt"><b>Print Ticket (PDF)</b><small>Download this attendee's ticket</small></span>
+          <span class="daction-arrow">›</span>
+        </a>
+        <button type="button" class="daction" id="attActTicketSms" style="display:none">
+          <span class="daction-ico" style="background:rgba(16,185,129,.12);color:var(--success)">
+            <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6L9 17l-5-5"/></svg>
+          </span>
+          <span class="daction-txt"><b>Send Ticket SMS</b><small>Send the ticket number by SMS</small></span>
+          <span class="daction-arrow">›</span>
+        </button>
+      </div>
     </div>
     <div class="drawer-foot">
       <button type="button" class="btn btn-secondary" data-drawer-close>Close</button>
@@ -255,7 +291,46 @@
 @push('scripts')
 <script>
 document.addEventListener('DOMContentLoaded', function(){
+  var curAtt = null;
+
+  function setDetailForm(){
+    document.getElementById('attPaymentName').textContent = curAtt.name || 'Attendee';
+    document.getElementById('attPaymentPaid').textContent = 'TZS ' + Number(curAtt.amount || 0).toLocaleString();
+    document.getElementById('attPaymentForm').action = "{{ url('/attendees') }}/" + curAtt.id + "/payments";
+    document.getElementById('attPaymentForm').reset();
+    document.getElementById('attPaymentAmount').value = '';
+  }
+  function setSmsForm(){
+    document.getElementById('attSmsName').textContent = curAtt.name || 'Attendee';
+    document.getElementById('attSmsPhone').value = curAtt.phone || '';
+    document.getElementById('attSmsMessage').value = 'Hello ' + (curAtt.name||'') + ',\\nYou are registered for Open Gate Camp. We look forward to seeing you!';
+    document.getElementById('attSmsForm').action = "{{ url('/attendees') }}/" + curAtt.id + "/sms";
+  }
+
+  document.getElementById('attActPayment').addEventListener('click', function(){
+    closeDrawerById('attDetailDrawer');
+    setDetailForm();
+    openDrawerById('attPaymentDrawer');
+  });
+  document.getElementById('attActSms').addEventListener('click', function(){
+    closeDrawerById('attDetailDrawer');
+    setSmsForm();
+    openDrawerById('attSmsDrawer');
+  });
+  document.getElementById('attActTicketSms').addEventListener('click', function(){
+    var msg = 'Send ticket (' + (curAtt.ticket||'') + ') to ' + (curAtt.name||'this attendee') + ' by SMS?';
+    if (!confirm(msg)) return;
+    var f = document.createElement('form');
+    f.method = 'POST';
+    f.action = "{{ url('/attendees') }}/" + curAtt.id + "/ticket/sms";
+    var t = document.createElement('input'); t.type='hidden'; t.name='_token'; t.value = document.querySelector('meta[name="csrf-token"]').content;
+    f.appendChild(t);
+    document.body.appendChild(f);
+    f.submit();
+  });
+
   function openAttDrawer(d){
+    curAtt = d;
     var initials = (d.name||'?').trim().split(' ').map(function(w){return w.charAt(0);}).slice(0,2).join('');
     document.getElementById('attDetailsAvatar').textContent = initials;
     document.getElementById('attDetailsId').textContent = '#' + (d.id || '—');
@@ -280,6 +355,15 @@ document.addEventListener('DOMContentLoaded', function(){
     document.getElementById('attDetailsRegistered').textContent = d.registered || '—';
     document.getElementById('attDetailsCheckedIn').textContent = d.checkedIn || '—';
     document.getElementById('attDetailsNotes').textContent = d.notes || '—';
+
+    var canTicket = d.canTicket === '1' || d.canTicket === 1;
+    var ticketUrl = "{{ url('/attendees') }}/" + d.id + "/ticket";
+    var ticketBtn = document.getElementById('attActTicket');
+    ticketBtn.style.display = canTicket ? 'flex' : 'none';
+    ticketBtn.href = canTicket ? ticketUrl : 'javascript:void(0)';
+    ticketBtn.target = canTicket ? '_blank' : '';
+    document.getElementById('attActTicketSms').style.display = canTicket ? 'flex' : 'none';
+
     openDrawerById('attDetailDrawer');
   }
 

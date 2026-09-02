@@ -223,6 +223,14 @@ table.data-table{width:100%;border-collapse:collapse;min-width:760px;}
 .drawer-head p{margin:4px 0 0;}
 .drawer-body{padding:24px;overflow-y:auto;flex:1;min-height:0;}
 .drawer-foot{display:flex;align-items:center;justify-content:flex-end;gap:10px;padding:16px 24px;border-top:1px solid var(--border);flex-shrink:0;background:rgba(248,250,252,.6);}
+.drawer-actions{display:flex;flex-direction:column;gap:8px;}
+.daction{display:flex;align-items:center;gap:12px;width:100%;padding:12px 14px;border:1px solid var(--border);border-radius:12px;background:#fff;cursor:pointer;text-align:left;text-decoration:none;color:var(--text-primary);transition:border-color .15s,background .15s;}
+.daction:hover{border-color:var(--blue-accent);background:var(--blue-light);}
+.daction-ico{width:36px;height:36px;border-radius:10px;display:flex;align-items:center;justify-content:center;flex-shrink:0;}
+.daction-txt{flex:1;min-width:0;}
+.daction-txt b{display:block;font-size:13.5px;font-weight:800;color:var(--text-primary);}
+.daction-txt small{display:block;font-size:11.5px;color:var(--text-tertiary);margin-top:1px;}
+.daction-arrow{color:var(--text-tertiary);font-size:18px;font-weight:600;}
 .drawer-panel form{display:flex;flex-direction:column;min-height:0;flex:1;overflow:hidden;}
 .profile-detail{display:flex;align-items:center;gap:14px;margin-bottom:20px;}
 .avatar-lg{width:52px;height:52px;font-size:18px;border-radius:14px;}
