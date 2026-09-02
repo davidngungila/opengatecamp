@@ -10,6 +10,7 @@
         ['notifications', 'Notifications'],
         ['accounting', 'Accounting'],
         ['financial-years', 'Financial Years'],
+        ['fellowships', 'University Fellowships'],
         ['security', 'Security'],
         ['backup', 'Backup'],
         ['audit', 'Audit Logs'],
@@ -180,6 +181,23 @@
             </tbody>
           </table>
         </div>
+      </div>
+
+      @elseif($tab === 'fellowships')
+      <div class="solid-card">
+        <h2 style="font-size:14.5px;margin:0 0 6px">University Fellowships</h2>
+        <p style="font-size:12.5px;color:var(--text-tertiary);margin:0 0 12px">These fellowships are available as a selectable list at event registration. Enter one per line.</p>
+        <form method="POST" action="{{ route('settings.fellowships') }}">
+          @csrf
+          <div class="field">
+            <label>Fellowship List</label>
+            <textarea name="fellowships" rows="10" placeholder="UDSM&#10;MUHAS&#10;SUZA&#10;TUDARCo&#10;MU&#10;MoCU&#10;Other">{{ old('fellowships', implode("\n", $fellowships)) }}</textarea>
+            <div class="field-hint">Each line becomes an option in the registration form's fellowship dropdown.</div>
+          </div>
+          <div class="flex" style="justify-content:flex-end;margin-top:16px">
+            <button type="submit" class="btn btn-accent">Save Fellowship List</button>
+          </div>
+        </form>
       </div>
 
       @elseif($tab === 'security')

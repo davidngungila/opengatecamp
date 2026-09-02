@@ -68,12 +68,14 @@ class MessagingController extends Controller
             ->paginate(15)
             ->withQueryString();
 
-        return view('messaging.history', $this->sharedData() + [
+        $data = array_replace($this->sharedData(), [
             'messages' => $messages,
             'channel'  => $channel,
             'status'   => $status,
             'q'        => $q,
         ]);
+
+        return view('messaging.history', $data);
     }
 
     public function settings()

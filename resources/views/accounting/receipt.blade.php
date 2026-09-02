@@ -3,26 +3,34 @@
 <head>
 <meta charset="UTF-8">
 <style>
-  *{box-sizing:border-box;}
-  body{font-family:DejaVu Sans Mono,DejaVu Sans,monospace;color:#000;margin:0;padding:4mm 2mm;width:76mm;}
-  .center{text-align:center;}
-  .org{font-size:13px;font-weight:800;text-transform:uppercase;letter-spacing:.5px;}
-  .org-sub{font-size:9px;letter-spacing:2px;}
-  .ruled{border-top:1px dashed #000;border-bottom:1px dashed #000;padding:2px 0;margin:6px 0;}
-  .title{font-size:14px;font-weight:800;text-align:center;letter-spacing:3px;margin:8px 0 2px;}
-  .head{margin-bottom:6px;font-size:11px;}
-  .head td{padding:1px 0;}
-  .head .lbl{color:#444;}
-  table.lines{width:100%;border-collapse:collapse;font-size:10.5px;}
-  table.lines th{border-bottom:1px dashed #000;font-size:9px;text-transform:uppercase;text-align:left;}
-  table.lines td{padding:2px 0;vertical-align:top;border-bottom:none;}
-  tr.total-row td{border-top:1px dashed #000;font-weight:800;font-size:12px;padding-top:3px;}
-  td.r{text-align:right;}
-  .nr{font-size:10px;color:#000;}
-  .qr{text-align:center;margin:8px 0 4px;}
-  .qr img{width:58px;height:58px;image-rendering:pixelated;}
-  .foot{margin-top:6px;text-align:center;font-size:8.5px;line-height:1.4;border-top:1px dashed #000;padding-top:5px;}
-  .barcode{text-align:center;font-size:8px;letter-spacing:1px;margin-top:4px;}
+  body {
+    font-family: courier;
+    font-size: 10px;
+    color: #000;
+    margin: 0;
+    padding: 0;
+  }
+  .center { text-align: center; }
+  .org { font-size: 13px; font-weight: bold; text-transform: uppercase; letter-spacing: 1px; }
+  .org-sub { font-size: 8px; letter-spacing: 2px; }
+  .title { font-size: 13px; font-weight: bold; text-align: center; letter-spacing: 3px; margin: 6px 0 2px; }
+  .ruled { border-top: 1px dashed #000; border-bottom: 1px dashed #000; padding: 2px 0; margin: 5px 0; }
+  table.head { width: 100%; border-collapse: collapse; font-size: 10px; margin-bottom: 2px; }
+  table.head td { padding: 1px 0; }
+  table.head td.lbl { color: #444; }
+  table.head td.r { text-align: right; font-weight: bold; }
+  table.lines { width: 100%; border-collapse: collapse; font-size: 10px; }
+  table.lines th { border-bottom: 1px dashed #000; font-size: 9px; text-transform: uppercase; text-align: left; padding: 2px 0; }
+  table.lines th.r { text-align: right; }
+  table.lines td { padding: 2px 0; vertical-align: top; }
+  table.lines td.r { text-align: right; white-space: nowrap; }
+  tr.total-row td { border-top: 1px dashed #000; font-weight: bold; font-size: 11px; padding-top: 3px; }
+  .nr { font-size: 8px; color: #444; }
+  td.r { text-align: right; }
+  .qr { text-align: center; margin: 7px 0 3px; }
+  .qr img { width: 52px; height: 52px; }
+  .barcode { text-align: center; font-size: 8px; letter-spacing: 2px; margin-top: 2px; font-weight: bold; }
+  .foot { margin-top: 6px; text-align: center; font-size: 8px; line-height: 1.4; border-top: 1px dashed #000; padding-top: 4px; }
 </style>
 </head>
 <body>
@@ -31,7 +39,7 @@
 
   <div class="title">RECEIPT</div>
 
-  <table class="head">
+  <table class="head" cellpadding="0" cellspacing="0">
     <tr><td class="lbl">Receipt No</td><td class="r"><b>{{ $receiptNo }}</b></td></tr>
     <tr><td class="lbl">Entry No</td><td class="r">{{ $entry->entry_no }}</td></tr>
     <tr><td class="lbl">Date</td><td class="r">{{ $entry->entry_date->format('d M Y') }}</td></tr>
@@ -42,28 +50,28 @@
 
   <div class="ruled"></div>
 
-  <table class="lines">
-    <thead><tr><th>Description</th><th class="r">Amount (TZS)</th></tr></thead>
+  <table class="lines" cellpadding="0" cellspacing="0">
+    <thead>
+      <tr><th>Description</th><th class="r">Amount (TZS)</th></tr>
+    </thead>
     <tbody>
       @if($moneyIn && $moneyInLines->count())
         @foreach($moneyInLines as $line)
-        <tr>
-          <td>{{ $line['label'] }}</td>
-          <td class="r">{{ number_format($line['amount'], 0) }}</td>
-        </tr>
+        <tr><td>{{ $line['label'] }}</td><td class="r">{{ number_format($line['amount'], 0) }}</td></tr>
         @endforeach
       @else
         @foreach($lines as $line)
         <tr>
-          <td>{{ $line['description'] }}<div class="nr">{{ $line['code'] }}</div></td>
-          <td class="r">{{ $line['debit'] > 0 ? number_format($line['debit'], 0) : number_format($line['credit'], 0) }}</td>
+          <td>{{ $line['description'] }}@if(isset($line['code']))<div class="nr">{{ $line['code'] }}</div>@endif</td>
+          <td class="r">
+            @if(isset($line['debit']) && $line['debit'] > 0){{ number_format($line['debit'], 0) }}
+            @elseif(isset($line['credit'])){{ number_format($line['credit'], 0) }}
+            @endif
+          </td>
         </tr>
         @endforeach
       @endif
-      <tr class="total-row">
-        <td>TOTAL</td>
-        <td class="r">TZS {{ number_format($amount, 0) }}</td>
-      </tr>
+      <tr class="total-row"><td><b>TOTAL</b></td><td class="r"><b>TZS {{ number_format($amount, 0) }}</b></td></tr>
     </tbody>
   </table>
 

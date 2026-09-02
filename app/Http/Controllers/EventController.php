@@ -510,14 +510,25 @@ class EventController extends Controller
 
         $org = \App\Models\Setting::get('church.name', 'Open Gate Camp Mission');
 
-        $pdf = \Barryvdh\DomPDF\Facade\Pdf::setPaper([0, 0, 226.77, 595.28], 'portrait')->loadView('accounting.ticket', [
+        $html = view('accounting.ticket', [
             'attendee' => $attendee,
             'event'    => $attendee->event,
             'qr'       => $qr,
             'org'      => $org,
-        ]);
+        ])->render();
 
-        return $pdf->stream('Ticket-'.$attendee->getTicketNo().'.pdf');
+        $mpdf = new \Mpdf\Mpdf([
+            'mode' => 'utf-8',
+            'format' => [80, 350],         // 80mm wide, generous height so content is never clipped
+            'margin_left'  => 4,
+            'margin_right' => 4,
+            'margin_top'   => 3,
+            'margin_bottom' => 3,
+            'tempDir' => storage_path('app/private/mpdf'),
+        ]);
+        $mpdf->WriteHTML($html);
+
+        return $mpdf->Output('Ticket-'.$attendee->getTicketNo().'.pdf', 'I');
     }
 
     public function sendTicketSms(EventAttendee $attendee)

@@ -11,7 +11,6 @@ use App\Models\JournalEntry;
 use App\Models\JournalLine;
 use App\Models\ReceiptPayment;
 use App\Models\Setting;
-use Barryvdh\DomPDF\Facade\Pdf;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 
@@ -673,10 +672,7 @@ class AccountingController extends Controller
         $qrData = 'OGCM|RCP|'.$receiptNo.'|'.number_format($amount, 2);
         $qr = app(\App\Services\QrCodeService::class)->pngDataUri($qrData, 3);
 
-        $pdf = Pdf::setPaper([0, 0, 226.77, 595.28], 'portrait')
-            ->setOption('isHtml5ParserEnabled', true)
-            ->setOption('isRemoteEnabled', false)
-            ->loadView('accounting.receipt', [
+        $html = view('accounting.receipt', [
             'entry' => $entry,
             'lines' => $lines,
             'amount' => $amount,
@@ -686,11 +682,22 @@ class AccountingController extends Controller
             'reference' => $reference,
             'org' => $org,
             'qr' => $qr,
+        ])->render();
+
+        $mpdf = new \Mpdf\Mpdf([
+            'mode' => 'utf-8',
+            'format' => [80, 350],         // 80mm wide, generous height so content is never clipped
+            'margin_left'  => 4,
+            'margin_right' => 4,
+            'margin_top'   => 3,
+            'margin_bottom' => 3,
+            'tempDir' => storage_path('app/private/mpdf'),
         ]);
+        $mpdf->WriteHTML($html);
 
         $filename = 'Receipt-'.preg_replace('/[^A-Za-z0-9-_]/', '', str_replace('JE-', '', $entry->entry_no)).'.pdf';
 
-        return $pdf->download($filename);
+        return $mpdf->Output($filename, 'D');
     }
 
     private function baseLineQuery(array $between)

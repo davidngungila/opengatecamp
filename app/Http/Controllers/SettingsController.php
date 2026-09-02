@@ -17,7 +17,7 @@ class SettingsController extends Controller
     public function index(Request $request)
     {
         $tab = $request->query('tab', 'general');
-        $valid = ['general', 'appearance', 'notifications', 'security', 'backup', 'audit', 'financial-years', 'accounting'];
+        $valid = ['general', 'appearance', 'notifications', 'security', 'backup', 'audit', 'financial-years', 'accounting', 'fellowships'];
 
         return view('settings.index', [
             'tab' => in_array($tab, $valid) ? $tab : 'general',
@@ -27,7 +27,45 @@ class SettingsController extends Controller
             'cashAccounts' => Account::where('is_cash', true)->orderBy('code')->get(),
             'incomeAccounts' => Account::where('type', 'income')->orderBy('code')->get(),
             'expenseAccounts' => Account::where('type', 'expense')->orderBy('code')->get(),
+            'fellowships' => $this->fellowshipList(),
         ]);
+    }
+
+    public function updateFellowships(Request $request)
+    {
+        $data = $request->validate([
+            'fellowships' => 'nullable|string',
+        ]);
+
+        $list = collect(explode("\n", $data['fellowships'] ?? ''))
+            ->map(fn ($f) => trim($f))
+            ->filter()
+            ->unique()
+            ->values()
+            ->implode("\n");
+
+        Setting::put('fellowships.list', $list);
+
+        AuditLog::record('Updated university fellowship list', 'Settings — Fellowships', "{$this->fellowshipListCount()} fellowships configured");
+
+        return back()->with('success', 'Fellowship list saved successfully.');
+    }
+
+    private function fellowshipList(): array
+    {
+        $raw = (string) Setting::get('fellowships.list', '');
+        $list = collect(explode("\n", $raw))
+            ->map(fn ($f) => trim($f))
+            ->filter()
+            ->values()
+            ->all();
+
+        return $list ?: ['UDSM', 'MUHAS', 'SUZA', 'TUDARCo', 'MU', 'MoCU', 'Other'];
+    }
+
+    private function fellowshipListCount(): int
+    {
+        return count($this->fellowshipList());
     }
 
     public function updateGeneral(Request $request)

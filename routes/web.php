@@ -74,6 +74,7 @@ Route::middleware('auth')->group(function () {
     Route::post('/settings/general', [SettingsController::class, 'updateGeneral'])->name('settings.general');
     Route::post('/settings/notifications', [SettingsController::class, 'updateNotifications'])->name('settings.notifications');
     Route::post('/settings/accounting', [SettingsController::class, 'updateAccounting'])->name('settings.accounting');
+    Route::post('/settings/fellowships', [SettingsController::class, 'updateFellowships'])->name('settings.fellowships');
     Route::post('/settings/security', [SettingsController::class, 'updateSecurity'])->name('settings.security');
     Route::post('/settings/financial-years', [SettingsController::class, 'storeYear'])->name('settings.years.store');
     Route::put('/settings/financial-years/{year}', [SettingsController::class, 'updateYear'])->name('settings.years.update');
