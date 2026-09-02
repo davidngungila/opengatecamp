@@ -99,6 +99,7 @@
       <div class="row"><span class="k">Receipt No</span><span class="v">{{ $entry->entry_no }}</span></div>
       <div class="row"><span class="k">Date</span><span class="v">{{ $entry->entry_date->format('d M Y') }}</span></div>
       <div class="row"><span class="k">Reference</span><span class="v">{{ $entry->reference ?: '—' }}</span></div>
+      <div class="row"><span class="k">Paid By</span><span class="v">{{ $payer ?? '—' }}</span></div>
       <div class="row"><span class="k">Amount Paid</span><span class="v hl">TZS {{ number_format($amount, 0) }}</span></div>
       <div class="row"><span class="k">Status</span><span class="v {{ $valid ? 'hl' : 'warn' }}">{{ $entry->status === 'posted' ? 'POSTED' : strtoupper($entry->status) }}</span></div>
 

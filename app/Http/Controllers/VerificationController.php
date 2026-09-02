@@ -65,6 +65,9 @@ class VerificationController extends Controller
 
         $confirmed = $entry->status === 'posted';
 
+        // Resolve who paid
+        $payer = $this->resolvePayer($entry);
+
         AuditLog::record(
             'Verified receipt',
             'Verification',
@@ -77,6 +80,7 @@ class VerificationController extends Controller
             'confirmed' => $confirmed,
             'entry' => $entry,
             'amount' => $amount,
+            'payer' => $payer,
             'org' => Setting::get('org.name', 'Open Gate Camp Mission'),
         ]);
     }
@@ -108,5 +112,30 @@ class VerificationController extends Controller
             'attendee' => $attendee,
             'org' => Setting::get('org.name', 'Open Gate Camp Mission'),
         ]);
+    }
+
+    /**
+     * Determine who the money came from for a posted journal entry.
+     * Prefers registrations, then pledges, then manual receipts; falls back to the
+     * journal entry's own reference/description.
+     */
+    private function resolvePayer($entry): string
+    {
+        $attendee = \App\Models\EventAttendee::where('journal_entry_id', $entry->id)->first();
+        if ($attendee) {
+            return trim($attendee->name) ?: ($attendee->event?->title ?? 'Attendee');
+        }
+
+        $pledgePay = \App\Models\PledgePayment::with('pledge')->where('journal_entry_id', $entry->id)->first();
+        if ($pledgePay && $pledgePay->pledge) {
+            return trim($pledgePay->pledge->name) ?: 'Pledge '.$pledgePay->pledge->pledge_no;
+        }
+
+        $receiptPay = \App\Models\ReceiptPayment::where('journal_entry_id', $entry->id)->first();
+        if ($receiptPay) {
+            return trim($receiptPay->party) ?: (trim($receiptPay->description) ?: 'Anonymous');
+        }
+
+        return trim((string) $entry->reference) ?: (trim((string) $entry->description) ?: 'Anonymous');
     }
 }
