@@ -31,9 +31,6 @@
 .field + .field{margin-top:0;}
 .login-actions{margin-top:8px;}
 .w-full{width:100%;justify-content:center;display:inline-flex;}
-.demo-hint{margin-top:18px;border-top:1px dashed var(--border-strong);padding-top:14px;text-align:center;}
-.demo-hint p{margin:0;font-size:11.5px;color:var(--text-tertiary);font-weight:600;}
-.demo-hint code{font-size:11.5px;color:var(--text-secondary);}
 .login-icon{position:absolute;right:12px;top:50%;transform:translateY(-50%);width:36px;height:36px;
   border-radius:8px;display:flex;align-items:center;justify-content:center;font-size:16px;
   pointer-events:none;transition:all .2s ease;}
@@ -83,11 +80,6 @@
         <button type="submit" class="btn btn-accent w-full">Sign In</button>
       </div>
     </form>
-
-    <div class="demo-hint">
-      <p>Admin — <code>camp.director@opengatecamp.org</code> / <code>password</code></p>
-      <p style="margin-top:4px">Member — phone <code>+255 715 234 881</code> / <code>password</code></p>
-    </div>
   </div>
 </div>
 
