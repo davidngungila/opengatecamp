@@ -15,7 +15,7 @@
   <div class="section-head">
     <div><h2>Open Gate Camp Calendar</h2><div class="sub">{{ $monthDate->format('F Y') }} · {{ count($eventsByDay) }} event days · {{ collect($sessionsByDay)->flatten()->count() }} planned activities</div></div>
     <div class="flex gap-8">
-      <a href="{{ route('calendar.timetable', ['scope' => 'month', 'month' => $monthDate->format('Y-m')]) }}" target="_blank" class="btn btn-secondary btn-sm">🖨 Print Timetable</a>
+      <a href="{{ route('calendar.timetable', ['scope' => 'month', 'month' => $monthDate->format('Y-m')]) }}" target="_blank" class="btn btn-secondary btn-sm"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:-2px;margin-right:5px"><path d="M8 7H3a1 1 0 00-1 1v13a1 1 0 001 1h13a1 1 0 001-1v-5"/><path d="M21 3H8a1 1 0 00-1 1v13a1 1 0 001 1h13a1 1 0 001-1V4a1 1 0 00-1-1z"/><path d="M12 8v4l3 2"/></svg>Print Timetable</a>
       <button type="button" class="btn btn-accent btn-sm" data-modal-open="planModal">+ Plan Activity</button>
       <a href="{{ route('calendar.index', ['month' => $prevMonth]) }}" class="btn btn-secondary btn-sm">← Prev</a>
       <a href="{{ route('calendar.index', ['month' => $today->format('Y-m')]) }}" class="btn btn-secondary btn-sm">Today</a>

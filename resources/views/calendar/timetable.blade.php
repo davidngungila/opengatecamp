@@ -51,7 +51,7 @@
     </div>
   </div>
 
-  <div class="actions"><button class="btn" onclick="window.print()">🖨 Print / Save PDF</button></div>
+  <div class="actions"><button class="btn" onclick="window.print()"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:-2px;margin-right:6px"><path d="M8 7H3a1 1 0 00-1 1v13a1 1 0 001 1h13a1 1 0 001-1v-5"/><path d="M21 3H8a1 1 0 00-1 1v13a1 1 0 001 1h13a1 1 0 001-1V4a1 1 0 00-1-1z"/><path d="M12 8v4l3 2"/></svg>Print / Save PDF</button></div>
 
   <div class="controls">
     <form method="GET" action="{{ route('calendar.timetable') }}">

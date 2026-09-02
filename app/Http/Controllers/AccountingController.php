@@ -669,6 +669,9 @@ class AccountingController extends Controller
 
         $org = Setting::get('org.name', 'Open Gate Camp Mission');
 
+        // Resolve who paid (registering attendee / pledge / manual receipt party).
+        $payer = $this->resolvePayer($entry);
+
         $payload = 'OGCM|RCP|'.$receiptNo.'|'.number_format($amount, 2);
         $qrData = route('verify', ['code' => $payload], true);
         $qr = app(\App\Services\QrCodeService::class)->pngDataUri($qrData, 3);
@@ -682,6 +685,7 @@ class AccountingController extends Controller
             'receiptNo' => $receiptNo,
             'reference' => $reference,
             'org' => $org,
+            'payer' => $payer,
             'qr' => $qr,
             'logoPath' => public_path('logo.png'),
         ])->render();
@@ -700,6 +704,31 @@ class AccountingController extends Controller
         $filename = 'Receipt-'.preg_replace('/[^A-Za-z0-9-_]/', '', str_replace('JE-', '', $entry->entry_no)).'.pdf';
 
         return $mpdf->Output($filename, 'D');
+    }
+
+    /**
+     * Determine who the money came from for a posted journal entry.
+     * Prefers registrations, then pledges, then manual receipts; falls back to the
+     * journal entry's own reference/description.
+     */
+    private function resolvePayer(JournalEntry $entry): string
+    {
+        $attendee = \App\Models\EventAttendee::where('journal_entry_id', $entry->id)->first();
+        if ($attendee) {
+            return trim($attendee->name) ?: ($attendee->event?->title ?? 'Attendee');
+        }
+
+        $pledgePay = \App\Models\PledgePayment::with('pledge')->where('journal_entry_id', $entry->id)->first();
+        if ($pledgePay && $pledgePay->pledge) {
+            return trim($pledgePay->pledge->name) ?: 'Pledge '.$pledgePay->pledge->pledge_no;
+        }
+
+        $receiptPay = \App\Models\ReceiptPayment::where('journal_entry_id', $entry->id)->first();
+        if ($receiptPay) {
+            return trim($receiptPay->party) ?: (trim($receiptPay->description) ?: 'Anonymous');
+        }
+
+        return trim((string) $entry->reference) ?: (trim((string) $entry->description) ?: 'Anonymous');
     }
 
     private function baseLineQuery(array $between)

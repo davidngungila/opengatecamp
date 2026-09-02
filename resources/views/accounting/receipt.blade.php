@@ -51,6 +51,7 @@
     <tr><td class="lbl">Time</td><td class="r">{{ $entry->created_at ? $entry->created_at->format('H:i') : $entry->entry_date->format('H:i') }}</td></tr>
     <tr><td class="lbl">Reference</td><td class="r">{{ $reference }}</td></tr>
     <tr><td class="lbl">Status</td><td class="r">POSTED</td></tr>
+    <tr><td class="lbl">Paid By</td><td class="r">{{ $payer ?? '—' }}</td></tr>
   </table>
 
   <div class="ruled"></div>
