@@ -15,8 +15,8 @@
   }
   .center { text-align: center; }
   .org { font-size: 13px; font-weight: 800; text-transform: uppercase; letter-spacing: 1px; }
-  .org-sub { font-size: 8px; letter-spacing: 2px; }
-  .org-line { font-size: 8px; letter-spacing: 1px; }
+  .org-sub { font-size: 8px; letter-spacing: 2px; font-weight: bold; }
+  .org-line { font-size: 8px; letter-spacing: 1px; font-weight: bold; }
   .org-tag { font-size: 10px; font-weight: 800; letter-spacing: 2px; margin-bottom: 2px; }
   .logo { text-align: center; margin-bottom: 4px; }
   .logo img { width: 34mm; height: 34mm; }
