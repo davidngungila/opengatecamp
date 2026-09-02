@@ -489,28 +489,7 @@ class EventController extends Controller
     // ── Tickets ─────────────────────────────────────────
     private function ensureTicket(EventAttendee $attendee): string
     {
-        if (! $attendee->ticket_no) {
-            $attendee->update(['ticket_no' => $this->uniqueTicketCode($attendee)]);
-        }
-
-        return $attendee->ticket_no;
-    }
-
-    /**
-     * Generate a short unique 6-character alphanumeric ticket code (e.g. AB3F9K).
-     */
-    private function uniqueTicketCode(EventAttendee $attendee): string
-    {
-        $chars = 'ABCDEFGHJKLMNPQRSTUVWXYZ123456789';
-        do {
-            $code = '';
-            $max = strlen($chars) - 1;
-            for ($i = 0; $i < 6; $i++) {
-                $code .= $chars[random_int(0, $max)];
-            }
-        } while (EventAttendee::where('ticket_no', $code)->exists());
-
-        return $code;
+        return $attendee->getTicketNo(); // lazily issues + persists a short 6-char code
     }
 
     public function ticketPdf(EventAttendee $attendee)

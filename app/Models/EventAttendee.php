@@ -31,7 +31,29 @@ class EventAttendee extends Model
 
     public function getTicketNo(): string
     {
-        return $this->ticket_no ?: ('TKT'.str_pad((string) $this->id, 5, '0', STR_PAD_LEFT));
+        if ($this->ticket_no) {
+            return $this->ticket_no;
+        }
+
+        // Lazily issue a short 6-character alphanumeric code (e.g. SD43D7) and persist it.
+        $code = $this->issueTicketCode();
+        $this->update(['ticket_no' => $code]);
+        $this->ticket_no = $code;
+
+        return $code;
+    }
+
+    private function issueTicketCode(): string
+    {
+        $chars = 'ABCDEFGHJKLMNPQRSTUVWXYZ123456789';
+        do {
+            $code = '';
+            for ($i = 0; $i < 6; $i++) {
+                $code .= $chars[random_int(0, strlen($chars) - 1)];
+            }
+        } while (self::where('ticket_no', $code)->exists());
+
+        return $code;
     }
 
     public function getRegionLabel(): string
