@@ -52,18 +52,18 @@
             <th>Recipients</th>
             <th>Message</th>
             <th>Sent By</th>
-            <th></th>
+            <th style="width:60px"></th>
           </tr>
         </thead>
         <tbody>
           @forelse($messages as $m)
-          <tr>
+          <tr class="msg-row" style="cursor:pointer" data-mid="{{ $m->id }}">
             <td style="white-space:nowrap">{{ $m->created_at->format('d M Y, H:i') }}</td>
             <td><span class="badge badge-{{ $m->channel==='sms' ? 'info' : 'purple' }} badge-dotted">{{ strtoupper($m->channel) }}</span></td>
             <td>
               <span class="badge badge-{{ $m->status==='sent' ? 'success' : ($m->status==='failed' ? 'danger' : 'neutral') }} badge-dotted">{{ ucfirst($m->status) }}</span>
               @if($m->status==='failed' && $m->api_response)
-              <div style="font-size:10.5px;color:var(--text-tertiary);margin-top:3px;max-width:180px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap" title="{{ is_string($m->api_response) ? $m->api_response : json_encode($m->api_response) }}">API: {{ is_string($m->api_response) ? Str::limit($m->api_response,40) : 'error' }}</div>
+              <div style="font-size:10.5px;color:var(--text-tertiary);margin-top:3px;max-width:180px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap" title="{{ is_array($m->api_response) ? json_encode($m->api_response) : $m->api_response }}">API: {{ is_array($m->api_response) ? 'error' : Str::limit($m->api_response,40) }}</div>
               @endif
             </td>
             <td style="font-weight:600;max-width:220px">{{ $m->recipients }}
@@ -74,8 +74,7 @@
             <td style="max-width:300px">{{ Str::limit($m->message, 90) }}</td>
             <td style="white-space:nowrap">{{ $m->created_by ?? '—' }}</td>
             <td style="text-align:right;white-space:nowrap">
-              <a href="{{ route('messaging.show', $m) }}" class="btn btn-sm btn-primary"
-                 style="height:30px;padding:0 12px" title="View full message">View</a>
+              <button type="button" class="btn btn-sm btn-primary" style="height:30px;padding:0 12px" onclick="openMsg({{ $m->id }})" title="View full message">View</button>
             </td>
           </tr>
           @empty
@@ -90,4 +89,109 @@
     </div>
   </div>
 </div>
+
+{{-- Message detail drawer --}}
+<div class="drawer-overlay" id="msgDetailDrawer">
+  <div class="drawer-panel">
+    <div class="drawer-head">
+      <div><h3>Message Detail</h3><p id="msgMeta" class="cu-sub">—</p></div>
+      <button type="button" class="modal-close" data-drawer-close><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><path d="M18 6L6 18M6 6l12 12"/></svg></button>
+    </div>
+    <div class="drawer-body">
+      <div class="flex gap-8" style="align-items:center;flex-wrap:wrap" id="msgBadges"></div>
+      <div style="margin-top:10px;color:var(--text-secondary);font-size:13px" id="msgSentOn">—</div>
+      <div style="margin-top:6px;font-weight:600;font-size:15px" id="msgSubject" class="hidden"></div>
+
+      <div class="info-grid" style="margin-top:18px">
+        <div class="info-row"><span>Recipients</span><b id="msgRecipients" style="text-align:right;word-break:break-word">—</b></div>
+        <div class="info-row" id="msgPhoneRow" style="display:none"><span>Phone / Target</span><b id="msgPhone" style="font-family:monospace">—</b></div>
+      </div>
+
+      <div style="margin-top:20px">
+        <div style="font-size:11px;font-weight:700;letter-spacing:.05em;text-transform:uppercase;color:var(--text-tertiary)">Message</div>
+        <div style="margin-top:8px;background:var(--bg-muted,#f8fafc);border:1px solid var(--border,#e5e7eb);border-radius:10px;padding:16px 18px;white-space:pre-wrap;word-break:break-word;line-height:1.7;font-size:14px" id="msgBody">—</div>
+      </div>
+
+      <details style="margin-top:20px;border:1px solid var(--border,#e5e7eb);border-radius:10px;padding:14px 18px" id="msgApiWrap">
+        <summary style="cursor:pointer;font-size:11px;font-weight:700;letter-spacing:.05em;text-transform:uppercase;color:var(--text-secondary)">Technical / API Response</summary>
+        <div style="margin-top:12px;display:grid;grid-template-columns:auto 1fr;gap:8px 18px;font-size:13px;font-family:monospace">
+          <div style="color:var(--text-tertiary)">API Message ID</div><div id="msgApiId">—</div>
+          <div style="color:var(--text-tertiary)">Status</div><div id="msgApiStatus">—</div>
+          <div style="color:var(--text-tertiary);vertical-align:top">Response</div>
+          <div id="msgApiResponse" style="background:var(--bg-muted,#f8fafc);border-radius:8px;padding:10px 12px;overflow:auto;max-height:220px;white-space:pre-wrap;word-break:break-word">—</div>
+        </div>
+      </details>
+    </div>
+    <div class="drawer-foot">
+      <button type="button" class="btn btn-secondary" data-drawer-close>Close</button>
+    </div>
+  </div>
+</div>
 @endsection
+
+@push('scripts')
+@php
+    $msgData = collect($messages->items())->mapWithKeys(function ($m) {
+        return [$m->id => [
+            'channel'     => $m->channel,
+            'status'      => $m->status,
+            'recipients'  => $m->recipients,
+            'phone'       => $m->phone,
+            'subject'     => $m->subject,
+            'message'     => $m->message,
+            'created_at'  => $m->created_at?->format('d M Y, H:i'),
+            'created_by'  => $m->created_by,
+            'api_message_id' => $m->api_message_id,
+            'api_response'   => is_array($m->api_response) ? json_encode($m->api_response, JSON_PRETTY_PRINT) : $m->api_response,
+        ];
+    })->toArray();
+    $msgDataJson = json_encode($msgData, JSON_HEX_APOS | JSON_HEX_QUOT | JSON_HEX_TAG | JSON_HEX_AMP);
+@endphp
+<script>
+var MSG_DATA = {!! $msgDataJson !!};
+
+function openMsg(id){
+  var d = MSG_DATA[id];
+  if(!d) return;
+
+  var badges = document.getElementById('msgBadges');
+  badges.innerHTML = '';
+  function addBadge(cls, text){
+    var s = document.createElement('span');
+    s.className = 'badge ' + cls + ' badge-dotted';
+    s.textContent = text;
+    badges.appendChild(s);
+  }
+  addBadge(d.channel === 'sms' ? 'badge-info' : 'badge-purple', String(d.channel).toUpperCase());
+  addBadge(d.status === 'sent' ? 'badge-success' : (d.status === 'failed' ? 'badge-danger' : 'badge-neutral'), d.status.charAt(0).toUpperCase() + d.status.slice(1));
+  if(d.api_message_id) addBadge('badge-neutral', 'ID ' + d.api_message_id);
+
+  document.getElementById('msgSentOn').innerHTML = (d.created_at || '—') + (d.created_by ? ' &middot; by ' + d.created_by : '');
+  var subj = document.getElementById('msgSubject');
+  if(d.subject){ subj.textContent = d.subject; subj.classList.remove('hidden'); } else { subj.classList.add('hidden'); }
+
+  document.getElementById('msgRecipients').textContent = d.recipients || '—';
+  var phoneRow = document.getElementById('msgPhoneRow');
+  if(d.phone){ phoneRow.style.display = ''; document.getElementById('msgPhone').textContent = d.phone; }
+  else { phoneRow.style.display = 'none'; }
+  document.getElementById('msgBody').textContent = d.message || '—';
+
+  document.getElementById('msgApiId').textContent = d.api_message_id || '—';
+  document.getElementById('msgApiStatus').textContent = d.status.charAt(0).toUpperCase() + d.status.slice(1);
+  document.getElementById('msgApiResponse').textContent = d.api_response || '—';
+  document.getElementById('msgApiWrap').style.display = (d.api_message_id || d.api_response) ? '' : 'none';
+
+  document.getElementById('msgMeta').textContent = d.channel === 'sms' ? 'SMS message' : 'Email message';
+  openDrawerById('msgDetailDrawer');
+}
+
+document.addEventListener('DOMContentLoaded', function(){
+  document.querySelectorAll('.msg-row').forEach(function(row){
+    row.addEventListener('click', function(e){
+      if(e.target.closest('a') || e.target.closest('button') || e.target.closest('form')) return;
+      openMsg(row.dataset.mid);
+    });
+  });
+});
+</script>
+@endpush
