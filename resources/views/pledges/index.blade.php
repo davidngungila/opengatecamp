@@ -78,6 +78,15 @@
         <thead><tr><th>Pledge No</th><th>Pledger</th><th>Event</th><th>Amount (TZS)</th><th>Paid (TZS)</th><th>Balance</th><th>Frequency</th><th>Status</th><th>Date</th><th style="width:60px">Actions</th></tr></thead>
         <tbody>
           @forelse($pledges as $pl)
+          @php
+            $paymentsJson = $pl->payments->map(fn($p) => [
+                'date'   => $p->pay_date?->format('d M Y'),
+                'amount' => $p->amount,
+                'method' => $p->method,
+                'ref'    => $p->reference,
+                'by'     => $p->recorded_by,
+            ])->toJson();
+          @endphp
           <tr>
             <td><span class="badge badge-neutral badge-dotted">{{ $pl->pledge_no }}</span></td>
             <td>
@@ -116,7 +125,7 @@
                     data-due-date="{{ $pl->due_date?->format('d M Y') ?? '—' }}"
                     data-notes="{{ $pl->notes }}"
                     data-created="{{ $pl->created_by ?? '—' }}"
-                    data-payments=@json($pl->payments->map(fn($p) => ['date' => $p->pay_date?->format('d M Y'), 'amount' => $p->amount, 'method' => $p->method, 'ref' => $p->reference, 'by' => $p->recorded_by]))
+                    data-payments="{{ e($paymentsJson) }}"
                     >View Details</button>
                   <button type="button" data-record-payment data-id="{{ $pl->id }}" data-name="{{ $pl->name }}" data-amount="{{ $pl->amount }}" data-remaining="{{ $pl->getRemainingAttribute() }}">Record Payment</button>
                   <form method="POST" action="{{ route('pledges.remind', $pl) }}" style="display:contents">@csrf<button type="submit">Remind (SMS)</button></form>
