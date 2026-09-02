@@ -459,14 +459,6 @@ class EventController extends Controller
 
     public function ticketPdf(EventAttendee $attendee)
     {
-        if (!$attendee->hasCompletedContribution()) {
-            abort(422, sprintf(
-                'Payment incomplete: %s/%s TZS. Please record full payment before generating ticket.',
-                number_format($attendee->amount_paid, 0),
-                number_format($attendee->fee_amount, 0)
-            ));
-        }
-
         $attendee->loadMissing('event');
         $this->ensureTicket($attendee);
 
@@ -501,14 +493,6 @@ class EventController extends Controller
 
     public function sendTicketSms(EventAttendee $attendee)
     {
-        if (!$attendee->hasCompletedContribution()) {
-            abort(422, sprintf(
-                'Payment incomplete: %s/%s TZS. Please record full payment before sending ticket.',
-                number_format($attendee->amount_paid, 0),
-                number_format($attendee->fee_amount, 0)
-            ));
-        }
-
         $attendee->loadMissing('event');
         $this->ensureTicket($attendee);
 
