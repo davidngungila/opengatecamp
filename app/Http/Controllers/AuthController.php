@@ -37,8 +37,7 @@ class AuthController extends Controller
         if ($isPhone) {
             $phone = preg_replace('/[\s\-().]+/', '', $login);
 
-            // Find member by comparing stripped phone numbers
-            // Normalize: strip all non-digits, handle 0 prefix â†’ 255 prefix
+            // Normalize: strip all non-digits, handle 0 prefix → 255 prefix
             $norm = function (string $raw) {
                 $digits = preg_replace('/[^0-9]/', '', $raw);
                 if (strlen($digits) >= 10 && str_starts_with($digits, '0')) {
@@ -49,40 +48,48 @@ class AuthController extends Controller
 
             $inputNorm = $norm($phone);
 
-            $members = Member::whereNotNull('phone')->where('phone', '!=', '')->get();
-            $member = $members->first(function ($m) use ($inputNorm, $norm) {
-                $dbNorm = $norm($m->phone);
+            // 1) Match an existing admin/leader/committee user by phone
+            $phoneUsers = User::whereNotNull('phone')->where('phone', '!=', '')->get();
+            $user = $phoneUsers->first(function ($u) use ($inputNorm, $norm) {
+                $dbNorm = $norm($u->phone);
                 return $dbNorm === $inputNorm || str_ends_with($dbNorm, $inputNorm) || str_ends_with($inputNorm, $dbNorm);
             });
 
-            if ($member) {
-                // Reuse existing linked account, otherwise find by phone
-                $user = User::where('member_id', $member->id)->first()
-                    ?? User::where('phone', $member->phone)->first();
+            // 2) Otherwise find the member (their phone becomes their username)
+            if (! $user) {
+                $members = Member::whereNotNull('phone')->where('phone', '!=', '')->get();
+                $member = $members->first(function ($m) use ($inputNorm, $norm) {
+                    $dbNorm = $norm($m->phone);
+                    return $dbNorm === $inputNorm || str_ends_with($dbNorm, $inputNorm) || str_ends_with($inputNorm, $dbNorm);
+                });
 
-                if (! $user) {
-                    $email = $member->email ?: ($member->phone . '@opengatecamp.local');
+                if ($member) {
+                    // Reuse existing linked account, otherwise find by phone
+                    $user = User::where('member_id', $member->id)->first()
+                        ?? User::where('phone', $member->phone)->first();
 
-                    // Ensure unique email
-                    if (User::where('email', $email)->exists()) {
-                        $email = 'member' . $member->id . '@opengatecamp.local';
+                    if (! $user) {
+                        $email = $member->email ?: ($member->phone . '@opengatecamp.local');
+                        if (User::where('email', $email)->exists()) {
+                            $email = 'member' . $member->id . '@opengatecamp.local';
+                        }
+
+                        $user = User::create([
+                            'name'     => $member->name,
+                            'email'    => $email,
+                            'phone'    => $member->phone,
+                            'password' => Hash::make('password'),
+                            'role_id'  => null,
+                            'member_id' => $member->id,
+                            'status'   => 'Active',
+                        ]);
+
+                        AuditLog::record(
+                            'Auto-created user account via phone login',
+                            'System',
+                            $member->name . ' (' . $member->phone . ')'
+                        );
                     }
-
-                    $user = User::create([
-                        'name'     => $member->name,
-                        'email'    => $email,
-                        'phone'    => $member->phone,
-                        'password' => Hash::make('password'),
-                        'role_id'  => null,
-                        'member_id' => $member->id,
-                        'status'   => 'Active',
-                    ]);
-
-                    AuditLog::record(
-                        'Auto-created user account via phone login',
-                        'System',
-                        $member->name . ' (' . $member->phone . ')'
-                    );
                 }
             }
         } else {

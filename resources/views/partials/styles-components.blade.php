@@ -13,6 +13,11 @@
 .kpi-trend.down{background:var(--danger-bg);color:var(--danger);}
 .kpi-value{font-size:26px;font-weight:800;margin:0 0 2px;letter-spacing:-.5px;}
 .kpi-label{font-size:12.5px;color:var(--text-secondary);font-weight:600;margin-bottom:10px;}
+.kpi-sub{font-size:11px;color:var(--text-tertiary);font-weight:600;}
+table.mini-table{width:100%;border-collapse:collapse;min-width:0;}
+table.mini-table thead th{text-align:left;font-size:10.5px;text-transform:uppercase;letter-spacing:.6px;color:var(--text-tertiary);padding:8px 10px;border-bottom:1px solid var(--border-strong);}
+table.mini-table tbody td{padding:9px 10px;border-bottom:1px solid var(--border);font-size:12.5px;color:var(--text-primary);}
+table.mini-table tbody tr:last-child td{border-bottom:none;}
 .spark{height:32px;width:100%;display:block;}
 .spark-box{position:relative;height:32px;width:100%;}
 

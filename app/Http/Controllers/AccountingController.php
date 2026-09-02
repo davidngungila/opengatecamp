@@ -384,7 +384,7 @@ class AccountingController extends Controller
         return back()->with('success', 'Document deleted successfully.');
     }
 
-    public function cashBank()
+    public function cashBank(Request $request)
     {
         [$fy, $between] = $this->fyWindow();
 
@@ -393,19 +393,58 @@ class AccountingController extends Controller
         foreach ($cashAccounts as $a) {
             $d = (float) $this->baseLineQuery($between)->clone()->where('account_id', $a->id)->sum('debit');
             $c = (float) $this->baseLineQuery($between)->clone()->where('account_id', $a->id)->sum('credit');
-            $balances[] = ['account' => $a, 'balance' => round($d - $c, 2)];
+            $balances[] = [
+                'account' => $a,
+                'debit' => round($d, 2),
+                'credit' => round($c, 2),
+                'balance' => round($d - $c, 2),
+            ];
+        }
+        $balances = collect($balances);
+
+        // Period inflows / outflows across all cash accounts
+        $inflows = (float) $this->baseLineQuery($between)->clone()
+            ->whereIn('account_id', $cashAccounts->pluck('id'))->sum('debit');
+        $outflows = (float) $this->baseLineQuery($between)->clone()
+            ->whereIn('account_id', $cashAccounts->pluck('id'))->sum('credit');
+        $inflows = round($inflows, 2);
+        $outflows = round($outflows, 2);
+
+        // Month-by-month cash flow series for the current period window
+        $monthly = [];
+        $lineQuery = $this->baseLineQuery($between)->clone()
+            ->whereIn('account_id', $cashAccounts->pluck('id'))
+            ->join('journal_entries', 'journal_lines.journal_entry_id', '=', 'journal_entries.id')
+            ->selectRaw("DATE_FORMAT(journal_entries.entry_date,'%Y-%m') ym, SUM(journal_lines.debit) din, SUM(journal_lines.credit) cout")
+            ->groupBy('ym')->orderBy('ym')->get();
+        foreach ($lineQuery as $row) {
+            $monthly[] = [
+                'month' => $row->ym,
+                'label' => \Carbon\Carbon::createFromFormat('Y-m', $row->ym)->format('M Y'),
+                'in' => round((float) $row->din, 2),
+                'out' => round((float) $row->cout, 2),
+                'net' => round((float) $row->din - (float) $row->cout, 2),
+            ];
         }
 
+        // Movements: optional per-account filter (account_uuid or account code)
+        $accountFilter = $request->query('account');
         $movements = JournalLine::with(['entry', 'account'])
             ->whereHas('account', fn ($q) => $q->where('is_cash', true))
+            ->when($accountFilter, fn ($q) => $q->whereHas('account', fn ($a) => $a->where('code', $accountFilter)->orWhere('id', $accountFilter)))
             ->when($fy, fn ($q) => $q->whereHas('entry', fn ($e) => $e->whereBetween('entry_date', $between)))
-            ->latest('id')->take(12)->get();
+            ->latest('id')->take(40)->get();
 
         return view('accounting.cash-bank', [
             'fy' => $fy,
-            'balances' => collect($balances),
-            'totalCash' => collect($balances)->sum('balance'),
+            'balances' => $balances,
+            'totalCash' => $balances->sum('balance'),
+            'inflows' => $inflows,
+            'outflows' => $outflows,
+            'netMovement' => round($inflows - $outflows, 2),
+            'monthly' => $monthly,
             'movements' => $movements,
+            'activeAccount' => $accountFilter,
         ]);
     }
 
