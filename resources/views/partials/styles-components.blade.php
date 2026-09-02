@@ -168,7 +168,7 @@ table.data-table{width:100%;border-collapse:collapse;min-width:760px;}
 
 .modal-overlay{
   position:fixed;inset:0;background:rgba(11,20,38,.55);backdrop-filter:blur(3px);
-  display:flex;align-items:center;justify-content:center;z-index:200;padding:24px;
+  display:flex;align-items:center;justify-content:center;z-index:300;padding:24px;
   opacity:0;pointer-events:none;transition:opacity .2s ease;
 }
 .modal-overlay.open{opacity:1;pointer-events:auto;}
