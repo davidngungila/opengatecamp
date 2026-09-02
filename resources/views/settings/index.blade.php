@@ -191,7 +191,7 @@
           @csrf
           <div class="field">
             <label>Fellowship List</label>
-            <textarea name="fellowships" rows="10" placeholder="UDSM&#10;MUHAS&#10;SUZA&#10;TUDARCo&#10;MU&#10;MoCU&#10;Other">{{ old('fellowships', implode("\n", $fellowships)) }}</textarea>
+            <textarea name="fellowships" rows="10" placeholder="MoCU&#10;MWECAU&#10;KCMC University&#10;SMMUCo&#10;NM-AIST&#10;UoA&#10;TUMA&#10;ATC&#10;Other">{{ old('fellowships', implode("\n", $fellowships)) }}</textarea>
             <div class="field-hint">Each line becomes an option in the registration form's fellowship dropdown.</div>
           </div>
           <div class="flex" style="justify-content:flex-end;margin-top:16px">
