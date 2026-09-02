@@ -37,6 +37,7 @@
                     'debit' => (float) $el->debit,
                     'credit' => (float) $el->credit,
                 ])->values()->all() ?? [];
+                $entryLinesJson = json_encode($entryLines, JSON_HEX_APOS | JSON_HEX_QUOT | JSON_HEX_TAG | JSON_HEX_AMP);
             @endphp
             <tr style="cursor:pointer" data-view-txn
             data-entry="{{ $l->entry->entry_no }}"
@@ -52,7 +53,7 @@
             data-debit="{{ $l->debit }}"
             data-credit="{{ $l->credit }}"
             data-receipt-url="{{ route('accounting.transactions.receipt', $l->entry) }}"
-            data-lines="{{ @json($entryLines) }}">
+            data-lines="{{ $entryLinesJson }}">
             <td><a href="{{ route('accounting.journal') }}" style="color:var(--blue-accent);font-weight:600">{{ $l->entry->entry_no }}</a></td>
             <td>{{ $l->entry->entry_date->format('d M Y') }}</td>
             <td>

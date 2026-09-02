@@ -44,6 +44,7 @@
                 'ref'    => $p->reference,
                 'by'     => $p->recorded_by,
             ])->values()->all();
+            $paymentsJson = json_encode($paymentsArr, JSON_HEX_APOS | JSON_HEX_QUOT | JSON_HEX_TAG | JSON_HEX_AMP);
           @endphp
           <tr style="cursor:pointer" data-view-pledge
             data-id="{{ $pl->id }}"
@@ -62,7 +63,7 @@
             data-status-key="{{ $pl->status }}"
             data-notes="{{ $pl->notes }}"
             data-created="{{ $pl->created_by ?? '—' }}"
-            data-payments="{{ @json($paymentsArr) }}">
+            data-payments="{{ $paymentsJson }}">
             <td><span class="badge badge-neutral badge-dotted">{{ $pl->pledge_no }}</span></td>
             <td>
               <div class="cell-user">
