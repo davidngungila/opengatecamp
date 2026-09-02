@@ -483,18 +483,6 @@ class EventController extends Controller
             'margin_right' => 4,
             'margin_top'   => 3,
             'margin_bottom' => 3,
-            'fontDir' => [__DIR__.'/../../vendor/mpdf/mpdf/ttfonts', storage_path('fonts')],
-            'fontdata' => [
-                'manrope' => [
-                    'R' => 'Manrope-Regular.ttf',
-                    'B' => 'Manrope-Bold.ttf',
-                ],
-                'dejavusans' => [
-                    'R' => 'DejaVuSans.ttf',
-                    'B' => 'DejaVuSans-Bold.ttf',
-                ],
-            ],
-            'default_font' => 'dejavusans',
             'tempDir' => storage_path('app/private/mpdf'),
         ]);
         $mpdf->WriteHTML($html);
