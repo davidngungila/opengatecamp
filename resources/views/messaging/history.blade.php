@@ -143,8 +143,9 @@
             'created_by'  => $m->created_by,
             'api_message_id' => $m->api_message_id,
             'api_response'   => is_array($m->api_response) ? json_encode($m->api_response, JSON_PRETTY_PRINT) : $m->api_response,
-        ];
-    })->toArray();
+        ],
+    ];
+})->toArray();
     $msgDataJson = json_encode($msgData, JSON_HEX_APOS | JSON_HEX_QUOT | JSON_HEX_TAG | JSON_HEX_AMP);
 @endphp
 <script>
