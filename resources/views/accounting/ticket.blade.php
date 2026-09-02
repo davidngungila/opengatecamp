@@ -23,7 +23,7 @@
   .det td.val{font-weight:bold;}
   .amt{text-align:center;font-size:12px;font-weight:800;margin:8px 0;background:#000;color:#fff;padding:5px 0;letter-spacing:1px;}
   .qr{text-align:center;margin:8px 0 4px;}
-  .qr img{width:52px;height:52px;}
+  .qr img{width:80px;height:80px;}
   .barcode{text-align:center;font-size:9px;letter-spacing:2px;font-weight:bold;margin-top:3px;}
   .foot{margin-top:6px;text-align:center;font-size:8px;line-height:1.4;border-top:1px dashed #000;padding-top:5px;}
   .admit{text-align:center;font-size:11px;font-weight:800;margin-top:5px;background:#000;color:#fff;padding:3px 0;letter-spacing:1px;}

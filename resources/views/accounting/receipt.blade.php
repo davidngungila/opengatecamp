@@ -35,7 +35,7 @@
   .nr { font-size: 8px; color: #444; }
   td.r { text-align: right; }
   .qr { text-align: center; margin: 7px 0 3px; }
-  .qr img { width: 52px; height: 52px; }
+  .qr img { width: 80px; height: 80px; }
   .barcode { text-align: center; font-size: 8px; letter-spacing: 2px; margin-top: 2px; font-weight: bold; }
   .foot { margin-top: 6px; text-align: center; font-size: 8px; line-height: 1.4; border-top: 1px dashed #000; padding-top: 4px; }
 </style>
