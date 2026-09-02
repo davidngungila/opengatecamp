@@ -45,6 +45,7 @@
                   <a href="{{ route('accounting.ledger', ['account' => $a->id]) }}">View Ledger</a>
                   <button type="button" data-edit-account
                           data-id="{{ $a->id }}" data-code="{{ $a->code }}" data-name="{{ $a->name }}" data-type="{{ $a->type }}">Edit</button>
+                  @if(!$isCommittee)
                   <form method="POST" action="{{ route('accounting.accounts.destroy', $a) }}"
                         data-confirm data-confirm-title="Delete this account?"
                         data-confirm-message="{{ $a->code }} — {{ $a->name }} will be removed."
@@ -52,6 +53,7 @@
                     @csrf @method('DELETE')
                     <button type="submit" class="danger">Delete</button>
                   </form>
+                  @endif
                 </div>
               </div>
             </td>

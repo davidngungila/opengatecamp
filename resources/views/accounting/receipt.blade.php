@@ -3,21 +3,24 @@
 <head>
 <meta charset="UTF-8">
 <style>
+  @font-face { font-family: Manrope; src: url("Manrope-Regular.ttf"); font-weight: normal; font-style: normal; }
+  @font-face { font-family: Manrope; src: url("Manrope-Bold.ttf"); font-weight: bold; font-style: normal; }
+  @font-face { font-family: Manrope; src: url("Manrope-ExtraBold.ttf"); font-weight: 800; font-style: normal; }
   body {
-    font-family: courier;
+    font-family: Manrope, Arial, sans-serif;
     font-size: 10px;
     color: #000;
     margin: 0;
     padding: 0;
   }
   .center { text-align: center; }
-  .org { font-size: 13px; font-weight: bold; text-transform: uppercase; letter-spacing: 1px; }
+  .org { font-size: 13px; font-weight: 800; text-transform: uppercase; letter-spacing: 1px; }
   .org-sub { font-size: 8px; letter-spacing: 2px; }
   .org-line { font-size: 8px; letter-spacing: 1px; }
-  .org-tag { font-size: 10px; font-weight: bold; letter-spacing: 2px; margin-bottom: 2px; }
+  .org-tag { font-size: 10px; font-weight: 800; letter-spacing: 2px; margin-bottom: 2px; }
   .logo { text-align: center; margin-bottom: 4px; }
   .logo img { width: 34mm; height: 34mm; }
-  .title { font-size: 13px; font-weight: bold; text-align: center; letter-spacing: 3px; margin: 6px 0 2px; }
+  .title { font-size: 13px; font-weight: 800; text-align: center; letter-spacing: 3px; margin: 6px 0 2px; text-transform: uppercase; }
   .ruled { border-top: 1px dashed #000; border-bottom: 1px dashed #000; padding: 2px 0; margin: 5px 0; }
   table.head { width: 100%; border-collapse: collapse; font-size: 10px; margin-bottom: 2px; }
   table.head td { padding: 1px 0; }

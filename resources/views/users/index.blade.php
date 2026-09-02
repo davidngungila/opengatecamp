@@ -48,6 +48,7 @@
                   <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><circle cx="12" cy="5" r=".6"/><circle cx="12" cy="12" r=".6"/><circle cx="12" cy="19" r=".6"/></svg>
                 </button>
                 <div class="action-menu" id="am-users-{{ $u->id }}">
+                  @if(!$isCommittee)
                   <button type="button" data-edit-user
                           data-id="{{ $u->id }}" data-name="{{ $u->name }}" data-email="{{ $u->email }}"
                           data-phone="{{ $u->phone }}" data-role="{{ $u->role_id }}" data-status="{{ $u->status }}">Edit Role / Profile</button>
@@ -66,6 +67,7 @@
                     @csrf @method('DELETE')
                     <button type="submit" class="danger">Delete</button>
                   </form>
+                  @endif
                 </div>
               </div>
             </td>

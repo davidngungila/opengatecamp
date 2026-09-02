@@ -40,6 +40,7 @@
                 </button>
                 <div class="action-menu" id="am-rcp-{{ $d->id }}">
                   <a href="{{ route('accounting.ledger', ['account' => $d->category_account_id]) }}">View Category Ledger</a>
+                  @if(!$isCommittee)
                   <form method="POST" action="{{ route('accounting.documents.destroy', $d) }}"
                         data-confirm data-confirm-title="Delete this receipt?"
                         data-confirm-message="{{ $d->doc_no }} and its linked journal entry will be removed."
@@ -47,6 +48,7 @@
                     @csrf @method('DELETE')
                     <button type="submit" class="danger">Delete</button>
                   </form>
+                  @endif
                 </div>
               </div>
             </td>

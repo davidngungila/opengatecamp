@@ -50,12 +50,14 @@
                 </button>
                 <div class="action-menu" id="am-bud-{{ $b->id }}">
                   <a href="{{ route('accounting.ledger', ['account' => $b->account_id]) }}">View Ledger</a>
+                  @if(!$isCommittee)
                   <form method="POST" action="{{ route('accounting.budgets.destroy', $b) }}"
                         data-confirm data-confirm-title="Delete this budget line?"
                         data-confirm-label="Delete Budget">
                     @csrf @method('DELETE')
                     <button type="submit" class="danger">Delete</button>
                   </form>
+                  @endif
                 </div>
               </div>
             </td>

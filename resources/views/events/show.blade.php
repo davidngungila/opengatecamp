@@ -40,7 +40,10 @@
         </div>
       </div>
       <div class="flex gap-8" style="flex-wrap:wrap">
+        @if(!$isCommittee)
         <button type="button" class="btn btn-secondary btn-sm" data-modal-open="editEventModal">Edit</button>
+        @endif
+        @if(!$isCommittee)
         <form method="POST" action="{{ route('events.status', $event) }}" style="display:inline">
           @csrf @method('PATCH')
           <select name="status" class="filter-select" onchange="this.form.submit()" style="min-width:150px">
@@ -49,6 +52,10 @@
             @endforeach
           </select>
         </form>
+        @else
+        <span class="badge badge-{{ $event->status==='open_registration' ? 'success' : ($event->status==='completed' ? 'info' : 'neutral') }} badge-dotted">{{ $eventStatuses[$event->status] ?? ucfirst($event->status) }}</span>
+        @endif
+        @if(!$isCommittee)
         <form method="POST" action="{{ route('events.destroy', $event) }}" data-confirm
               data-confirm-title="Delete this event?"
               data-confirm-message="{{ $event->title }} and all its attendees/pledges will be permanently removed."
@@ -56,6 +63,7 @@
           @csrf @method('DELETE')
           <button type="submit" class="btn btn-danger btn-sm">Delete</button>
         </form>
+        @endif
       </div>
     </div>
   </div>
@@ -103,6 +111,7 @@
               <td>{{ number_format($a->amount_paid) }}</td>
               <td>{{ ucfirst($a->payment_method ?? '—') }}</td>
               <td>
+                @if(!$isCommittee)
                 <form method="POST" action="{{ route('events.attendees.update', [$event, $a]) }}" id="attStatus-{{ $a->id }}">
                   @csrf @method('PUT')
                   <select name="status" class="filter-select" style="min-width:110px;padding:3px 8px;font-size:11.5px" onchange="document.getElementById('attStatus-{{ $a->id }}').submit()">
@@ -111,6 +120,9 @@
                     @endforeach
                   </select>
                 </form>
+                @else
+                  <span class="badge badge-{{ $a->getStatusColor() }} badge-dotted">{{ $a->getStatusLabel() }}</span>
+                @endif
               </td>
               <td>
                 @if($a->checked_in_at)
@@ -126,6 +138,7 @@
                     <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><circle cx="12" cy="5" r=".6"/><circle cx="12" cy="12" r=".6"/><circle cx="12" cy="19" r=".6"/></svg>
                   </button>
                   <div class="action-menu" id="am-att-{{ $a->id }}">
+                    @if(!$isCommittee)
                     <button type="button" data-edit-attendee data-id="{{ $a->id }}" data-name="{{ $a->name }}" data-phone="{{ $a->phone }}" data-email="{{ $a->email }}" data-status="{{ $a->status }}" data-amount="{{ $a->amount_paid }}" data-method="{{ $a->payment_method }}" data-notes="{{ $a->notes }}">Edit Status / Payment</button>
                     <form method="POST" action="{{ route('events.attendees.destroy', [$event, $a]) }}" data-confirm
                           data-confirm-title="Remove attendee?"
@@ -133,6 +146,7 @@
                           data-confirm-label="Remove">@csrf @method('DELETE')
                       <button type="submit" class="danger">Remove</button>
                     </form>
+                    @endif
                   </div>
                 </div>
               </td>
@@ -198,6 +212,7 @@
         </div>
         @if($s->speaker || $s->facilitator)<div class="ec-sub" style="margin-top:8px">{{ $s->speaker ? 'Speaker: '.$s->speaker : '' }} {{ $s->facilitator ? '· Facilitator: '.$s->facilitator : '' }}</div>@endif
         @if($s->description)<p class="text-muted" style="margin:8px 0 0">{{ $s->description }}</p>@endif
+        @if(!$isCommittee)
         <div style="margin-top:12px">
           <form method="POST" action="{{ route('events.sessions.destroy', [$event, $s]) }}" data-confirm
                 data-confirm-title="Remove session?"
@@ -206,6 +221,7 @@
             <button type="submit" class="btn btn-ghost btn-sm danger">Remove</button>
           </form>
         </div>
+        @endif
       </div>
       @empty
       <div style="grid-column:1/-1"><div class="empty-state" style="padding:40px 20px"><h3>No sessions yet</h3><p>Add sessions to build the event programme.</p><button type="button" class="btn btn-accent" data-modal-open="sessionModal">+ Add Session</button></div></div>

@@ -24,7 +24,7 @@ Route::post('/logout', [AuthController::class, 'logout'])->name('logout');
 // Public verification page (receipt / ticket QR scan)
 Route::get('/verify', [VerificationController::class, 'verify'])->name('verify');
 
-Route::middleware('auth')->group(function () {
+Route::middleware(['auth', 'committee.readonly'])->group(function () {
 
     Route::get('/', [DashboardController::class, 'index'])->name('dashboard');
 

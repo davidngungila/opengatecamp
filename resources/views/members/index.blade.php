@@ -85,12 +85,15 @@
                 </button>
                 <div class="action-menu" id="am-members-{{ $m->id }}">
                   <a href="{{ route('members.profile', urlencode(Crypt::encryptString($m->id))) }}">View Profile</a>
+                  @if(!$isCommittee)
                   <a href="{{ route('members.edit', $m) }}">Edit</a>
+                  @endif
                   @if($needsActivation)
                   <form method="POST" action="{{ route('members.activate', $m) }}">@csrf
                     <button type="submit">Activate for {{ $fy?->name }}</button>
                   </form>
                   @endif
+                  @if(!$isCommittee)
                   <form method="POST" action="{{ route('members.status', $m) }}">@csrf @method('PATCH')
                     <button type="submit">{{ $m->status==='Active' ? 'Deactivate' : 'Activate' }}</button>
                   </form>
@@ -100,6 +103,7 @@
                         data-confirm-label="Delete Member">@csrf @method('DELETE')
                     <button type="submit" class="danger">Delete</button>
                   </form>
+                  @endif
                 </div>
               </div>
             </td>

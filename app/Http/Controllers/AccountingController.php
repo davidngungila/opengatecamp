@@ -697,6 +697,7 @@ class AccountingController extends Controller
             'margin_right' => 4,
             'margin_top'   => 3,
             'margin_bottom' => 3,
+            'fontDir' => [__DIR__.'/../../vendor/mpdf/mpdf/ttfonts', storage_path('fonts')],
             'tempDir' => storage_path('app/private/mpdf'),
         ]);
         $mpdf->WriteHTML($html);

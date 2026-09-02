@@ -33,6 +33,7 @@
                 </button>
                 <div class="action-menu" id="am-je-{{ $e->id }}">
                   <button type="button" onclick="showEntry({{ $e->id }})">View Lines</button>
+                  @if(!$isCommittee)
                   <form method="POST" action="{{ route('accounting.journal.destroy', $e) }}"
                         data-confirm data-confirm-title="Delete this journal entry?"
                         data-confirm-message="{{ $e->entry_no }} will be removed and account balances updated."
@@ -40,6 +41,7 @@
                     @csrf @method('DELETE')
                     <button type="submit" class="danger">Delete</button>
                   </form>
+                  @endif
                 </div>
               </div>
             </td>

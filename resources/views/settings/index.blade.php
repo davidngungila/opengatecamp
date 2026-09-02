@@ -165,6 +165,7 @@
                     @if(! $y->is_default)
                     <a class="btn btn-secondary btn-sm" href="{{ route('settings.years.switch', $y->id) }}">Set Default</a>
                     @endif
+                    @if(!$isCommittee)
                     <form method="POST" action="{{ route('settings.years.destroy', $y) }}"
                           data-confirm data-confirm-title="Delete this financial year?"
                           data-confirm-message="{{ $y->name }} will be permanently removed."
@@ -172,6 +173,7 @@
                       @csrf @method('DELETE')
                       <button type="submit" class="btn btn-ghost btn-sm" style="color:var(--danger)">Delete</button>
                     </form>
+                    @endif
                   </div>
                 </td>
               </tr>
@@ -264,6 +266,7 @@
           <span class="tf-info">Showing {{ $auditLogs->firstItem() ?? 0 }}“{{ $auditLogs->lastItem() ?? 0 }} of {{ $auditLogs->total() }} entries</span>
           <div class="flex gap-8 settings-actions-cell" style="align-items:center">
             {{ $auditLogs->links() }}
+            @if(!$isCommittee)
             <form method="POST" action="{{ route('settings.audit.clear') }}"
                   data-confirm data-confirm-title="Clear audit log?"
                   data-confirm-message="All recorded activity will be permanently removed."
@@ -271,6 +274,7 @@
               @csrf @method('DELETE')
               <button type="submit" class="btn btn-danger btn-sm">Clear Log</button>
             </form>
+            @endif
           </div>
         </div>
       </div>
