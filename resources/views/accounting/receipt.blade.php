@@ -13,6 +13,8 @@
   .center { text-align: center; }
   .org { font-size: 13px; font-weight: bold; text-transform: uppercase; letter-spacing: 1px; }
   .org-sub { font-size: 8px; letter-spacing: 2px; }
+  .logo { text-align: center; margin-bottom: 4px; }
+  .logo img { width: 34mm; height: 34mm; }
   .title { font-size: 13px; font-weight: bold; text-align: center; letter-spacing: 3px; margin: 6px 0 2px; }
   .ruled { border-top: 1px dashed #000; border-bottom: 1px dashed #000; padding: 2px 0; margin: 5px 0; }
   table.head { width: 100%; border-collapse: collapse; font-size: 10px; margin-bottom: 2px; }
@@ -34,6 +36,9 @@
 </style>
 </head>
 <body>
+  @if(!empty($logoPath) && file_exists($logoPath))
+  <div class="logo"><img src="{{ $logoPath }}" alt="{{ $org }}"></div>
+  @endif
   <div class="center org">{{ $org }}</div>
   <div class="center org-sub">OFFICIAL RECEIPT</div>
 

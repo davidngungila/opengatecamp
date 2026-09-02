@@ -490,12 +490,27 @@ class EventController extends Controller
     private function ensureTicket(EventAttendee $attendee): string
     {
         if (! $attendee->ticket_no) {
-            $prefix = strtoupper(Str::slug($attendee->event?->slug ?? 'OGCM', '_'));
-            $no = $prefix.'-'.str_pad((string) $attendee->id, 5, '0', STR_PAD_LEFT);
-            $attendee->update(['ticket_no' => $no]);
+            $attendee->update(['ticket_no' => $this->uniqueTicketCode($attendee)]);
         }
 
         return $attendee->ticket_no;
+    }
+
+    /**
+     * Generate a short unique 6-character alphanumeric ticket code (e.g. AB3F9K).
+     */
+    private function uniqueTicketCode(EventAttendee $attendee): string
+    {
+        $chars = 'ABCDEFGHJKLMNPQRSTUVWXYZ123456789';
+        do {
+            $code = '';
+            $max = strlen($chars) - 1;
+            for ($i = 0; $i < 6; $i++) {
+                $code .= $chars[random_int(0, $max)];
+            }
+        } while (EventAttendee::where('ticket_no', $code)->exists());
+
+        return $code;
     }
 
     public function ticketPdf(EventAttendee $attendee)
@@ -515,6 +530,7 @@ class EventController extends Controller
             'event'    => $attendee->event,
             'qr'       => $qr,
             'org'      => $org,
+            'logoPath' => public_path('logo.png'),
         ])->render();
 
         $mpdf = new \Mpdf\Mpdf([

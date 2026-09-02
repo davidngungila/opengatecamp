@@ -31,8 +31,7 @@ class EventAttendee extends Model
 
     public function getTicketNo(): string
     {
-        $org = strtoupper($this->event?->slug ?? 'OGCM');
-        return $this->ticket_no ?: ($org.'-'.str_pad((string) $this->id, 5, '0', STR_PAD_LEFT));
+        return $this->ticket_no ?: ('TKT'.str_pad((string) $this->id, 5, '0', STR_PAD_LEFT));
     }
 
     public function getRegionLabel(): string

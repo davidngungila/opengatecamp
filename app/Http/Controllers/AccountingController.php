@@ -682,6 +682,7 @@ class AccountingController extends Controller
             'reference' => $reference,
             'org' => $org,
             'qr' => $qr,
+            'logoPath' => public_path('logo.png'),
         ])->render();
 
         $mpdf = new \Mpdf\Mpdf([
