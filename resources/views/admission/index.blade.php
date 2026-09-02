@@ -11,17 +11,34 @@
   </div>
 
   <div class="glass-card" style="max-width:640px;margin:0 auto">
-    <form method="POST" action="{{ route('admission.lookup') }}">
+    <div class="section-head" style="margin-bottom:12px">
+      <div><h3 style="margin:0">Scan or enter ticket</h3><div class="sub">Use the device camera, type the code, or paste the full QR payload</div></div>
+      <button type="button" id="camToggle" class="btn btn-secondary btn-sm">📷 Scan with Camera</button>
+    </div>
+
+    <form method="POST" action="{{ route('admission.lookup') }}" id="lookupForm">
       @csrf
       <label style="font-size:13px;font-weight:700;color:var(--text-secondary);display:block;margin-bottom:8px">Ticket QR / Code</label>
       <div style="display:flex;gap:8px">
-        <input name="code" value="{{ request('code') }}" placeholder="e.g. 5R8DHY or scan QR"
+        <input name="code" id="codeInput" value="{{ request('code') }}" placeholder="e.g. 5R8DHY or scan QR"
                autofocus autocomplete="off" spellcheck="false"
                style="flex:1;font-size:20px;font-weight:800;letter-spacing:4px;text-transform:uppercase;padding:12px 14px;border:1.5px solid var(--border);border-radius:12px;background:#fff;color:var(--text);">
         <button type="submit" class="btn btn-accent">Find</button>
       </div>
     </form>
-    <div class="sub" style="margin-top:8px">The scanner can type the 6-char code, the printed <code>*CODE*</code> barcode, or the full QR payload.</div>
+    <div class="sub" style="margin-top:8px">The scanner accepts the 6-char code, the printed <code>*CODE*</code> barcode, or the full QR payload.</div>
+  </div>
+
+  <div class="glass-card" id="camBox" style="max-width:640px;margin:16px auto 0;display:none">
+    <div class="section-head" style="margin-bottom:8px">
+      <div><h3 style="margin:0">Camera Scanner</h3><div class="sub" id="camStatus">Starting camera...</div></div>
+      <button type="button" id="camStop" class="btn btn-ghost btn-sm danger">Stop Camera</button>
+    </div>
+    <div style="position:relative;background:#000;border-radius:12px;overflow:hidden">
+      <video id="camVideo" playsinline muted style="width:100%;max-height:360px;display:block"></video>
+      <canvas id="camCanvas" style="position:absolute;inset:0;width:100%;height:100%;opacity:0"></canvas>
+      <div id="camOverlay" style="position:absolute;inset:0;display:flex;align-items:center;justify-content:center;color:#94a3b8;font-size:14px;font-weight:600;background:rgba(0,0,0,.35)">Point the camera at the ticket QR code</div>
+    </div>
   </div>
 
   @if($result === 'not_found')
@@ -96,10 +113,90 @@
 @endsection
 
 @push('scripts')
+<script src="{{ asset('js/jsQR.js') }}"></script>
 <script>
 (function(){
-  var input = document.querySelector('input[name="code"]');
+  var input = document.getElementById('codeInput');
+  var form = document.getElementById('lookupForm');
   if(input){ input.focus(); }
+
+  var camToggle = document.getElementById('camToggle');
+  var camStop  = document.getElementById('camStop');
+  var camBox   = document.getElementById('camBox');
+  var video    = document.getElementById('camVideo');
+  var canvas   = document.getElementById('camCanvas');
+  var camStatus= document.getElementById('camStatus');
+  var scanning = false, stream = null, raf = null, lastDecode = '';
+
+  function normalize(code){
+    var c = String(code||'').trim();
+    if(c.charAt(0)==='*' && c.slice(-1)==='*'){ c = c.slice(1,-1); }
+    if(c.indexOf('|') !== -1){ c = (c.split('|')[2]||''); }
+    return c.trim().toUpperCase();
+  }
+
+  function submitCode(code){
+    if(!code) return;
+    input.value = code;
+    form.submit();
+  }
+
+  function stopCam(){
+    scanning = false;
+    if(raf){ cancelAnimationFrame(raf); raf = null; }
+    if(stream){ stream.getTracks().forEach(function(t){ t.stop(); }); stream = null; }
+    video.srcObject = null;
+    camBox.style.display = 'none';
+  }
+
+  function tick(){
+    if(!scanning) return;
+    if(video.readyState === video.HAVE_ENOUGH_DATA){
+      var w = video.videoWidth, h = video.videoHeight;
+      if(w && h){
+        canvas.width = w; canvas.height = h;
+        var ctx = canvas.getContext('2d', {willReadFrequently:true});
+        ctx.drawImage(video, 0, 0, w, h);
+        var img = ctx.getImageData(0, 0, w, h);
+        var code = jsQR(img.data, img.width, img.height, {inversionAttempts:'dontInvert'});
+        if(code && code.data){
+          var n = normalize(code.data);
+          if(n && n !== lastDecode){
+            lastDecode = n;
+            camStatus.textContent = 'Scanned: '+n+' — looking up...';
+            submitCode(n);
+            return;
+          }
+        }
+      }
+    }
+    raf = requestAnimationFrame(tick);
+  }
+
+  function startCam(){
+    if(!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia){
+      camStatus.textContent = 'Camera not supported in this browser.';
+      return;
+    }
+    camBox.style.display = 'block';
+    camStatus.textContent = 'Requesting camera permission...';
+    navigator.mediaDevices.getUserMedia({video:{facingMode:'environment', width:{ideal:1280}, height:{ideal:720}}, audio:false})
+      .then(function(s){
+        stream = s;
+        video.srcObject = s;
+        video.play();
+        scanning = true;
+        lastDecode = '';
+        camStatus.textContent = 'Scanner ready — point at the QR code';
+        raf = requestAnimationFrame(tick);
+      })
+      .catch(function(err){
+        camStatus.textContent = 'Camera unavailable: '+(err && err.name ? err.name : 'permission denied');
+      });
+  }
+
+  if(camToggle){ camToggle.addEventListener('click', startCam); }
+  if(camStop){ camStop.addEventListener('click', stopCam); }
 })();
 </script>
 @endpush
