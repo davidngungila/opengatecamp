@@ -669,7 +669,8 @@ class AccountingController extends Controller
 
         $org = Setting::get('org.name', 'Open Gate Camp Mission');
 
-        $qrData = 'OGCM|RCP|'.$receiptNo.'|'.number_format($amount, 2);
+        $payload = 'OGCM|RCP|'.$receiptNo.'|'.number_format($amount, 2);
+        $qrData = route('verify', ['code' => $payload], true);
         $qr = app(\App\Services\QrCodeService::class)->pngDataUri($qrData, 3);
 
         $html = view('accounting.receipt', [

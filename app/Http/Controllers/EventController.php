@@ -520,7 +520,8 @@ class EventController extends Controller
         $attendee->loadMissing('event');
         $this->ensureTicket($attendee);
 
-        $qrData = 'OGCM|TICKET|'.$attendee->getTicketNo().'|'.$attendee->event?->slug;
+        $payload = 'OGCM|TICKET|'.$attendee->getTicketNo().'|'.$attendee->event?->slug;
+        $qrData = route('verify', ['code' => $payload], true);
         $qr = app(\App\Services\QrCodeService::class)->pngDataUri($qrData, 3);
 
         $org = \App\Models\Setting::get('church.name', 'Open Gate Camp Mission');

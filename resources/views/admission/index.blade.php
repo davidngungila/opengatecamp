@@ -129,10 +129,9 @@
   var scanning = false, stream = null, raf = null, lastDecode = '';
 
   function normalize(code){
-    var c = String(code||'').trim();
-    if(c.charAt(0)==='*' && c.slice(-1)==='*'){ c = c.slice(1,-1); }
-    if(c.indexOf('|') !== -1){ c = (c.split('|')[2]||''); }
-    return c.trim().toUpperCase();
+    // Pass the raw scanned value through — the backend parses the verification
+    // URL, QR payload, barcode (*CODE*) or raw 6-char code.
+    return String(code||'').trim();
   }
 
   function submitCode(code){

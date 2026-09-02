@@ -79,14 +79,25 @@ class CheckInController extends Controller
     }
 
     /**
-     * Resolve an attendee from a ticket code in any of these forms:
+     * Resolve an attendee from a ticket value in any of these forms:
+     *  - verification URL (…/verify?code=OGCM%7CTICKET%7CCODE%7Cslug)
      *  - 6-char short code (e.g. 5R8DHY)
      *  - barcode form (*5R8DHY*)
      *  - QR payload form (OGCM|TICKET|CODE|slug)
      */
     private function resolveAttendee(string $input): ?EventAttendee
     {
-        $code = trim((string) $input);
+        $value = trim((string) $input);
+
+        // If it's a verification URL, pull the "code" query param (URL-decoded).
+        if (preg_match('~[/?]verify\?~', $value) || (str_starts_with($value, 'http') && str_contains($value, 'code='))) {
+            parse_str((string) parse_url($value, PHP_URL_QUERY), $q);
+            if (! empty($q['code'])) {
+                $value = urldecode($q['code']);
+            }
+        }
+
+        $code = trim($value);
 
         // Strip barcode asterisks.
         if (str_starts_with($code, '*') && str_ends_with($code, '*')) {
@@ -107,7 +118,6 @@ class CheckInController extends Controller
         }
 
         return EventAttendee::where('ticket_no', $code)
-            ->orWhere('ticket_no', strtoupper($code))
             ->with('event')
             ->first();
     }
