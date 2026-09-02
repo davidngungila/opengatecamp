@@ -53,6 +53,7 @@
             <th>Recipients</th>
             <th>Message</th>
             <th>Sent By</th>
+            <th></th>
           </tr>
         </thead>
         <tbody>
@@ -73,9 +74,13 @@
             </td>
             <td style="max-width:300px">{{ Str::limit($m->message, 90) }}</td>
             <td style="white-space:nowrap">{{ $m->created_by ?? '—' }}</td>
+            <td style="text-align:right;white-space:nowrap">
+              <a href="{{ route('messaging.show', $m) }}" class="btn btn-sm btn-primary"
+                 style="height:30px;padding:0 12px" title="View full message">View</a>
+            </td>
           </tr>
           @empty
-          <tr><td colspan="6"><div class="empty-state"><h3>No messages found</h3><p>Try adjusting your filters.</p></div></td></tr>
+          <tr><td colspan="7"><div class="empty-state"><h3>No messages found</h3><p>Try adjusting your filters.</p></div></td></tr>
           @endforelse
         </tbody>
       </table>

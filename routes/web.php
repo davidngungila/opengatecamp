@@ -128,6 +128,7 @@ Route::middleware('auth')->group(function () {
     Route::get('/messaging/email', [MessagingController::class, 'email'])->name('messaging.email');
     Route::get('/messaging/notifications', [MessagingController::class, 'notifications'])->name('messaging.notifications');
     Route::get('/messaging/history', [MessagingController::class, 'history'])->name('messaging.history');
+    Route::get('/messaging/history/{message}', [MessagingController::class, 'show'])->name('messaging.show');
     Route::get('/messaging/templates', [MessagingController::class, 'templates'])->name('messaging.templates');
     Route::get('/messaging/settings', [MessagingController::class, 'settings'])->name('messaging.settings');
     Route::post('/messaging', [MessagingController::class, 'store'])->name('messaging.store');

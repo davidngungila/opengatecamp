@@ -78,6 +78,15 @@ class MessagingController extends Controller
         return view('messaging.history', $data);
     }
 
+    public function show(int $id)
+    {
+        $message = Message::findOrFail($id);
+
+        return view('messaging.show', array_replace($this->sharedData(), [
+            'message' => $message,
+        ]));
+    }
+
     public function settings()
     {
         return view('messaging.settings', $this->sharedData());
