@@ -604,12 +604,93 @@ class EventController extends Controller
             $eventsByDay[$e->start_date->format('Y-m-d')][] = $e;
         }
 
+        // Time-slotted agenda items (sessions) for the displayed month.
+        $sessions = EventSession::with('event')
+            ->whereBetween('session_date', [$start, $end])
+            ->orderBy('session_date')->orderBy('start_time')->get();
+
+        $sessionsByDay = [];
+        foreach ($sessions as $s) {
+            $sessionsByDay[$s->session_date->format('Y-m-d')][] = $s;
+        }
+
         return view('calendar.index', [
             'eventsByDay' => $eventsByDay,
+            'sessionsByDay' => $sessionsByDay,
+            'campEvents' => $events,
             'today' => now()->startOfDay(),
             'monthDate' => $date,
             'prevMonth' => (clone $date)->modify('-1 month')->format('Y-m'),
             'nextMonth' => (clone $date)->modify('+1 month')->format('Y-m'),
+        ]);
+    }
+
+    /**
+     * Plan a time-slotted agenda item for a specific day & hours on the calendar.
+     */
+    public function storeCalendarSession(Request $request)
+    {
+        $data = $request->validate([
+            'session_date'   => 'required|date',
+            'title'          => 'required|string|max:255',
+            'start_time'     => 'required',
+            'end_time'       => 'required|after:start_time',
+            'venue'          => 'nullable|string|max:255',
+            'speaker'        => 'nullable|string|max:255',
+            'facilitator'    => 'nullable|string|max:255',
+            'category'       => 'nullable|string|max:255',
+            'description'    => 'nullable|string',
+            'event_id'       => 'nullable|exists:events,id',
+        ]);
+
+        $event = ($data['event_id'] ?? null)
+            ? Event::find($data['event_id'])
+            : Event::where('event_type', 'camp')->latest('id')->first();
+
+        $data['event_id'] = $event?->id;
+        $data['sort_order'] = (((int) EventSession::where('event_id', $event?->id)->max('sort_order')) + 1);
+        $data['session_date'] = $data['session_date'];
+
+        $session = EventSession::create($data);
+        AuditLog::record('Planned calendar activity', 'Calendar',
+            $session->title.' — '.$session->session_date?->format('Y-m-d')
+            .($session->start_time ? ' '.$session->start_time.'-'.($session->end_time ?? '') : ''));
+
+        return back()->with('success', 'Activity planned for '.$session->session_date?->format('d M Y').'.');
+    }
+
+    /**
+     * Printable timetable — scope: month (default), a single day, or the whole programme.
+     */
+    public function timetable(Request $request)
+    {
+        $scope = $request->query('scope', 'month');
+        $date  = $request->query('date') ? date_create($request->query('date')) : now();
+        $month = $request->query('month', $date->format('Y-m'));
+
+        if ($scope === 'day') {
+            $sessions = EventSession::with('event')
+                ->whereDate('session_date', $date->format('Y-m-d'))
+                ->orderBy('start_time')->get();
+            $groups = [$date->format('Y-m-d') => $sessions];
+        } elseif ($scope === 'programme') {
+            $sessions = EventSession::with('event')
+                ->orderBy('session_date')->orderBy('start_time')->get();
+            $groups = $sessions->groupBy(fn ($s) => $s->session_date?->format('Y-m-d'))->all();
+        } else {
+            $start = date_create($month.'-01') ?: now()->startOfMonth();
+            $end = (clone $start)->modify('last day of this month');
+            $sessions = EventSession::with('event')
+                ->whereBetween('session_date', [$start, $end])
+                ->orderBy('session_date')->orderBy('start_time')->get();
+            $groups = $sessions->groupBy(fn ($s) => $s->session_date?->format('Y-m-d'))->all();
+        }
+
+        return view('calendar.timetable', [
+            'scope' => $scope,
+            'groups' => $groups,
+            'monthDate' => date_create($month.'-01') ?: now()->startOfMonth(),
+            'today' => now(),
         ]);
     }
 

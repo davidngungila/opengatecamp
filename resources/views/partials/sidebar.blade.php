@@ -52,6 +52,20 @@
             <span class="tt">Calendar</span>
         </div>
 
+        <!-- Admission Desk -->
+        <div class="tooltip-wrap">
+            <a href="{{ route('admission.index') }}" class="nav-single {{ $base === 'admission' ? 'active' : '' }}">
+                <span class="nav-icon">
+                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round">
+                        <path d="M22 11.08V12a10 10 0 11-5.93-9.14"/>
+                        <path d="M22 4L12 14.01l-3-3"/>
+                    </svg>
+                </span>
+                <span class="nav-label">Admission Desk</span>
+            </a>
+            <span class="tt">Admission Desk</span>
+        </div>
+
         <!-- Registrations -->
         <div class="tooltip-wrap">
             <a href="{{ route('attendees.index') }}" class="nav-single {{ $base === 'attendees' ? 'active' : '' }}">

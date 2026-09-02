@@ -8,7 +8,7 @@ class EventSession extends Model
 {
     protected $fillable = [
         'event_id', 'title', 'description', 'session_date', 'start_time',
-        'end_time', 'venue', 'speaker', 'facilitator', 'sort_order',
+        'end_time', 'venue', 'speaker', 'facilitator', 'sort_order', 'category',
     ];
 
     protected $casts = [

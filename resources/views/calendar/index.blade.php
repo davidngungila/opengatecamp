@@ -13,8 +13,10 @@
 @endphp
 <div class="fade-in">
   <div class="section-head">
-    <div><h2>Open Gate Camp Calendar</h2><div class="sub">{{ $monthDate->format('F Y') }} · {{ count($eventsByDay) }} event days</div></div>
+    <div><h2>Open Gate Camp Calendar</h2><div class="sub">{{ $monthDate->format('F Y') }} · {{ count($eventsByDay) }} event days · {{ collect($sessionsByDay)->flatten()->count() }} planned activities</div></div>
     <div class="flex gap-8">
+      <a href="{{ route('calendar.timetable', ['scope' => 'month', 'month' => $monthDate->format('Y-m')]) }}" target="_blank" class="btn btn-secondary btn-sm">🖨 Print Timetable</a>
+      <button type="button" class="btn btn-accent btn-sm" data-modal-open="planModal">+ Plan Activity</button>
       <a href="{{ route('calendar.index', ['month' => $prevMonth]) }}" class="btn btn-secondary btn-sm">← Prev</a>
       <a href="{{ route('calendar.index', ['month' => $today->format('Y-m')]) }}" class="btn btn-secondary btn-sm">Today</a>
       <a href="{{ route('calendar.index', ['month' => $nextMonth]) }}" class="btn btn-secondary btn-sm">Next →</a>
@@ -32,18 +34,61 @@
             $key = $monthDate->format('Y-m').'-'.str_pad((string)$d,2,'0',STR_PAD_LEFT);
             $isToday = $today->format('Y-m-d') === $key;
             $dayEvents = $eventsByDay[$key] ?? [];
+            $daySessions = $sessionsByDay[$key] ?? [];
         @endphp
         <div class="cal-cell {{ $isToday ? 'today' : '' }}">
-          {{ $d }}
+          <div class="cal-head">{{ $d }}</div>
           @foreach($dayEvents as $e)
             <a href="{{ route('events.show', $e) }}" class="cal-evt type-evt" title="{{ $e->title }}">
               {{ $e->title }} <span class="cal-count">({{ $e->registered_count }})</span>
             </a>
           @endforeach
+          @foreach($daySessions as $s)
+            <div class="cal-slot" title="{{ $s->title }}">
+              <span class="cal-time">{{ \Carbon\Carbon::parse($s->start_time)->format('H:i') }}{{ $s->end_time ? '-'.substr($s->end_time,0,5) : '' }}</span>
+              <span class="cal-slot-t">{{ $s->title }}</span>
+            </div>
+          @endforeach
         </div>
       @endfor
       @for($i=0;$i<$trailingPads;$i++)<div class="cal-cell pad"></div>@endfor
     </div>
+  </div>
+</div>
+
+{{-- Modal: Plan a day activity with hours --}}
+<div class="modal-overlay" id="planModal">
+  <div class="modal-box md">
+    <div class="modal-head">
+      <div><h3>Plan Day Activity</h3><p>Schedule an activity for a specific day and hours</p></div>
+      <button type="button" class="modal-close" data-modal-close><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><path d="M18 6L6 18M6 6l12 12"/></svg></button>
+    </div>
+    <form method="POST" action="{{ route('calendar.sessions.store') }}">
+      @csrf
+      <div class="modal-body">
+        <div class="form-grid">
+          <div class="field"><label>Date</label><input type="date" name="session_date" required value="{{ request()->query('plan_date', $today->format('Y-m-d')) }}"></div>
+          <div class="field"><label>Event</label>
+            <select name="event_id">
+              <option value="">{{ $campEvents->first()?->title ?? '— Open Gate Summer Camp —' }}</option>
+              @foreach($campEvents as $ce)<option value="{{ $ce->id }}">{{ $ce->title }}</option>@endforeach
+            </select>
+          </div>
+          <div class="field full"><label>Activity / Title</label><input name="title" placeholder="e.g. Opening Devotion, Group Games" required></div>
+          <div class="field"><label>Start Time</label><input type="time" name="start_time" required></div>
+          <div class="field"><label>End Time</label><input type="time" name="end_time" required></div>
+          <div class="field"><label>Venue</label><input name="venue" placeholder="e.g. Main Hall"></div>
+          <div class="field"><label>Category</label><input name="category" placeholder="e.g. Worship, Food, Committee"></div>
+          <div class="field"><label>Speaker</label><input name="speaker" placeholder="e.g. Fr. Daniel"></div>
+          <div class="field"><label>Facilitator</label><input name="facilitator" placeholder="e.g. Grace Kileo"></div>
+          <div class="field full"><label>Notes</label><textarea name="description" placeholder="Details..."></textarea></div>
+        </div>
+      </div>
+      <div class="modal-foot">
+        <button type="button" class="btn btn-secondary" data-modal-close>Cancel</button>
+        <button type="submit" class="btn btn-accent">Plan Activity</button>
+      </div>
+    </form>
   </div>
 </div>
 @endsection

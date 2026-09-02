@@ -244,6 +244,10 @@ table.data-table{width:100%;border-collapse:collapse;min-width:760px;}
 .cal-cell .cal-evt.type-mass{background:var(--purple-bg);color:var(--purple);}
 .cal-cell .cal-evt.type-fin{background:var(--success-bg);color:var(--success);}
 .cal-cell.pad{background:transparent;border:none;}
+.cal-head{font-size:12px;color:var(--text-secondary);margin-bottom:2px;}
+.cal-slot{display:flex;flex-direction:column;margin-top:4px;background:var(--info-bg);color:var(--info);border-radius:6px;padding:3px 6px;font-size:10px;font-weight:600;}
+.cal-slot .cal-time{font-size:9px;font-weight:800;opacity:.85;letter-spacing:.3px;}
+.cal-slot .cal-slot-t{white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
 
 .switch{position:relative;width:42px;height:24px;flex-shrink:0;display:inline-block;}
 .switch input{opacity:0;width:0;height:0;}

@@ -14,6 +14,7 @@ use App\Http\Controllers\UserController;
 use App\Http\Controllers\VerificationController;
 use App\Http\Controllers\MessagingController;
 use App\Http\Controllers\MemberPortalController;
+use App\Http\Controllers\CheckInController;
 use Illuminate\Support\Facades\Route;
 
 Route::get('/login', [AuthController::class, 'showLogin'])->name('login');
@@ -99,6 +100,13 @@ Route::middleware('auth')->group(function () {
     Route::put('/events/{event:slug}/attendees/{attendee}', [EventController::class, 'updateAttendee'])->name('events.attendees.update');
     Route::delete('/events/{event:slug}/attendees/{attendee}', [EventController::class, 'destroyAttendee'])->name('events.attendees.destroy');
     Route::get('/calendar', [EventController::class, 'calendar'])->name('calendar.index');
+    Route::post('/calendar/sessions', [EventController::class, 'storeCalendarSession'])->name('calendar.sessions.store');
+    Route::get('/calendar/timetable', [EventController::class, 'timetable'])->name('calendar.timetable');
+
+    // ── Admission desk (scan ticket / enter code) ─────────
+    Route::get('/admission', [CheckInController::class, 'index'])->name('admission.index');
+    Route::post('/admission/lookup', [CheckInController::class, 'lookup'])->name('admission.lookup');
+    Route::post('/admission/admit', [CheckInController::class, 'admit'])->name('admission.admit');
     Route::get('/attendees', [EventController::class, 'attendees'])->name('attendees.index');
     Route::post('/attendees', [EventController::class, 'storeAttendeeGlobal'])->name('attendees.store');
     Route::post('/attendees/{attendee}/payments', [EventController::class, 'recordAttendeePayment'])->name('attendees.payments');
