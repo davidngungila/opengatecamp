@@ -61,7 +61,7 @@
     @endforeach
   </div>
 
-  <div class="two-col" style="grid-template-columns:1.6fr 1fr;align-items:start">
+  <div class="two-col">
     {{-- Cash flow overview + chart --}}
     <div class="glass-card">
       <h2 style="font-size:14px;margin:0 0 6px">Cash Flow Overview</h2>
@@ -96,15 +96,15 @@
       {{-- Moving filter + latest transactions --}}
       <div class="glass-card">
         <h2 style="font-size:14px;margin:0 0 12px">Cash Movements</h2>
-        <form method="GET" action="{{ route('accounting.cash-bank') }}" style="display:flex;gap:8px;margin-bottom:12px">
-          <select name="account" style="flex:1;height:36px;border:1px solid var(--border-strong);border-radius:10px;padding:0 10px;font-size:12.5px;background:var(--white);color:var(--text-primary)">
+        <form method="GET" action="{{ route('accounting.cash-bank') }}" style="display:flex;flex-wrap:wrap;gap:8px;margin-bottom:12px">
+          <select name="account" style="flex:1 1 140px;min-width:140px;height:36px;border:1px solid var(--border-strong);border-radius:10px;padding:0 10px;font-size:12.5px;background:var(--white);color:var(--text-primary)">
             <option value="">All money accounts</option>
             @foreach($balances as $b)
               <option value="{{ $b['account']->id }}" {{ (string)$activeAccount === (string)$b['account']->id ? 'selected' : '' }}>{{ $b['account']->code }} — {{ $b['account']->name }}</option>
             @endforeach
           </select>
-          <button type="submit" class="btn btn-secondary" style="height:36px">Filter</button>
-          @if($activeAccount)<a href="{{ route('accounting.cash-bank') }}" class="btn btn-ghost btn-sm" style="height:36px;align-self:center">Clear</a>@endif
+          <button type="submit" class="btn btn-secondary" style="height:36px;flex:0 0 auto">Filter</button>
+          @if($activeAccount)<a href="{{ route('accounting.cash-bank') }}" class="btn btn-ghost btn-sm" style="height:36px;align-self:center;flex:0 0 auto">Clear</a>@endif
         </form>
         @forelse($movements as $m)
         <div class="mini-row">

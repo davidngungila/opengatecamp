@@ -7,14 +7,15 @@ use Illuminate\Database\Eloquent\Model;
 class EventAttendee extends Model
 {
     protected $fillable = [
-        'event_id', 'member_id', 'name', 'phone', 'email', 'status',
+        'event_id', 'member_id', 'name', 'phone', 'email', 'fellowship', 'status',
         'amount_paid', 'fee_amount', 'payment_method', 'pickup_location', 'notes', 'registered_on',
-        'checked_in_by', 'checked_in_at', 'journal_entry_id',
+        'checked_in_by', 'checked_in_at', 'ticket_no', 'ticket_sent_at', 'journal_entry_id',
     ];
 
     protected $casts = [
         'registered_on' => 'date',
         'checked_in_at' => 'datetime',
+        'ticket_sent_at' => 'datetime',
         'amount_paid' => 'float',
         'fee_amount' => 'float',
     ];
@@ -22,6 +23,26 @@ class EventAttendee extends Model
     public function event() { return $this->belongsTo(Event::class); }
     public function member() { return $this->belongsTo(Member::class); }
     public function journalEntry() { return $this->belongsTo(JournalEntry::class); }
+
+    public function hasCompletedContribution(): bool
+    {
+        return (float) $this->amount_paid >= (float) $this->fee_amount && (float) $this->fee_amount > 0;
+    }
+
+    public function getTicketNo(): string
+    {
+        $org = strtoupper($this->event?->slug ?? 'OGCM');
+        return $this->ticket_no ?: ($org.'-'.str_pad((string) $this->id, 5, '0', STR_PAD_LEFT));
+    }
+
+    public function getRegionLabel(): string
+    {
+        return match ($this->pickup_location) {
+            'arusha' => 'Arusha',
+            'moshi'  => 'Moshi',
+            default  => '—',
+        };
+    }
 
     public static function statuses(): array
     {

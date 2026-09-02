@@ -1,5 +1,4 @@
-<div class="two-col" style="grid-template-columns:1.4fr 1fr">
-  <div class="glass-card">
+<div class="glass-card">
     <h2 style="font-size:14.5px;margin:0 0 14px">Compose SMS</h2>
     <form method="POST" action="{{ route('messaging.store') }}" id="composeForm">
       @csrf
@@ -68,28 +67,6 @@
       </div>
     </form>
   </div>
-
-  <div class="glass-card">
-    <h2 style="font-size:14.5px;margin:0 0 12px">SMS History</h2>
-    @php $smsMessages = $messages->filter(fn($m) => $m->channel === 'sms'); @endphp
-    @if($smsMessages->isEmpty())
-    <div class="empty-state" style="padding:30px 16px"><p>No SMS messages sent yet.</p></div>
-    @endif
-    @foreach($smsMessages->take(10) as $h)
-    @php $rowClass = $h->status==='sent' ? 'var(--green-light)' : ($h->status==='failed' ? '#fef2f2' : 'var(--blue-light)'); $icoColor = $h->status==='sent' ? 'var(--green-accent)' : ($h->status==='failed' ? '#991b1b' : 'var(--blue-accent)'); @endphp
-    <div class="mini-row">
-      <div class="m-ico" style="background:{{ $rowClass }};color:{{ $icoColor }}">
-        @php echo $h->status==='sent' ? '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6L9 17l-5-5"/></svg>' : ($h->status==='failed' ? '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>' : 'SMS'); @endphp
-      </div>
-      <div class="m-body">
-        <p>{{ $h->recipients }}</p>
-        <span>{{ Str::limit($h->message, 46) }}</span>
-      </div>
-      <span class="badge badge-{{ $h->status==='sent' ? 'success' : ($h->status==='failed' ? 'danger' : 'neutral') }} badge-dotted">{{ ucfirst($h->status) }}</span>
-    </div>
-    @endforeach
-  </div>
-</div>
 
 <script>
 var recipientsData = [];

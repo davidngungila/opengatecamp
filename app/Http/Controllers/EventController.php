@@ -171,6 +171,7 @@ class EventController extends Controller
             'statuses' => EventAttendee::statuses(),
             'defaultFee' => 10000,
             'pickupLocations' => ['arusha' => 'Arusha', 'moshi' => 'Moshi'],
+            'fellowships' => $this->fellowshipList(),
             'filters' => compact('eventSlug', 'status', 'q'),
             'totals' => [
                 'registered' => EventAttendee::count(),
@@ -188,6 +189,7 @@ class EventController extends Controller
             'name' => 'nullable|string|max:255',
             'phone' => 'nullable|string|max:20',
             'email' => 'nullable|email',
+            'fellowship' => 'nullable|string|max:255',
             'amount_paid' => 'nullable|numeric|min:0',
             'fee_amount' => 'nullable|numeric|min:0',
             'payment_method' => 'nullable|in:cash,bank,mobile',
@@ -234,6 +236,8 @@ class EventController extends Controller
                 ]);
 
                 $attendee->update(['journal_entry_id' => $entry->id]);
+                $attendee->loadMissing('event');
+                $this->ensureTicket($attendee);
             }
 
             return $attendee;
@@ -301,6 +305,11 @@ class EventController extends Controller
         });
 
         $attendee->refresh();
+
+        if ($attendee->hasCompletedContribution()) {
+            $attendee->loadMissing('event');
+            $this->ensureTicket($attendee);
+        }
 
         AuditLog::record('Recorded attendee payment', 'Events', "{$attendee->event?->title} — {$attendee->name} (+{$amount})");
 
@@ -439,6 +448,8 @@ class EventController extends Controller
                 ]);
 
                 $attendee->update(['journal_entry_id' => $entry->id]);
+                $attendee->loadMissing('event');
+                $this->ensureTicket($attendee);
             }
 
             return $attendee;
@@ -475,6 +486,77 @@ class EventController extends Controller
         return back()->with('success', 'Attendee removed.');
     }
 
+    // ── Tickets ─────────────────────────────────────────
+    private function ensureTicket(EventAttendee $attendee): string
+    {
+        if (! $attendee->ticket_no) {
+            $prefix = strtoupper(Str::slug($attendee->event?->slug ?? 'OGCM', '_'));
+            $no = $prefix.'-'.str_pad((string) $attendee->id, 5, '0', STR_PAD_LEFT);
+            $attendee->update(['ticket_no' => $no]);
+        }
+
+        return $attendee->ticket_no;
+    }
+
+    public function ticketPdf(EventAttendee $attendee)
+    {
+        abort_unless($attendee->hasCompletedContribution(), 422);
+
+        $attendee->loadMissing('event');
+        $this->ensureTicket($attendee);
+
+        $qrData = 'OGCM|TICKET|'.$attendee->getTicketNo().'|'.$attendee->event?->slug;
+        $qr = app(\App\Services\QrCodeService::class)->pngDataUri($qrData, 3);
+
+        $org = \App\Models\Setting::get('church.name', 'Open Gate Camp Mission');
+
+        $pdf = \Barryvdh\DomPDF\Facade\Pdf::setPaper([0, 0, 226.77, 595.28], 'portrait')->loadView('accounting.ticket', [
+            'attendee' => $attendee,
+            'event'    => $attendee->event,
+            'qr'       => $qr,
+            'org'      => $org,
+        ]);
+
+        return $pdf->stream('Ticket-'.$attendee->getTicketNo().'.pdf');
+    }
+
+    public function sendTicketSms(EventAttendee $attendee)
+    {
+        abort_unless($attendee->hasCompletedContribution(), 422);
+
+        $attendee->loadMissing('event');
+        $this->ensureTicket($attendee);
+
+        if (empty($attendee->phone)) {
+            return back()->with('error', 'No phone number on file for this attendee — SMS not sent.');
+        }
+
+        $sms = new SmsService();
+        $msg = "Hello {$attendee->name}, your ticket for {$attendee->event?->title} is ready.\nTicket: {$attendee->getTicketNo()}\nComing from: {$attendee->getRegionLabel()}\nPresent this ticket at the gate. — Open Gate Camp Mission";
+        $result = $sms->send($attendee->phone, $msg);
+
+        $attendee->update([
+            'ticket_sent_at' => $result['success'] ? now() : $attendee->ticket_sent_at,
+        ]);
+
+        Message::create([
+            'channel'        => 'sms',
+            'recipients'     => $attendee->name,
+            'phone'          => $attendee->phone,
+            'subject'        => null,
+            'message'        => $msg,
+            'status'         => $result['success'] ? 'sent' : 'failed',
+            'api_message_id' => $result['api_message_id'],
+            'api_response'   => $result['raw'],
+            'created_by'     => auth()->user()?->name,
+        ]);
+
+        AuditLog::record($result['success'] ? 'Sent ticket SMS' : 'Failed ticket SMS', 'Events', "{$attendee->getTicketNo()} — {$attendee->phone}");
+
+        return back()->with($result['success'] ? 'success' : 'error',
+            $result['success'] ? "Ticket ({$attendee->getTicketNo()}) SMS sent to {$attendee->name}." : 'Ticket SMS failed to send.');
+    }
+
     // ── Calendar ────────────────────────────────────────
     public function calendar(Request $request)
     {
@@ -502,6 +584,18 @@ class EventController extends Controller
             'prevMonth' => (clone $date)->modify('-1 month')->format('Y-m'),
             'nextMonth' => (clone $date)->modify('+1 month')->format('Y-m'),
         ]);
+    }
+
+    private function fellowshipList(): array
+    {
+        $raw = (string) \App\Models\Setting::get('fellowships.list', '');
+        $list = collect(explode("\n", $raw))
+            ->map(fn ($f) => trim($f))
+            ->filter()
+            ->values()
+            ->all();
+
+        return $list ?: ['UDSM', 'MUHAS', 'SUZA', 'TUDARCo', 'MU', 'MoCU', 'Other'];
     }
 
     private function validated(Request $request, ?int $ignore = null): array

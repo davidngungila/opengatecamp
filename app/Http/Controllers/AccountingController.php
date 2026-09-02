@@ -670,7 +670,13 @@ class AccountingController extends Controller
 
         $org = Setting::get('org.name', 'Open Gate Camp Mission');
 
-        $pdf = Pdf::loadView('accounting.receipt', [
+        $qrData = 'OGCM|RCP|'.$receiptNo.'|'.number_format($amount, 2);
+        $qr = app(\App\Services\QrCodeService::class)->pngDataUri($qrData, 3);
+
+        $pdf = Pdf::setPaper([0, 0, 226.77, 595.28], 'portrait')
+            ->setOption('isHtml5ParserEnabled', true)
+            ->setOption('isRemoteEnabled', false)
+            ->loadView('accounting.receipt', [
             'entry' => $entry,
             'lines' => $lines,
             'amount' => $amount,
@@ -679,6 +685,7 @@ class AccountingController extends Controller
             'receiptNo' => $receiptNo,
             'reference' => $reference,
             'org' => $org,
+            'qr' => $qr,
         ]);
 
         $filename = 'Receipt-'.preg_replace('/[^A-Za-z0-9-_]/', '', str_replace('JE-', '', $entry->entry_no)).'.pdf';

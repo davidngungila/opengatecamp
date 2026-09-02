@@ -3,6 +3,7 @@
         ['sms', 'SMS', route('messaging.sms')],
         ['email', 'Email', route('messaging.email')],
         ['notifications', 'Notifications', route('messaging.notifications')],
+        ['history', 'History', route('messaging.history')],
         ['templates', 'Templates', route('messaging.templates')],
         ['settings', 'Settings', route('messaging.settings')],
     ];

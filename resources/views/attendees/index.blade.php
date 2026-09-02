@@ -81,6 +81,10 @@
                           data-notes="{{ $a->notes }}">View Details</button>
                   <button type="button" data-record-payment data-id="{{ $a->id }}" data-name="{{ $a->name }}" data-amount="{{ $a->amount_paid }}">Record Payment</button>
                   <button type="button" data-send-sms data-id="{{ $a->id }}" data-name="{{ $a->name }}" data-phone="{{ $a->phone }}">Send SMS</button>
+                  @if($a->hasCompletedContribution())
+                  <a href="{{ route('attendees.ticket.pdf', $a) }}" target="_blank" class="action-link" style="display:block;width:100%;padding:8px 14px;font-size:12.5px;color:var(--text-primary);text-decoration:none;box-sizing:border-box">Print Ticket (PDF)</a>
+                  <button type="button" data-send-ticket data-id="{{ $a->id }}" data-name="{{ $a->name }}" data-phone="{{ $a->phone }}" data-ticket="{{ $a->getTicketNo() }}">Send Ticket SMS</button>
+                  @endif
                 </div>
               </div>
             </td>
@@ -111,11 +115,15 @@
           <div class="field"><label>Full Name</label><input name="name" id="regName" placeholder="Full name" value="{{ old('name') }}" required></div>
           <div class="field"><label>Phone</label><input name="phone" id="regPhone" placeholder="+255 7XX XXX XXX" value="{{ old('phone') }}"></div>
           <div class="field full"><label>Email</label><input name="email" id="regEmail" placeholder="email@example.com" value="{{ old('email') }}"></div>
-          <div class="field"><label>Amount to Pay (TZS)</label><input type="number" name="fee_amount" id="regFee" value="{{ old('fee_amount', $defaultFee ?? 10000) }}" readonly style="background:var(--blue-light);font-weight:700;color:var(--navy-900)"></div>
-          <div class="field"><label>Pickup Location</label><select name="pickup_location" required>
+          <div class="field"><label>University Fellowship</label><select name="fellowship">
+            <option value="">— Select —</option>
+            @foreach($fellowships ?? [] as $f)<option value="{{ $f }}" @if(old('fellowship')===$f) selected @endif>{{ $f }}</option>@endforeach
+          </select></div>
+          <div class="field"><label>Coming From</label><select name="pickup_location" required>
             <option value="">— Select —</option>
             @foreach($pickupLocations ?? [] as $pk => $pl)<option value="{{ $pk }}" @if(old('pickup_location')===$pk) selected @endif>{{ $pl }}</option>@endforeach
           </select></div>
+          <div class="field"><label>Amount to Pay (TZS)</label><input type="number" name="fee_amount" id="regFee" value="{{ old('fee_amount', $defaultFee ?? 10000) }}" readonly style="background:var(--blue-light);font-weight:700;color:var(--navy-900)"></div>
           <div class="field"><label>Amount Paid (TZS)</label><input type="number" step="0.01" min="0" name="amount_paid" value="{{ old('amount_paid', 0) }}"></div>
           <div class="field"><label>Payment Method</label><select name="payment_method">
             <option value="">— Select —</option>
@@ -271,6 +279,21 @@ document.addEventListener('DOMContentLoaded', function(){
       document.getElementById('smsMessage').value = 'Hello ' + (d.name||'') + ',\\nYou are registered for Open Gate Camp. We look forward to seeing you!';
       document.getElementById('smsForm').action = "{{ url('/attendees') }}/" + d.id + "/sms";
       openModalById('smsModal');
+    });
+  });
+
+  document.querySelectorAll('[data-send-ticket]').forEach(function(btn){
+    btn.addEventListener('click', function(){
+      var d = btn.dataset;
+      var msg = 'Send ticket (' + (d.ticket||'') + ') to ' + (d.name||'this attendee') + ' by SMS?';
+      if (!confirm(msg)) return;
+      var f = document.createElement('form');
+      f.method = 'POST';
+      f.action = "{{ url('/attendees') }}/" + d.id + "/ticket/sms";
+      var t = document.createElement('input'); t.type='hidden'; t.name='_token'; t.value = document.querySelector('meta[name="csrf-token"]').content;
+      f.appendChild(t);
+      document.body.appendChild(f);
+      f.submit();
     });
   });
 });

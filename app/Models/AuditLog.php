@@ -8,6 +8,11 @@ class AuditLog extends Model
 {
     protected $fillable = ['user_id', 'user_name', 'action', 'module', 'details', 'ip'];
 
+    public function user()
+    {
+        return $this->belongsTo(User::class);
+    }
+
     public static function record(string $action, ?string $module = null, ?string $details = null): void
     {
         $user = auth()->user();

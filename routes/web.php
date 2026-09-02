@@ -1,6 +1,7 @@
 <?php
 
 use App\Http\Controllers\AccountingController;
+use App\Http\Controllers\AccountController;
 use App\Http\Controllers\AuthController;
 use App\Http\Controllers\DashboardController;
 use App\Http\Controllers\DocumentController;
@@ -36,6 +37,17 @@ Route::middleware('auth')->group(function () {
         Route::get('/activations', [MemberPortalController::class, 'activations'])->name('activations');
         Route::get('/settings', [MemberPortalController::class, 'settings'])->name('settings');
         Route::put('/password', [MemberPortalController::class, 'updatePassword'])->name('password.update');
+    });
+
+    // ── User Account (Profile / Settings / Audit Logs) ──────────────────
+    Route::prefix('account')->name('account.')->group(function () {
+        Route::get('/profile', [AccountController::class, 'profile'])->name('profile');
+        Route::put('/profile', [AccountController::class, 'updateProfile'])->name('profile.update');
+        Route::post('/profile/photo', [AccountController::class, 'updatePhoto'])->name('profile.photo');
+        Route::delete('/profile/photo', [AccountController::class, 'removePhoto'])->name('profile.photo.remove');
+        Route::put('/password', [AccountController::class, 'updatePassword'])->name('password.update');
+        Route::get('/settings', [AccountController::class, 'settings'])->name('settings');
+        Route::get('/audit-logs', [AccountController::class, 'auditLogs'])->name('audit-logs');
     });
 
     Route::post('/members/activate-students', [MemberController::class, 'activateAll'])->name('members.activateAll');
@@ -86,6 +98,8 @@ Route::middleware('auth')->group(function () {
     Route::post('/attendees', [EventController::class, 'storeAttendeeGlobal'])->name('attendees.store');
     Route::post('/attendees/{attendee}/payments', [EventController::class, 'recordAttendeePayment'])->name('attendees.payments');
     Route::post('/attendees/{attendee}/sms', [EventController::class, 'sendAttendeeSms'])->name('attendees.sms');
+    Route::get('/attendees/{attendee}/ticket', [EventController::class, 'ticketPdf'])->name('attendees.ticket.pdf');
+    Route::post('/attendees/{attendee}/ticket/sms', [EventController::class, 'sendTicketSms'])->name('attendees.ticket.sms');
 
     Route::get('/pledges', [PledgeController::class, 'index'])->name('pledges.index');
     Route::post('/pledges', [PledgeController::class, 'store'])->name('pledges.store');
@@ -100,6 +114,7 @@ Route::middleware('auth')->group(function () {
     Route::get('/messaging/sms', [MessagingController::class, 'sms'])->name('messaging.sms');
     Route::get('/messaging/email', [MessagingController::class, 'email'])->name('messaging.email');
     Route::get('/messaging/notifications', [MessagingController::class, 'notifications'])->name('messaging.notifications');
+    Route::get('/messaging/history', [MessagingController::class, 'history'])->name('messaging.history');
     Route::get('/messaging/templates', [MessagingController::class, 'templates'])->name('messaging.templates');
     Route::get('/messaging/settings', [MessagingController::class, 'settings'])->name('messaging.settings');
     Route::post('/messaging', [MessagingController::class, 'store'])->name('messaging.store');

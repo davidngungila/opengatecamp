@@ -50,6 +50,32 @@ class MessagingController extends Controller
         return view('messaging.templates', $this->sharedData());
     }
 
+    public function history(Request $request)
+    {
+        $channel = $request->query('channel', 'all');
+        $status  = $request->query('status', 'all');
+        $q       = $request->query('q', '');
+
+        $messages = Message::query()
+            ->when($channel !== 'all', fn ($query) => $query->where('channel', $channel))
+            ->when($status !== 'all', fn ($query) => $query->where('status', $status))
+            ->when($q !== '', fn ($query) => $query->where(function ($query) use ($q) {
+                $query->where('recipients', 'like', '%'.$q.'%')
+                    ->orWhere('phone', 'like', '%'.$q.'%')
+                    ->orWhere('message', 'like', '%'.$q.'%');
+            }))
+            ->latest()
+            ->paginate(15)
+            ->withQueryString();
+
+        return view('messaging.history', $this->sharedData() + [
+            'messages' => $messages,
+            'channel'  => $channel,
+            'status'   => $status,
+            'q'        => $q,
+        ]);
+    }
+
     public function settings()
     {
         return view('messaging.settings', $this->sharedData());

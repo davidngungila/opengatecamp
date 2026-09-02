@@ -6,7 +6,7 @@
 
 @php
     $tab = $tab ?? 'sms';
-    $tabs = [['sms','SMS'],['email','Email'],['notif','Notifications'],['templates','Templates'],['settings','Settings']];
+    $tabs = [['sms','SMS'],['email','Email'],['notif','Notifications'],['history','History'],['templates','Templates'],['settings','Settings']];
 @endphp
 
 @section('content')
