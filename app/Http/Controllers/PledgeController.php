@@ -24,7 +24,7 @@ class PledgeController extends Controller
         $status = $request->query('status');
         $q = trim((string) $request->query('q'));
 
-        $query = Pledge::with(['event', 'member']);
+        $query = Pledge::with(['event', 'member', 'payments']);
 
         $query->when($eventId, fn ($qr) => $qr->where('event_id', $eventId))
             ->when($status, fn ($qr) => $qr->where('status', $status))
@@ -192,7 +192,47 @@ class PledgeController extends Controller
         });
 
         AuditLog::record('Recorded pledge payment', 'Pledges', "{$pledge->pledge_no} — {$payment->amount}");
-        return back()->with('success', "Payment of {$payment->amount} recorded.");
+
+        $notice = "Payment of {$payment->amount} recorded.";
+
+        if (! empty($pledge->phone)) {
+            $sms = new SmsService();
+
+            if ($sms->isConfigured()) {
+                $event = $pledge->event?->title ?? 'Open Gate Camp Mission';
+                $remaining = $pledge->getRemainingAttribute();
+
+                $msg = "Asante {$pledge->name}, tumepokea mchango wako wa TSH ".number_format($payment->amount)
+                    ." kuongezea ahadi yako. Kwaajili ya \"{$event}\"."
+                    .($remaining > 0 ? ' Salio lako ni TSH '.number_format($remaining).'.' : ' Ahadi yako imekamilika. Asante sana!')
+                    .' Mungu akubariki. — Open Gate Camp Mission';
+
+                $result = $sms->send($pledge->phone, $msg);
+
+                Message::create([
+                    'channel'          => 'sms',
+                    'recipients'       => $pledge->name,
+                    'phone'            => $pledge->phone,
+                    'subject'          => 'Pledge payment received',
+                    'message'          => $msg,
+                    'status'           => $result['success'] ? 'sent' : 'failed',
+                    'api_message_id'   => $result['api_message_id'],
+                    'api_response'     => $result['raw'],
+                    'created_by'       => auth()->user()?->name,
+                ]);
+                AuditLog::record($result['success'] ? 'Sent pledge payment SMS' : 'Failed pledge payment SMS', 'Communication', "{$pledge->pledge_no} — {$pledge->name} ({$pledge->phone})");
+
+                $notice .= $result['success']
+                    ? " Thank-you SMS sent to {$pledge->name}."
+                    : " SMS failed (".($result['status'] ?? 'error').").";
+            } else {
+                $notice .= ' SMS skipped — SMS API token not configured.';
+            }
+        } else {
+            $notice .= ' SMS skipped — no phone number on this pledge.';
+        }
+
+        return back()->with('success', $notice);
     }
 
     public function update(Request $request, Pledge $pledge)

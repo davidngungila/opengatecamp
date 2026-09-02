@@ -13,6 +13,8 @@
   .center { text-align: center; }
   .org { font-size: 13px; font-weight: bold; text-transform: uppercase; letter-spacing: 1px; }
   .org-sub { font-size: 8px; letter-spacing: 2px; }
+  .org-line { font-size: 8px; letter-spacing: 1px; }
+  .org-tag { font-size: 10px; font-weight: bold; letter-spacing: 2px; margin-bottom: 2px; }
   .logo { text-align: center; margin-bottom: 4px; }
   .logo img { width: 34mm; height: 34mm; }
   .title { font-size: 13px; font-weight: bold; text-align: center; letter-spacing: 3px; margin: 6px 0 2px; }
@@ -36,11 +38,10 @@
 </style>
 </head>
 <body>
-  @if(!empty($logoPath) && file_exists($logoPath))
-  <div class="logo"><img src="{{ $logoPath }}" alt="{{ $org }}"></div>
-  @endif
-  <div class="center org">{{ $org }}</div>
-  <div class="center org-sub">OFFICIAL RECEIPT</div>
+  <div class="center org">UMOJA WA VYUO</div>
+  <div class="center org-sub">KARISMATIKI KATOLIKI TANZANIA</div>
+  <div class="center org-line">JIMBO LA MOSHI NA ARUSHA</div>
+  <div class="center org-tag">OPEN GATE SEASON THREE</div>
 
   <div class="title">RECEIPT</div>
 
