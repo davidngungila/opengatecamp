@@ -100,7 +100,7 @@
       @csrf
       <div class="modal-body">
         <div class="form-grid">
-          <div class="field full"><label>Event Title</label><input name="title" placeholder="e.g. Summer Youth Camp 2026" value="{{ old('title') }}"></div>
+          <div class="field full"><label>Event Title</label><input name="title" placeholder="e.g. Open Gate Camp Season 3" value="{{ old('title') }}"></div>
           <div class="field"><label>Type</label><select name="event_type">
             @foreach($types as $k => $t)<option value="{{ $k }}" {{ old('event_type')===$k ? 'selected' : '' }}>{{ $t }}</option>@endforeach
           </select></div>

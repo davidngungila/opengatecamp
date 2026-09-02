@@ -5,48 +5,6 @@
 @section('page_title', 'Pledges')
 
 @section('content')
-<style>
-  .drawer-overlay{
-    position:fixed;inset:0;background:rgba(11,20,38,.45);backdrop-filter:blur(2px);
-    z-index:200;opacity:0;pointer-events:none;transition:opacity .2s ease;
-  }
-  .drawer-overlay.open{opacity:1;pointer-events:auto;}
-  .drawer-panel{
-    position:absolute;top:0;right:0;bottom:0;width:100%;max-width:440px;
-    background:var(--white);box-shadow:-20px 0 60px rgba(0,0,0,.2);
-    display:flex;flex-direction:column;transform:translateX(100%);
-    transition:transform .28s cubic-bezier(.2,.8,.3,1);
-  }
-  .drawer-overlay.open .drawer-panel{transform:translateX(0);}
-  .drawer-head{display:flex;align-items:center;justify-content:space-between;padding:20px 24px;border-bottom:1px solid var(--border);flex-shrink:0;}
-  .drawer-head h3{font-size:17px;font-weight:800;margin:0;}
-  .drawer-head p{margin:4px 0 0;}
-  .drawer-body{padding:24px;overflow-y:auto;flex:1;min-height:0;}
-  .drawer-foot{display:flex;align-items:center;justify-content:flex-end;gap:10px;padding:16px 24px;border-top:1px solid var(--border);flex-shrink:0;background:rgba(248,250,252,.6);}
-  .profile-detail{display:flex;align-items:center;gap:14px;margin-bottom:20px;}
-  .avatar-lg{width:52px;height:52px;font-size:18px;border-radius:14px;}
-  .info-grid{display:flex;flex-direction:column;}
-  .info-row{display:flex;justify-content:space-between;gap:16px;padding:11px 0;border-bottom:1px solid var(--border);font-size:13px;}
-  .info-row:last-child{border-bottom:none;}
-  .info-row span{color:var(--text-tertiary);font-weight:600;flex-shrink:0;}
-  .info-row b{font-weight:700;color:var(--text-primary);text-align:right;}
-  .drawer-progress{background:var(--navy-800);color:#fff;border-radius:14px;padding:16px 18px;margin-bottom:20px;}
-  .dp-row{display:flex;justify-content:space-between;font-size:13px;padding:3px 0;}
-  .dp-row span{color:rgba(255,255,255,.65);font-weight:600;}
-  .dp-row b{font-weight:800;}
-  .dp-track{height:8px;border-radius:10px;background:rgba(255,255,255,.18);margin-top:12px;overflow:hidden;}
-  .dp-fill{height:100%;border-radius:10px;background:linear-gradient(90deg,var(--blue-accent),var(--success));transition:width .4s ease;}
-  .payments-head{display:flex;align-items:center;justify-content:space-between;margin:4px 0 10px;font-size:13.5px;font-weight:800;color:var(--text-primary);}
-  .payments-count{background:var(--blue-light);color:var(--blue-accent);border-radius:20px;padding:2px 10px;font-size:12px;font-weight:800;}
-  .payments-list{display:flex;flex-direction:column;gap:8px;}
-  .pay-item{display:flex;align-items:center;gap:12px;border:1px solid var(--border);border-radius:12px;padding:12px 14px;}
-  .pay-ico{width:38px;height:38px;border-radius:10px;background:var(--success-bg);color:var(--success);display:flex;align-items:center;justify-content:center;flex-shrink:0;}
-  .pay-main{flex:1;min-width:0;}
-  .pay-main .pm-name{font-weight:700;font-size:13px;color:var(--text-primary);}
-  .pay-main .pm-sub{font-size:11.5px;color:var(--text-tertiary);font-weight:600;}
-  .pay-amt{font-weight:800;color:var(--success);font-size:13.5px;white-space:nowrap;}
-  .pay-empty{text-align:center;color:var(--text-tertiary);font-size:13px;padding:22px 0;border:1px dashed var(--border-strong);border-radius:12px;font-weight:600;}
-</style>
 @php
     $v = fn($f) => old($f, $filters[$f] ?? null);
 @endphp
@@ -55,7 +13,7 @@
     <div><h2>Pledges</h2><div class="sub">
       TZS {{ number_format($totals['pledged']) }} pledged · {{ number_format($totals['paid']) }} collected · TZS {{ number_format($totals['outstanding']) }} outstanding
     </div></div>
-    <button type="button" class="btn btn-accent" data-modal-open="pledgeModal">+ Record Pledge</button>
+    <button type="button" class="btn btn-accent" data-drawer-open="pledgeNewDrawer">+ Record Pledge</button>
   </div>
 
   <form class="toolbar" method="GET" action="{{ route('pledges.index') }}">
@@ -75,7 +33,7 @@
   <div class="table-card">
     <div class="table-scroll">
       <table class="data-table">
-        <thead><tr><th>Pledge No</th><th>Pledger</th><th>Event</th><th>Amount (TZS)</th><th>Paid (TZS)</th><th>Balance</th><th>Frequency</th><th>Status</th><th>Date</th><th style="width:60px">Actions</th></tr></thead>
+        <thead><tr><th>Pledge No</th><th>Pledger</th><th>Amount (TZS)</th><th>Paid (TZS)</th><th>Balance</th><th>Status</th><th style="width:60px">Actions</th></tr></thead>
         <tbody>
           @forelse($pledges as $pl)
           @php
@@ -87,7 +45,24 @@
                 'by'     => $p->recorded_by,
             ])->toJson();
           @endphp
-          <tr>
+          <tr style="cursor:pointer" data-view-pledge
+            data-id="{{ $pl->id }}"
+            data-no="{{ $pl->pledge_no }}"
+            data-name="{{ $pl->name }}"
+            data-phone="{{ $pl->phone }}"
+            data-email="{{ $pl->email }}"
+            data-event="{{ $pl->event?->title ?? '—' }}"
+            data-amount="{{ $pl->amount }}"
+            data-paid="{{ $pl->paid_amount }}"
+            data-remaining="{{ $pl->getRemainingAttribute() }}"
+            data-frequency="{{ ucfirst(str_replace('_',' ',$pl->frequency)) }}"
+            data-pledge-date="{{ $pl->pledge_date?->format('d M Y') }}"
+            data-due-date="{{ $pl->due_date?->format('d M Y') ?? '—' }}"
+            data-status="{{ $pl->getStatusLabel() }}"
+            data-status-key="{{ $pl->status }}"
+            data-notes="{{ $pl->notes }}"
+            data-created="{{ $pl->created_by ?? '—' }}"
+            data-payments="{{ e($paymentsJson) }}">
             <td><span class="badge badge-neutral badge-dotted">{{ $pl->pledge_no }}</span></td>
             <td>
               <div class="cell-user">
@@ -95,38 +70,16 @@
                 <div><div class="cu-name">{{ $pl->name ?? '—' }}</div><div class="cu-sub">{{ $pl->email ?? ($pl->phone ?? '') }}</div></div>
               </div>
             </td>
-            <td>{{ $pl->event?->title ?? '—' }}</td>
             <td><b>{{ number_format($pl->amount) }}</b></td>
             <td>{{ number_format($pl->paid_amount) }}</td>
             <td><b style="color:{{ $pl->getRemainingAttribute() > 0 ? 'var(--warning)' : 'var(--success)' }}">{{ number_format($pl->getRemainingAttribute()) }}</b></td>
-            <td>{{ ucfirst(str_replace('_',' ',$pl->frequency)) }}</td>
             <td><span class="badge badge-{{ $pl->getStatusColor() }} badge-dotted">{{ $pl->getStatusLabel() }}</span></td>
-            <td>{{ $pl->pledge_date?->format('d M Y') }}</td>
-            <td>
+            <td onclick="event.stopPropagation()">
               <div class="action-menu-wrap">
                 <button type="button" class="action-trigger" onclick="toggleActionMenu('am-pledge-{{ $pl->id }}')">
                   <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><circle cx="12" cy="5" r=".6"/><circle cx="12" cy="12" r=".6"/><circle cx="12" cy="19" r=".6"/></svg>
                 </button>
                 <div class="action-menu" id="am-pledge-{{ $pl->id }}">
-                  <button type="button" data-view-pledge
-                    data-id="{{ $pl->id }}"
-                    data-no="{{ $pl->pledge_no }}"
-                    data-name="{{ $pl->name }}"
-                    data-phone="{{ $pl->phone }}"
-                    data-email="{{ $pl->email }}"
-                    data-event="{{ $pl->event?->title ?? '—' }}"
-                    data-amount="{{ $pl->amount }}"
-                    data-paid="{{ $pl->paid_amount }}"
-                    data-remaining="{{ $pl->getRemainingAttribute() }}"
-                    data-frequency="{{ ucfirst(str_replace('_',' ',$pl->frequency)) }}"
-                    data-status="{{ $pl->getStatusLabel() }}"
-                    data-status-key="{{ $pl->status }}"
-                    data-pledge-date="{{ $pl->pledge_date?->format('d M Y') }}"
-                    data-due-date="{{ $pl->due_date?->format('d M Y') ?? '—' }}"
-                    data-notes="{{ $pl->notes }}"
-                    data-created="{{ $pl->created_by ?? '—' }}"
-                    data-payments="{{ e($paymentsJson) }}"
-                    >View Details</button>
                   <button type="button" data-record-payment data-id="{{ $pl->id }}" data-name="{{ $pl->name }}" data-amount="{{ $pl->amount }}" data-remaining="{{ $pl->getRemainingAttribute() }}">Record Payment</button>
                   <form method="POST" action="{{ route('pledges.remind', $pl) }}" style="display:contents">@csrf<button type="submit">Remind (SMS)</button></form>
                   <form method="POST" action="{{ route('pledges.thanks', $pl) }}" style="display:contents">@csrf<button type="submit">Send Thanks (SMS)</button></form>
@@ -142,7 +95,7 @@
             </td>
           </tr>
           @empty
-          <tr><td colspan="10"><div class="empty-state" style="padding:40px 20px"><h3>No pledges recorded</h3><p>Record your first event pledge.</p><button type="button" class="btn btn-accent" data-modal-open="pledgeModal">+ Record Pledge</button></div></td></tr>
+          <tr><td colspan="7"><div class="empty-state" style="padding:40px 20px"><h3>No pledges recorded</h3><p>Record your first event pledge.</p><button type="button" class="btn btn-accent" data-drawer-open="pledgeNewDrawer">+ Record Pledge</button></div></td></tr>
           @endforelse
         </tbody>
       </table>
@@ -154,15 +107,15 @@
   </div>
 </div>
 
-<div class="modal-overlay" id="pledgeModal">
-  <div class="modal-box md">
-    <div class="modal-head">
+<div class="drawer-overlay" id="pledgeNewDrawer">
+  <div class="drawer-panel">
+    <div class="drawer-head">
       <div><h3>Record Pledge</h3><p>Captured automatically against {{ $campEvent?->title ?? 'Open Gate Camp' }}</p></div>
-      <button type="button" class="modal-close" data-modal-close><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><path d="M18 6L6 18M6 6l12 12"/></svg></button>
+      <button type="button" class="modal-close" data-drawer-close><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><path d="M18 6L6 18M6 6l12 12"/></svg></button>
     </div>
     <form method="POST" action="{{ route('pledges.store') }}">
       @csrf
-      <div class="modal-body">
+      <div class="drawer-body">
         <div class="form-grid">
           <div class="field full"><label>Event / Campaign</label>
             <input type="hidden" name="event_id" value="{{ $campEvent?->id }}">
@@ -180,23 +133,23 @@
           <div class="field full"><label>Notes</label><textarea name="notes" placeholder="Any notes about this pledge"></textarea></div>
         </div>
       </div>
-      <div class="modal-foot">
-        <button type="button" class="btn btn-secondary" data-modal-close>Cancel</button>
+      <div class="drawer-foot">
+        <button type="button" class="btn btn-secondary" data-drawer-close>Cancel</button>
         <button type="submit" class="btn btn-accent">Save Pledge</button>
       </div>
     </form>
   </div>
 </div>
 
-<div class="modal-overlay" id="paymentModal">
-  <div class="modal-box md">
-    <div class="modal-head">
+<div class="drawer-overlay" id="pledgePaymentDrawer">
+  <div class="drawer-panel">
+    <div class="drawer-head">
       <div><h3>Record Pledge Payment</h3><p id="paymentPledgeName">—</p></div>
-      <button type="button" class="modal-close" data-modal-close><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><path d="M18 6L6 18M6 6l12 12"/></svg></button>
+      <button type="button" class="modal-close" data-drawer-close><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><path d="M18 6L6 18M6 6l12 12"/></svg></button>
     </div>
     <form method="POST" action="" id="paymentForm">
       @csrf
-      <div class="modal-body">
+      <div class="drawer-body">
         <div class="form-grid">
           <div class="field full"><div class="info-row"><span>Amount Pledged</span><b id="paymentPledged">—</b></div><div class="info-row"><span>Balance Outstanding</span><b id="paymentRemaining" style="color:var(--warning)">—</b></div></div>
           <div class="field"><label>Amount (TZS)</label><input type="number" step="0.01" name="amount" id="paymentAmount" required min="1"></div>
@@ -205,23 +158,23 @@
           <div class="field"><label>Payment Date</label><input type="date" name="pay_date" value="{{ now()->format('Y-m-d') }}"></div>
         </div>
       </div>
-      <div class="modal-foot">
-        <button type="button" class="btn btn-secondary" data-modal-close>Cancel</button>
+      <div class="drawer-foot">
+        <button type="button" class="btn btn-secondary" data-drawer-close>Cancel</button>
         <button type="submit" class="btn btn-accent">Record Payment</button>
       </div>
     </form>
   </div>
 </div>
 
-<div class="modal-overlay" id="editPledgeModal">
-  <div class="modal-box md">
-    <div class="modal-head">
+<div class="drawer-overlay" id="pledgeEditDrawer">
+  <div class="drawer-panel">
+    <div class="drawer-head">
       <div><h3>Edit Pledge</h3><p>Update amount or status</p></div>
-      <button type="button" class="modal-close" data-modal-close><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><path d="M18 6L6 18M6 6l12 12"/></svg></button>
+      <button type="button" class="modal-close" data-drawer-close><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><path d="M18 6L6 18M6 6l12 12"/></svg></button>
     </div>
     <form method="POST" action="" id="editPledgeForm">
       @csrf @method('PUT')
-      <div class="modal-body">
+      <div class="drawer-body">
         <div class="form-grid">
           <div class="field"><label>Amount (TZS)</label><input type="number" step="0.01" name="amount" id="editPledgeAmount" required></div>
           <div class="field"><label>Status</label><select name="status" id="editPledgeStatus">
@@ -230,15 +183,15 @@
           <div class="field full"><label>Notes</label><textarea name="notes" id="editPledgeNotes"></textarea></div>
         </div>
       </div>
-      <div class="modal-foot">
-        <button type="button" class="btn btn-secondary" data-modal-close>Cancel</button>
+      <div class="drawer-foot">
+        <button type="button" class="btn btn-secondary" data-drawer-close>Cancel</button>
         <button type="submit" class="btn btn-accent">Save Changes</button>
       </div>
     </form>
   </div>
 </div>
 
-<div class="drawer-overlay" id="pledgeDrawer">
+<div class="drawer-overlay" id="pledgeDetailDrawer">
   <div class="drawer-panel">
     <div class="drawer-head">
       <div>
@@ -291,6 +244,70 @@
 @push('scripts')
 <script>
 document.addEventListener('DOMContentLoaded', function(){
+  document.querySelectorAll('[data-view-pledge]').forEach(function(tr){
+    tr.addEventListener('click', function(e){
+      if(e.target.closest('.action-menu-wrap') || e.target.closest('form') || e.target.closest('button') || e.target.closest('a')) return;
+      var d = tr.dataset;
+      var initials = (d.name||'?').trim().split(' ').map(function(w){return w.charAt(0);}).slice(0,2).join('');
+      document.getElementById('drawerAvatar').textContent = initials;
+      document.getElementById('drawerNo').textContent = d.no;
+      document.getElementById('drawerName').textContent = d.name || '—';
+      var st = document.getElementById('drawerStatus');
+      var colors = {pending:'warning',partial:'info',fulfilled:'success',cancelled:'neutral'};
+      var key = d.statusKey || '';
+      st.textContent = d.status || '—';
+      st.className = 'badge badge-' + (colors[key]||'neutral') + ' badge-dotted';
+
+      var amount = Number(d.amount||0), paid = Number(d.paid||0), remaining = Number(d.remaining||0);
+      var fmt = function(n){ return 'TZS ' + n.toLocaleString(); };
+      document.getElementById('drawerAmount').textContent = fmt(amount);
+      document.getElementById('drawerPaid').textContent = fmt(paid);
+      document.getElementById('drawerRemaining').textContent = fmt(remaining);
+      document.getElementById('drawerRemaining').style.color = remaining > 0 ? 'var(--warning)' : 'var(--success)';
+      document.getElementById('drawerFill').style.width = (amount > 0 ? Math.min(100, (paid/amount)*100) : 0) + '%';
+
+      document.getElementById('drawerEvent').textContent = d.event || '—';
+      document.getElementById('drawerPhone').textContent = d.phone || '—';
+      document.getElementById('drawerEmail').textContent = d.email || '—';
+      document.getElementById('drawerFrequency').textContent = d.frequency || '—';
+      document.getElementById('drawerPledgeDate').textContent = d.pledgeDate || '—';
+      document.getElementById('drawerDueDate').textContent = d.dueDate || '—';
+      document.getElementById('drawerCreated').textContent = d.created || '—';
+      document.getElementById('drawerNotes').textContent = d.notes || '—';
+
+      var payments = [];
+      try { payments = JSON.parse(d.payments || '[]'); } catch(e){ payments = []; }
+      var list = document.getElementById('drawerPayments');
+      list.innerHTML = '';
+      var totalCount = payments.length;
+      if(payments.length === 0 && paid > 0){
+        totalCount = 1;
+        list.innerHTML = '<div class="pay-item"><div class="pay-ico"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6L9 17l-5-5"/></svg></div><div class="pay-main"><div class="pm-name">Direct record</div><div class="pm-sub">Amount recorded against this pledge</div></div><div class="pay-amt">' + fmt(paid) + '</div></div>';
+      } else if(payments.length === 0){
+        list.innerHTML = '<div class="pay-empty">No payments recorded yet</div>';
+      } else {
+        payments.forEach(function(p, i){
+          var item = document.createElement('div');
+          item.className = 'pay-item';
+          item.innerHTML =
+            '<div class="pay-ico"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6L9 17l-5-5"/></svg></div>' +
+            '<div class="pay-main"><div class="pm-name">Payment ' + (i+1) + (p.ref ? ' · ' + p.ref : '') + '</div>' +
+            '<div class="pm-sub">' + (p.date||'—') + (p.method ? ' · ' + p.method.charAt(0).toUpperCase() + p.method.slice(1) : '') + (p.by ? ' · Recorded by ' + p.by : '') + '</div></div>' +
+            '<div class="pay-amt">' + fmt(Number(p.amount||0)) + '</div>';
+          list.appendChild(item);
+        });
+      }
+      document.getElementById('drawerPayCount').textContent = totalCount;
+
+      document.getElementById('drawerPaymentBtn').dataset.id = d.id;
+      document.getElementById('drawerPaymentBtn').dataset.name = d.name;
+      document.getElementById('drawerPaymentBtn').dataset.amount = d.amount;
+      document.getElementById('drawerPaymentBtn').dataset.remaining = d.remaining;
+
+      openDrawerById('pledgeDetailDrawer');
+    });
+  });
+
   document.querySelectorAll('[data-record-payment]').forEach(function(btn){
     btn.addEventListener('click', function(){
       var d = btn.dataset;
@@ -300,7 +317,7 @@ document.addEventListener('DOMContentLoaded', function(){
       document.getElementById('paymentAmount').value = d.remaining;
       document.getElementById('paymentAmount').max = d.remaining;
       document.getElementById('paymentForm').action = "{{ url('/pledges') }}/" + d.id + "/payments";
-      openModalById('paymentModal');
+      openDrawerById('pledgePaymentDrawer');
     });
   });
   document.querySelectorAll('[data-edit-pledge]').forEach(function(btn){
@@ -310,92 +327,23 @@ document.addEventListener('DOMContentLoaded', function(){
       document.getElementById('editPledgeStatus').value = d.status;
       document.getElementById('editPledgeNotes').value = d.notes || '';
       document.getElementById('editPledgeForm').action = "{{ url('/pledges') }}/" + d.id;
-      openModalById('editPledgeModal');
+      openDrawerById('pledgeEditDrawer');
     });
   });
 
-  var drawer = document.getElementById('pledgeDrawer');
-  if(drawer){
-    document.querySelectorAll('[data-view-pledge]').forEach(function(btn){
-      btn.addEventListener('click', function(){
-        var d = btn.dataset;
-        var initials = (d.name||'?').trim().split(' ').map(function(w){return w.charAt(0);}).slice(0,2).join('');
-        document.getElementById('drawerAvatar').textContent = initials;
-        document.getElementById('drawerNo').textContent = d.no;
-        document.getElementById('drawerName').textContent = d.name || '—';
-        var st = document.getElementById('drawerStatus');
-        var colors = {pending:'warning',partial:'info',fulfilled:'success',cancelled:'neutral'};
-        var key = d.statusKey || '';
-        st.textContent = d.status || '—';
-        st.className = 'badge badge-' + (colors[key]||'neutral') + ' badge-dotted';
-
-        var amount = Number(d.amount||0), paid = Number(d.paid||0), remaining = Number(d.remaining||0);
-        var fmt = function(n){ return 'TZS ' + n.toLocaleString(); };
-        document.getElementById('drawerAmount').textContent = fmt(amount);
-        document.getElementById('drawerPaid').textContent = fmt(paid);
-        document.getElementById('drawerRemaining').textContent = fmt(remaining);
-        document.getElementById('drawerRemaining').style.color = remaining > 0 ? 'var(--warning)' : 'var(--success)';
-        document.getElementById('drawerFill').style.width = (amount > 0 ? Math.min(100, (paid/amount)*100) : 0) + '%';
-
-        document.getElementById('drawerEvent').textContent = d.event || '—';
-        document.getElementById('drawerPhone').textContent = d.phone || '—';
-        document.getElementById('drawerEmail').textContent = d.email || '—';
-        document.getElementById('drawerFrequency').textContent = d.frequency ? d.frequency.charAt(0).toUpperCase() + d.frequency.slice(1) : '—';
-        document.getElementById('drawerPledgeDate').textContent = d.pledgeDate || '—';
-        document.getElementById('drawerDueDate').textContent = d.dueDate || '—';
-        document.getElementById('drawerCreated').textContent = d.created || '—';
-        document.getElementById('drawerNotes').textContent = d.notes || '—';
-
-        var payments = [];
-        try { payments = JSON.parse(d.payments || '[]'); } catch(e){ payments = []; }
-        var list = document.getElementById('drawerPayments');
-        list.innerHTML = '';
-        document.getElementById('drawerPayCount').textContent = payments.length;
-        if(payments.length === 0){
-          list.innerHTML = '<div class="pay-empty">No payments recorded yet</div>';
-        } else {
-          payments.forEach(function(p, i){
-            var item = document.createElement('div');
-            item.className = 'pay-item';
-            item.innerHTML =
-              '<div class="pay-ico"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6L9 17l-5-5"/></svg></div>' +
-              '<div class="pay-main"><div class="pm-name">Payment ' + (i+1) + (p.ref ? ' · ' + p.ref : '') + '</div>' +
-              '<div class="pm-sub">' + (p.date||'—') + (p.method ? ' · ' + p.method.charAt(0).toUpperCase() + p.method.slice(1) : '') + (p.by ? ' · ' + p.by : '') + '</div></div>' +
-              '<div class="pay-amt">TZS ' + Number(p.amount||0).toLocaleString() + '</div>';
-            list.appendChild(item);
-          });
-        }
-
-        document.getElementById('drawerPaymentBtn').dataset.id = d.id;
-        document.getElementById('drawerPaymentBtn').dataset.name = d.name;
-        document.getElementById('drawerPaymentBtn').dataset.amount = d.amount;
-        document.getElementById('drawerPaymentBtn').dataset.remaining = d.remaining;
-
-        drawer.classList.add('open');
-      });
-    });
-
-    function closeDrawer(){ drawer.classList.remove('open'); }
-    drawer.querySelectorAll('[data-drawer-close]').forEach(function(b){
-      b.addEventListener('click', closeDrawer);
-    });
-    drawer.addEventListener('click', function(e){
-      if(e.target === drawer) closeDrawer();
-    });
-    document.getElementById('drawerPaymentBtn').addEventListener('click', function(){
-      var d = this.dataset;
-      var remaining = Number(d.remaining||0);
-      if(remaining <= 0){ toast('This pledge is fully paid','warning'); return; }
-      document.getElementById('paymentPledgeName').textContent = d.name;
-      document.getElementById('paymentPledged').textContent = 'TZS ' + Number(d.amount||0).toLocaleString();
-      document.getElementById('paymentRemaining').textContent = 'TZS ' + remaining.toLocaleString();
-      document.getElementById('paymentAmount').value = remaining;
-      document.getElementById('paymentAmount').max = remaining;
-      document.getElementById('paymentForm').action = "{{ url('/pledges') }}/" + d.id + "/payments";
-      drawer.classList.remove('open');
-      openModalById('paymentModal');
-    });
-  }
+  document.getElementById('drawerPaymentBtn').addEventListener('click', function(){
+    var d = this.dataset;
+    var remaining = Number(d.remaining||0);
+    if(remaining <= 0){ toast('This pledge is fully paid','warning'); return; }
+    document.getElementById('paymentPledgeName').textContent = d.name;
+    document.getElementById('paymentPledged').textContent = 'TZS ' + Number(d.amount||0).toLocaleString();
+    document.getElementById('paymentRemaining').textContent = 'TZS ' + remaining.toLocaleString();
+    document.getElementById('paymentAmount').value = remaining;
+    document.getElementById('paymentAmount').max = remaining;
+    document.getElementById('paymentForm').action = "{{ url('/pledges') }}/" + d.id + "/payments";
+    closeDrawerById('pledgeDetailDrawer');
+    openDrawerById('pledgePaymentDrawer');
+  });
 });
 </script>
 @endpush

@@ -52,7 +52,7 @@
 
   <div class="foot">
     Present this ticket with a valid ID at the open gate.<br>
-    Open Gate Summer Camp {{ $event->start_date->format('Y') }}
+    Open Gate Camp Season 3 {{ $event->start_date->format('Y') }}
   </div>
 </body>
 </html>

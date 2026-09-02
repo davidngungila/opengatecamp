@@ -80,6 +80,18 @@ function openModalById(id){
 }
 function closeModalEl(el){ el.closest('.modal-overlay').classList.remove('open'); }
 
+function openDrawerById(id){
+  var ov=document.getElementById(id);
+  if(!ov) return;
+  ov.classList.add('open');
+}
+function closeDrawerById(id){
+  var ov=document.getElementById(id);
+  if(!ov) return;
+  ov.classList.remove('open');
+}
+function closeDrawerEl(el){ el.closest('.drawer-overlay').classList.remove('open'); }
+
 var __pendingForm=null;
 function confirmAction(form, title, message, label){
   __pendingForm=form;
@@ -105,10 +117,16 @@ document.addEventListener('click', function(e){
 document.addEventListener('click',function(e){
   var opener=e.target.closest('[data-modal-open]');
   if(opener){ e.preventDefault(); closeAllPanels(); openModalById(opener.getAttribute('data-modal-open')); return; }
+  var drawerOpener=e.target.closest('[data-drawer-open]');
+  if(drawerOpener){ e.preventDefault(); closeAllPanels(); openDrawerById(drawerOpener.getAttribute('data-drawer-open')); return; }
   var closer=e.target.closest('[data-modal-close]');
   if(closer){ closeModalEl(closer); return; }
+  var drawerCloser=e.target.closest('[data-drawer-close]');
+  if(drawerCloser){ closeDrawerEl(drawerCloser); return; }
   var overlay=e.target.classList && e.target.classList.contains('modal-overlay') ? e.target : null;
   if(overlay) overlay.classList.remove('open');
+  var drawerOverlay=e.target.classList && e.target.classList.contains('drawer-overlay') ? e.target : null;
+  if(drawerOverlay) drawerOverlay.classList.remove('open');
 
   if(!e.target.closest('[data-panel-toggle]') && !e.target.closest('.dropdown-panel') && !e.target.closest('#globalSearch')){ closeAllPanels(); }
   if(!e.target.closest('.action-menu-wrap')){ document.querySelectorAll('.action-menu.open').forEach(function(m){m.classList.remove('open');}); }
@@ -116,6 +134,7 @@ document.addEventListener('click',function(e){
 document.addEventListener('keydown',function(e){
   if(e.key==='Escape'){
     document.querySelectorAll('.modal-overlay.open').forEach(function(m){m.classList.remove('open');});
+    document.querySelectorAll('.drawer-overlay.open').forEach(function(m){m.classList.remove('open');});
     closeAllPanels();
   }
 });

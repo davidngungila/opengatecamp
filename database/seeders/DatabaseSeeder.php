@@ -208,7 +208,7 @@ class DatabaseSeeder extends Seeder
         }
 
 $eventsData = [
-            ['OGM-CAMP-2026', 'Open Gate Summer Camp', 'camp', 'Annual youth camp at Morogoro base camp.', 'Open Gate Base Camp', 'Morogoro', now()->subMonths(2)->toDateString(), now()->subMonths(2)->addDays(6)->toDateString(), '06:00', '17:30', 'completed', 'Daniel Mwinuka'],
+            ['OGM-CAMP-2026', 'Open Gate Camp Season 3', 'camp', 'Annual youth camp at Morogoro base camp.', 'Open Gate Base Camp', 'Morogoro', now()->subMonths(2)->toDateString(), now()->subMonths(2)->addDays(6)->toDateString(), '06:00', '17:30', 'completed', 'Daniel Mwinuka'],
             ['OGM-CONF-2026', 'Leadership Conference', 'conference', 'Equipping camp leaders for mission work.', 'Open Gate Conference Hall', 'Morogoro', now()->addDays(14)->toDateString(), now()->addDays(16)->toDateString(), '08:00', '18:00', 'open_registration', 'Grace Kileo'],
             ['OGM-MISS-2026', 'Coastal Mission Trip', 'mission_trip', 'Service mission to villages along the coast.', 'Coastal Villages', 'Dar es Salaam region', now()->addMonths(2)->toDateString(), now()->addMonths(2)->addDays(9)->toDateString(), '05:30', '19:00', 'planned', 'Daniel Mwinuka'],
             ['OGM-YTR-2026', 'Youth Evangelism Training', 'training', 'Practical evangelism skills for young leaders.', 'Open Gate Training Centre', 'Morogoro', now()->addDays(45)->toDateString(), now()->addDays(47)->toDateString(), '09:00', '16:00', 'planned', 'Mary Massawe'],

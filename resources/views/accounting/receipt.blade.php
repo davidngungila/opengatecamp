@@ -38,6 +38,9 @@
 </style>
 </head>
 <body>
+  @if(!empty($logoPath) && file_exists($logoPath))
+  <div class="logo"><img src="{{ $logoPath }}" alt="{{ $org }}"></div>
+  @endif
   <div class="center org">UMOJA WA VYUO</div>
   <div class="center org-sub">KARISMATIKI KATOLIKI TANZANIA</div>
   <div class="center org-line">JIMBO LA MOSHI NA ARUSHA</div>

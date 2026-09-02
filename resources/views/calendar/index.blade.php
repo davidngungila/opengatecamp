@@ -70,7 +70,7 @@
           <div class="field"><label>Date</label><input type="date" name="session_date" required value="{{ request()->query('plan_date', $today->format('Y-m-d')) }}"></div>
           <div class="field"><label>Event</label>
             <select name="event_id">
-              <option value="">{{ $campEvents->first()?->title ?? '— Open Gate Summer Camp —' }}</option>
+              <option value="">{{ $campEvents->first()?->title ?? '— Open Gate Camp Season 3 —' }}</option>
               @foreach($campEvents as $ce)<option value="{{ $ce->id }}">{{ $ce->title }}</option>@endforeach
             </select>
           </div>
