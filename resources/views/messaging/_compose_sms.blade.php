@@ -13,6 +13,7 @@
           <select id="recipientType" style="width:100%" onchange="onRecipientTypeChange(this)">
             <option value="all_active">All Active Members</option>
             <option value="all">All Members</option>
+            <option value="manual">Manual Single Number</option>
             <option value="group">By Group</option>
             <option value="ministry">By Ministry</option>
             <option value="member_type">By Member Type</option>
@@ -123,6 +124,21 @@ function onRecipientTypeChange(sel) {
   var manualWrap = document.getElementById('manualPhoneWrap');
   var f = sel.value;
   document.getElementById('recipientFilter').value = f;
+
+  if (f === 'manual') {
+    wrap.style.display = 'none';
+    manualWrap.style.display = 'block';
+    document.getElementById('phonesJson').value = '';
+    document.getElementById('recipientCount').textContent = '0';
+    document.getElementById('recipientMeta').innerHTML = '';
+    document.getElementById('recipientSummary').style.display = 'block';
+    document.getElementById('recipientError').style.display = 'none';
+    document.getElementById('recipientTableBody').innerHTML = '';
+    document.getElementById('recipientDrawerMeta').textContent = 'Manual entry';
+    document.getElementById('viewRecipientsBtn').disabled = true;
+    updateSmsCount();
+    return;
+  }
 
   if (f === 'group') {
     valSel.innerHTML = '<option value="">— Select Group —</option>';
@@ -249,14 +265,32 @@ function updateSmsCount() {
   if (!msg) return;
   var len = msg.value.length;
   var parts = len === 0 ? 0 : (len <= 160 ? 1 : Math.ceil(len / 153));
-  var count = recipientsData.length || 0;
+  var isManual = document.getElementById('recipientType').value === 'manual';
+  var manualPhone = document.getElementById('manualPhone').value.trim();
+  var count = isManual && manualPhone ? 1 : (recipientsData.length || 0);
+  if (isManual && manualPhone) {
+    document.getElementById('phonesJson').value = JSON.stringify([manualPhone]);
+  }
   var el = document.getElementById('smsCount');
-  if (el) el.textContent = parts + ' SMS' + (parts !== 1 ? 's' : '') + (count > 0 ? ' x ' + count + ' recipients = ' + (parts * count) + ' total' : '');
+  if (el) el.textContent = parts + ' SMS' + (parts !== 1 ? 's' : '') + (count > 0 ? ' x ' + count + ' recipient' + (count !== 1 ? 's' : '') + ' = ' + (parts * count) + ' total' : '');
   var hint = document.getElementById('costHint');
   if (hint) hint.textContent = count > 0 ? 'Total messages to send: ' + (parts * count) : '';
 }
 
 document.addEventListener('DOMContentLoaded', function() {
   loadRecipients();
+  document.getElementById('manualPhone').addEventListener('input', function() {
+    updateSmsCount();
+    var phone = this.value.trim();
+    if (phone) {
+      document.getElementById('recipientCount').textContent = '1';
+      document.getElementById('recipientMeta').innerHTML = '';
+      document.getElementById('recipientSummary').style.display = 'block';
+      document.getElementById('recipientError').style.display = 'none';
+    } else {
+      document.getElementById('recipientCount').textContent = '0';
+      document.getElementById('recipientMeta').innerHTML = '';
+    }
+  });
 });
 </script>
