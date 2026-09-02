@@ -37,13 +37,13 @@
         <tbody>
           @forelse($pledges as $pl)
           @php
-            $paymentsJson = $pl->payments->map(fn($p) => [
+            $paymentsArr = $pl->payments->map(fn($p) => [
                 'date'   => $p->pay_date?->format('d M Y'),
                 'amount' => $p->amount,
                 'method' => $p->method,
                 'ref'    => $p->reference,
                 'by'     => $p->recorded_by,
-            ])->toJson();
+            ])->values()->all();
           @endphp
           <tr style="cursor:pointer" data-view-pledge
             data-id="{{ $pl->id }}"
@@ -62,7 +62,7 @@
             data-status-key="{{ $pl->status }}"
             data-notes="{{ $pl->notes }}"
             data-created="{{ $pl->created_by ?? '—' }}"
-            data-payments="{{ e($paymentsJson) }}">
+            data-payments="{{ @json($paymentsArr) }}">
             <td><span class="badge badge-neutral badge-dotted">{{ $pl->pledge_no }}</span></td>
             <td>
               <div class="cell-user">
@@ -243,6 +243,12 @@
 
 @push('scripts')
 <script>
+function decodeEntities(s){
+  if(s.indexOf('&') === -1) return s;
+  var ta = document.createElement('textarea');
+  ta.innerHTML = s;
+  return ta.value;
+}
 document.addEventListener('DOMContentLoaded', function(){
   document.querySelectorAll('[data-view-pledge]').forEach(function(tr){
     tr.addEventListener('click', function(e){
@@ -276,7 +282,7 @@ document.addEventListener('DOMContentLoaded', function(){
       document.getElementById('drawerNotes').textContent = d.notes || '—';
 
       var payments = [];
-      try { payments = JSON.parse(d.payments || '[]'); } catch(e){ payments = []; }
+      try { payments = JSON.parse(decodeEntities(d.payments || '[]')); } catch(e){ payments = []; }
       var list = document.getElementById('drawerPayments');
       list.innerHTML = '';
       var totalCount = payments.length;

@@ -567,7 +567,7 @@ class AccountingController extends Controller
         $q = trim((string) $request->query('q'));
         $accountId = $request->query('account');
 
-        $lines = JournalLine::with(['entry', 'account'])
+        $lines = JournalLine::with(['entry.lines.account', 'account'])
             ->whereHas('entry', fn ($e) => $e
                 ->where('status', 'posted')
                 ->when($fy, fn ($ee) => $ee->whereBetween('entry_date', $between))
