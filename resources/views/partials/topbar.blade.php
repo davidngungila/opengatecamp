@@ -44,21 +44,21 @@
               $notifPledges = \App\Models\Pledge::whereIn('status',['pending','partial'])->count();
           @endphp
           @foreach($notifEvents as $ne)
-          <div class="notif-item">
+          <a class="notif-item" href="{{ route('events.show', $ne->slug) }}" style="text-decoration:none;color:inherit">
             <div class="n-ico" style="background:var(--purple-bg);color:var(--purple)"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="18" rx="2" ry="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg></div>
             <div class="n-body"><p>Registrations open: {{ $ne->title }}</p><span>{{ $ne->start_date?->format('d M') }} · {{ $ne->getAttendeeCountAttribute() }} registered</span></div>
-          </div>
+          </a>
           @endforeach
           @if($notifPledges > 0)
-          <div class="notif-item">
+          <a class="notif-item" href="{{ route('pledges.index') }}" style="text-decoration:none;color:inherit">
             <div class="n-ico" style="background:var(--success-bg);color:var(--success)"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="1" x2="12" y2="23"/><path d="M17 5H9.5a3.5 3.5 0 000 7h5a3.5 3.5 0 010 7H6"/></svg></div>
             <div class="n-body"><p>{{ $notifPledges }} ongoing pledge(s) awaiting payments</p><span>{{ \App\Models\Pledge::whereIn('status',['pending','partial'])->sum('amount') }} pledged</span></div>
-          </div>
+          </a>
           @endif
-          <div class="notif-item">
+          <a class="notif-item" href="{{ route('attendees.index') }}" style="text-decoration:none;color:inherit">
             <div class="n-ico" style="background:var(--info-bg);color:var(--info)"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 21v-2a4 4 0 00-4-4H8a4 4 0 00-4 4v2"/><circle cx="12" cy="7" r="4"/></svg></div>
             <div class="n-body"><p>{{ \App\Models\EventAttendee::where('status','pending')->count() }} pending attendee registration(s)</p><span>Needs confirmation</span></div>
-          </div>
+          </a>
           @if($notifEvents->isEmpty() && $notifPledges === 0)
           <div class="notif-item">
             <div class="n-body"><p>You're all caught up. No new notifications.</p><span>Just now</span></div>

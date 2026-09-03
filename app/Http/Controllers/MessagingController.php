@@ -51,7 +51,7 @@ class MessagingController extends Controller
 
         AuditLog::record('Marked all notifications as read', 'Communication — Notifications', "{$count} notification(s) marked read");
 
-        return back()->with('success', 'All notifications marked as read.');
+        return redirect()->route('messaging.notifications')->with('success', 'All notifications marked as read.');
     }
 
     public function templates()
