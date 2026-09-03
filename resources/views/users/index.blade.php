@@ -14,7 +14,7 @@
   <div class="section-head">
     <div><h2>Users &amp; Roles</h2><div class="sub">{{ $users->count() }} system users · {{ $roles->count() }} roles</div></div>
     @if($tab === 'users')
-      <button type="button" class="btn btn-accent" data-modal-open="userModal" onclick="resetUserModal()">+ Add User</button>
+      <button type="button" class="btn btn-accent" data-drawer-open="userModal" onclick="resetUserModal()">+ Add User</button>
     @endif
   </div>
 
@@ -129,15 +129,15 @@
   @endif
 </div>
 
-<div class="modal-overlay" id="userModal">
-  <div class="modal-box md">
-    <div class="modal-head">
+<div class="drawer-overlay" id="userModal">
+  <div class="drawer-panel">
+    <div class="drawer-head">
       <div><h3 id="userModalTitle">Add User</h3><p id="userModalSub">Invite a new team member with a temporary password</p></div>
-      <button type="button" class="modal-close" data-modal-close><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><path d="M18 6L6 18M6 6l12 12"/></svg></button>
+      <button type="button" class="modal-close" data-drawer-close><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><path d="M18 6L6 18M6 6l12 12"/></svg></button>
     </div>
     <form id="userForm" method="POST" action="{{ route('users.store') }}">
       @csrf
-      <div class="modal-body">
+      <div class="drawer-body">
         <div class="form-grid">
           <div class="field"><label>Full Name *</label><input name="name" required placeholder="e.g. Grace Kileo"></div>
           <div class="field"><label>Email *</label><input type="email" name="email" required placeholder="email@stjoseph.church"></div>
@@ -154,8 +154,8 @@
           <div class="field full"><label>Phone</label><input name="phone" placeholder="+255 7XX XXX XXX"></div>
         </div>
       </div>
-      <div class="modal-foot">
-        <button type="button" class="btn btn-secondary" data-modal-close>Cancel</button>
+      <div class="drawer-foot">
+        <button type="button" class="btn btn-secondary" data-drawer-close>Cancel</button>
         <button type="submit" class="btn btn-accent">Save User</button>
       </div>
     </form>
@@ -186,7 +186,7 @@ document.addEventListener('click', function(e){
   m.type='hidden'; m.name='_method'; m.value='PUT'; m.id='_umethod';
   form.appendChild(m);
   document.getElementById('userModalTitle').textContent='Edit User';
-  openModalById('userModal');
+  openDrawerById('userModal');
 });
 function savePermissions(btn){
   var boxes=document.querySelectorAll('.perm-box:checked:not([disabled])');
