@@ -3,6 +3,24 @@
 @section('crumb', 'Communication / Messaging / Settings')
 @section('page_title', 'Messaging Settings')
 
+@push('styles')
+<style>
+  .led{width:11px;height:11px;border-radius:50%;display:inline-block;flex:none;position:relative}
+  .led-green{background:#22c55e;animation:ledPulse 1.8s ease-in-out infinite}
+  .led-red{background:#ef4444;animation:ledRed 1.6s ease-in-out infinite}
+  @keyframes ledPulse{
+    0%{box-shadow:0 0 0 0 rgba(34,197,94,.55)}
+    70%{box-shadow:0 0 0 10px rgba(34,197,94,0)}
+    100%{box-shadow:0 0 0 0 rgba(34,197,94,0)}
+  }
+  @keyframes ledRed{
+    0%{box-shadow:0 0 0 0 rgba(239,68,68,.5)}
+    70%{box-shadow:0 0 0 8px rgba(239,68,68,0)}
+    100%{box-shadow:0 0 0 0 rgba(239,68,68,0)}
+  }
+</style>
+@endpush
+
 @section('content')
 <div class="fade-in">
   <div class="section-head">
@@ -22,6 +40,16 @@
         <p style="color:var(--text-muted);font-size:13px;margin:0">Manage your <b>messaging-service.co.tz</b> API credentials. Add multiple providers and mark one as <b>Primary</b> — the primary provider is used when sending SMS.</p>
       </div>
       <button type="button" class="btn btn-accent" data-sms-open-btn data-mode="add">Add Provider</button>
+    </div>
+
+    <div style="display:flex;align-items:center;gap:12px;padding:12px 18px;border-radius:12px;background:#0f172a;border:1px solid rgba(255,255,255,.08);margin-bottom:16px">
+      <span class="led {{ $smsConfigured ? 'led-green' : 'led-red' }}"></span>
+      <div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap">
+        <span style="font-size:13px;font-weight:800;color:#fff">API Configured</span>
+        <span style="display:inline-flex;align-items:center;gap:5px;font-size:12px;font-weight:700;padding:2px 10px;border-radius:999px;{{ $smsConfigured ? 'color:#4ade80;background:rgba(34,197,94,.12)' : 'color:#f87171;background:rgba(239,68,68,.12)' }}">
+          {{ $smsConfigured ? 'Connected · Live' : 'Not connected' }}
+        </span>
+      </div>
     </div>
 
     <div class="table-card" style="box-shadow:none;border:1px solid var(--border,#e5e7eb)">
