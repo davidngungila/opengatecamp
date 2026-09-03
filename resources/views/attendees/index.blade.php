@@ -322,7 +322,8 @@ document.addEventListener('DOMContentLoaded', function(){
     var f = document.createElement('form');
     f.method = 'POST';
     f.action = "{{ url('/attendees') }}/" + curAtt.id + "/ticket/sms";
-    var t = document.createElement('input'); t.type='hidden'; t.name='_token'; t.value = document.querySelector('meta[name="csrf-token"]').content;
+    var mt = document.querySelector('meta[name="csrf-token"]');
+    var t = document.createElement('input'); t.type='hidden'; t.name='_token'; t.value = mt ? mt.content : '{{ csrf_token() }}';
     f.appendChild(t);
     document.body.appendChild(f);
     confirmAction(f, 'Send ticket by SMS', msg, 'Send SMS');
@@ -407,7 +408,8 @@ document.addEventListener('DOMContentLoaded', function(){
       var f = document.createElement('form');
       f.method = 'POST';
       f.action = "{{ url('/attendees') }}/" + d.id + "/ticket/sms";
-      var t = document.createElement('input'); t.type='hidden'; t.name='_token'; t.value = document.querySelector('meta[name="csrf-token"]').content;
+      var mt = document.querySelector('meta[name="csrf-token"]');
+      var t = document.createElement('input'); t.type='hidden'; t.name='_token'; t.value = mt ? mt.content : '{{ csrf_token() }}';
       f.appendChild(t);
       document.body.appendChild(f);
       confirmAction(f, 'Send ticket by SMS', msg, 'Send SMS');
