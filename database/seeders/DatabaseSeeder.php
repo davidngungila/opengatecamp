@@ -64,6 +64,7 @@ class DatabaseSeeder extends Seeder
         );
 
         Setting::put('church.name', 'Open Gate Camp Mission');
+        Setting::put('event.name', 'Open Gate Camp Season 3');
         Setting::put('church.phone', '+255 713 000 123');
         Setting::put('church.email', 'info@opengatecamp.org');
         Setting::put('church.website', 'www.opengatecamp.org');

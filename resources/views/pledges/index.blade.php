@@ -113,7 +113,7 @@
 <div class="drawer-overlay" id="pledgeNewDrawer">
   <div class="drawer-panel">
     <div class="drawer-head">
-      <div><h3>Record Pledge</h3><p>Captured automatically against {{ $campEvent?->title ?? 'Open Gate Camp' }}</p></div>
+      <div><h3>Record Pledge</h3><p>Captured automatically against {{ $campEvent?->title ?? \App\Models\Setting::get('event.name', 'Open Gate Camp') }}</p></div>
       <button type="button" class="modal-close" data-drawer-close><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><path d="M18 6L6 18M6 6l12 12"/></svg></button>
     </div>
     <form method="POST" action="{{ route('pledges.store') }}">
@@ -122,7 +122,7 @@
         <div class="form-grid">
           <div class="field full"><label>Event / Campaign</label>
             <input type="hidden" name="event_id" value="{{ $campEvent?->id }}">
-            <div style="background:var(--blue-light);color:var(--blue-accent);border-radius:10px;padding:10px 12px;font-size:13px;font-weight:700">{{ $campEvent?->title ?? 'Open Gate Camp' }} · {{ $campEvent?->start_date?->format('d M Y') }}</div>
+            <div style="background:var(--blue-light);color:var(--blue-accent);border-radius:10px;padding:10px 12px;font-size:13px;font-weight:700">{{ $campEvent?->title ?? \App\Models\Setting::get('event.name', 'Open Gate Camp') }} · {{ $campEvent?->start_date?->format('d M Y') }}</div>
           </div>
           <div class="field"><label>Name</label><input name="name" placeholder="Full name" value="{{ old('name') }}" required></div>
           <div class="field"><label>Phone</label><input name="phone" placeholder="+255 7XX XXX XXX" value="{{ old('phone') }}"></div>

@@ -136,6 +136,7 @@ class SettingsController extends Controller
     {
         $data = $request->validate([
             'church_name' => 'required|string|max:255',
+            'event_name' => 'nullable|string|max:255',
             'church_phone' => 'nullable|string|max:30',
             'church_email' => 'nullable|email|max:255',
             'church_website' => 'nullable|string|max:255',
@@ -145,6 +146,7 @@ class SettingsController extends Controller
 
         foreach ([
             'church_name' => 'church.name',
+            'event_name' => 'event.name',
             'church_phone' => 'church.phone',
             'church_email' => 'church.email',
             'church_website' => 'church.website',

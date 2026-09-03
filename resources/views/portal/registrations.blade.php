@@ -14,7 +14,7 @@
   <div class="stat-grid">
     <div class="stat-card blue"><div class="stat-value">{{ $registrations->total() }}</div><div class="stat-label">Total Registrations</div></div>
     <div class="stat-card green"><div class="stat-value">TZS {{ number_format($totalPaid ?? 0) }}</div><div class="stat-label">Total Paid</div></div>
-    <div class="stat-card purple"><div class="stat-value">{{ $currentCamp?->title ?? 'Open Gate Camp Season 3' }}</div><div class="stat-label">Current Camp</div></div>
+    <div class="stat-card purple"><div class="stat-value">{{ $currentCamp?->title ?? \App\Models\Setting::get('event.name', 'Open Gate Camp Season 3') }}</div><div class="stat-label">Current Camp</div></div>
   </div>
 
   @if($currentCamp)

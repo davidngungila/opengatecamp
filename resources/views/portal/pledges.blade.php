@@ -17,7 +17,7 @@
   </div>
 
   <div class="portal-card">
-    <h2>Add Pledge — {{ $currentCamp?->title ?? 'Open Gate Camp Season 3' }}</h2>
+    <h2>Add Pledge — {{ $currentCamp?->title ?? \App\Models\Setting::get('event.name', 'Open Gate Camp Season 3') }}</h2>
     <form method="POST" action="{{ route('portal.pledges.store') }}" class="portal-form">
       @csrf
       <div class="form-row">

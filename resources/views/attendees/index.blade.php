@@ -303,7 +303,7 @@ document.addEventListener('DOMContentLoaded', function(){
   function setSmsForm(){
     document.getElementById('attSmsName').textContent = curAtt.name || 'Attendee';
     document.getElementById('attSmsPhone').value = curAtt.phone || '';
-    document.getElementById('attSmsMessage').value = 'Hello ' + (curAtt.name||'') + ',\\nYou are registered for Open Gate Camp. We look forward to seeing you!';
+    document.getElementById('attSmsMessage').value = 'Hello ' + (curAtt.name||'') + ',\\nYou are registered for {{ \App\Models\Setting::get("event.name", "Open Gate Camp") }}. We look forward to seeing you!';
     document.getElementById('attSmsForm').action = "{{ url('/attendees') }}/" + curAtt.id + "/sms";
   }
 
@@ -395,7 +395,7 @@ document.addEventListener('DOMContentLoaded', function(){
       var d = btn.dataset;
       document.getElementById('attSmsName').textContent = d.name || 'Attendee';
       document.getElementById('attSmsPhone').value = d.phone || '';
-      document.getElementById('attSmsMessage').value = 'Hello ' + (d.name||'') + ',\\nYou are registered for Open Gate Camp. We look forward to seeing you!';
+      document.getElementById('attSmsMessage').value = 'Hello ' + (d.name||'') + ',\\nYou are registered for {{ \App\Models\Setting::get("event.name", "Open Gate Camp") }}. We look forward to seeing you!';
       document.getElementById('attSmsForm').action = "{{ url('/attendees') }}/" + d.id + "/sms";
       openDrawerById('attSmsDrawer');
     });
