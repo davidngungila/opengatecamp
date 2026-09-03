@@ -48,12 +48,12 @@
 
   {{-- Account balances row --}}
   <div class="section-head" style="margin-top:6px"><div><h2>Account Balances</h2><div class="sub">Net position per money account for the period.</div></div></div>
-  <div class="stat-grid" style="grid-template-columns:repeat(auto-fit, minmax(220px, 1fr));margin-bottom:24px">
+  <div class="stat-grid" style="grid-template-columns:repeat(auto-fit, minmax(200px, 1fr));margin-bottom:24px">
     @foreach($balances as $b)
-    <div class="glass-card" style="padding:16px 20px;text-align:center;cursor:pointer" data-view-cash-acct data-id="{{ $b['account']->id }}">
-      <div style="font-size:11px;text-transform:uppercase;letter-spacing:1px;color:var(--text-muted);margin-bottom:6px">{{ $b['account']->code }} — {{ $b['account']->name }}</div>
-      <div style="font-size:24px;font-weight:700;color:var(--blue-accent)">TZS {{ number_format($b['balance']) }}</div>
-      <div style="font-size:11px;color:var(--text-tertiary);margin-top:8px;display:flex;justify-content:center;gap:14px">
+    <div class="glass-card" style="padding:16px;text-align:center;cursor:pointer" data-view-cash-acct data-id="{{ $b['account']->id }}">
+      <div style="font-size:11px;text-transform:uppercase;letter-spacing:1px;color:var(--text-muted);margin-bottom:6px;word-break:break-word">{{ $b['account']->code }} — {{ $b['account']->name }}</div>
+      <div style="font-size:clamp(18px,4vw,24px);font-weight:700;color:var(--blue-accent)">TZS {{ number_format($b['balance']) }}</div>
+      <div style="font-size:11px;color:var(--text-tertiary);margin-top:8px;display:flex;justify-content:center;gap:14px;flex-wrap:wrap">
         <span><b style="color:var(--green-accent)">In</b> TZS {{ number_format($b['debit']) }}</span>
         <span><b style="color:var(--red)">Out</b> TZS {{ number_format($b['credit']) }}</span>
       </div>
@@ -66,7 +66,7 @@
     <div class="glass-card">
       <h2 style="font-size:14px;margin:0 0 6px">Cash Flow Overview</h2>
       <div class="sub" style="margin-bottom:6px">Monthly inflows vs outflows across money accounts.</div>
-      <div class="chart-wrap" style="height:220px"><canvas id="cashChart"
+      <div class="chart-wrap" style="height:clamp(180px,30vw,260px)"><canvas id="cashChart"
         data-labels='@json(collect($monthly)->pluck("label"))'
         data-in='@json(collect($monthly)->pluck("in"))'
         data-out='@json(collect($monthly)->pluck("out"))'></canvas></div>
@@ -96,15 +96,17 @@
       {{-- Moving filter + latest transactions --}}
       <div class="glass-card">
         <h2 style="font-size:14px;margin:0 0 12px">Cash Movements</h2>
-        <form method="GET" action="{{ route('accounting.cash-bank') }}" style="display:flex;flex-wrap:wrap;gap:8px;margin-bottom:12px">
-          <select name="account" style="flex:1 1 140px;min-width:140px;height:36px;border:1px solid var(--border-strong);border-radius:10px;padding:0 10px;font-size:12.5px;background:var(--white);color:var(--text-primary)">
+        <form method="GET" action="{{ route('accounting.cash-bank') }}" class="cash-filter-form">
+          <select name="account" class="cash-filter-select">
             <option value="">All money accounts</option>
             @foreach($balances as $b)
               <option value="{{ $b['account']->id }}" {{ (string)$activeAccount === (string)$b['account']->id ? 'selected' : '' }}>{{ $b['account']->code }} — {{ $b['account']->name }}</option>
             @endforeach
           </select>
-          <button type="submit" class="btn btn-secondary" style="height:36px;flex:0 0 auto">Filter</button>
-          @if($activeAccount)<a href="{{ route('accounting.cash-bank') }}" class="btn btn-ghost btn-sm" style="height:36px;align-self:center;flex:0 0 auto">Clear</a>@endif
+          <div class="cash-filter-btns">
+            <button type="submit" class="btn btn-secondary btn-sm">Filter</button>
+            @if($activeAccount)<a href="{{ route('accounting.cash-bank') }}" class="btn btn-ghost btn-sm">Clear</a>@endif
+          </div>
         </form>
         @forelse($movements as $m)
         <div class="mini-row" style="cursor:pointer" data-view-cash-movement data-id="{{ $m->id }}">
@@ -126,12 +128,12 @@
 
       <div class="glass-card">
         <h2 style="font-size:14px;margin:0 0 12px">Quick Actions</h2>
-        <div style="display:flex;flex-direction:column;gap:10px">
-          <a href="{{ route('accounting.offerings') }}" class="btn btn-secondary" style="justify-content:center;text-align:center">+ Record Receipt</a>
-          <a href="{{ route('accounting.payments') }}" class="btn btn-secondary" style="justify-content:center;text-align:center">+ Record Payment</a>
-          <a href="{{ route('accounting.reconciliation') }}" class="btn btn-secondary" style="justify-content:center;text-align:center">Bank Reconciliation</a>
-          <a href="{{ route('accounting.ledger') }}" class="btn btn-secondary" style="justify-content:center;text-align:center">View Ledger</a>
-          <a href="{{ route('accounting.transactions') }}" class="btn btn-secondary" style="justify-content:center;text-align:center">Transaction History</a>
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px">
+          <a href="{{ route('accounting.offerings') }}" class="btn btn-secondary btn-sm" style="justify-content:center">+ Receipt</a>
+          <a href="{{ route('accounting.payments') }}" class="btn btn-secondary btn-sm" style="justify-content:center">+ Payment</a>
+          <a href="{{ route('accounting.reconciliation') }}" class="btn btn-secondary btn-sm" style="justify-content:center">Reconciliation</a>
+          <a href="{{ route('accounting.ledger') }}" class="btn btn-secondary btn-sm" style="justify-content:center">Ledger</a>
+          <a href="{{ route('accounting.transactions') }}" class="btn btn-secondary btn-sm" style="justify-content:center;grid-column:1/-1">Transaction History</a>
         </div>
       </div>
     </div>

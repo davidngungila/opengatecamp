@@ -350,9 +350,17 @@ input:checked + .slider::before{transform:translateX(18px);}
 }
 @media (max-width:520px){
   .kpi-grid{grid-template-columns:1fr;}
+  .kpi-value{font-size:20px;}
+  .kpi-label{font-size:11.5px;}
   .dropdown-panel{width:92vw;right:-8px;}
   .attendance-grid{grid-template-columns:1fr;}
   .card-grid{grid-template-columns:1fr;}
+  .drawer-panel{max-width:100%;}
+  .mini-row{flex-wrap:wrap;}
+  .mini-row .m-body p{white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+  .mini-row>span:last-child{width:100%;text-align:right;margin-top:2px;}
+  .section-head{flex-direction:column;align-items:flex-start;}
+  .section-head .btn{align-self:flex-start;}
 }
 
 .kpi-grid.cols-3{grid-template-columns:repeat(3,1fr);}
