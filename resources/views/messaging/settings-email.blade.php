@@ -22,7 +22,7 @@
   <div style="background:#f0fdf4;border:1px solid #bbf7d0;border-radius:8px;padding:12px 16px;margin-bottom:18px;color:#166534;font-size:13.5px">✓ {{ session('success') }}</div>
   @endif
 
-  <div class="glass-card" style="max-width:640px">
+  <div class="glass-card">
     <h2 style="font-size:14.5px;margin:0 0 6px">SMTP Server Details</h2>
 
     @php $mailConfigured = (string) $s('mail.host') !== ''; @endphp
