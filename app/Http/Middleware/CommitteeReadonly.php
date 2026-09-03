@@ -14,7 +14,7 @@ class CommitteeReadonly
 
         if (
             $user
-            && $user->hasRole('committee')
+            && $user->isCommitteeMember()
             && in_array($request->method(), ['PUT', 'PATCH', 'DELETE'], true)
             && ! $request->is('account/*')
             && ! $request->is('portal/*')

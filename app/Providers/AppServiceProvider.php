@@ -21,7 +21,7 @@ class AppServiceProvider extends ServiceProvider
     {
         \Illuminate\Support\Facades\View::composer('*', function ($view) {
             $user = auth()->user();
-            $view->with('isCommittee', $user ? $user->hasRole('committee') : false);
+            $view->with('isCommittee', $user ? $user->isCommitteeMember() : false);
             $view->with('isAdmin', $user ? in_array($user->role?->name, ['Super Administrator', 'Chairperson']) : false);
         });
     }

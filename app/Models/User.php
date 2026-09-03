@@ -35,6 +35,11 @@ class User extends Authenticatable
         return $this->role?->name === $name;
     }
 
+    public function isCommitteeMember(): bool
+    {
+        return in_array($this->role?->name, ['Committee Member', 'committee'], true);
+    }
+
     public function hasPermission(string $permission): bool
     {
         if ($this->role?->name === 'Super Administrator') {

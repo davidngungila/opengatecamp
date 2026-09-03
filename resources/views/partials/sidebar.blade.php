@@ -95,6 +95,7 @@
         </div>
 
         <!-- Communication Group -->
+        @if(!$isCommittee)
         <div class="nav-group">
             <div class="tooltip-wrap">
                 <button type="button" class="nav-parent {{ $isComms ? 'expanded' : '' }}" onclick="toggleNavGroup(this)">
@@ -119,8 +120,10 @@
                 <a href="{{ route('messaging.settings') }}" class="nav-child {{ request()->routeIs('messaging.settings') ? 'active' : '' }}">Settings</a>
             </div>
         </div>
+        @endif
 
         <!-- Finance Group -->
+        @if(!$isCommittee)
         <div class="nav-group">
             <div class="tooltip-wrap">
                 <button type="button" class="nav-parent {{ $isFinance ? 'expanded' : '' }}" onclick="toggleNavGroup(this)">
@@ -154,6 +157,7 @@
                 <a href="{{ url('/accounting/balance-sheet') }}" class="nav-child {{ $p === 'accounting/balance-sheet' ? 'active' : '' }}">Balance Sheet</a>
             </div>
         </div>
+        @endif
 
         <!-- Administration Group -->
         @if($isAdmin)

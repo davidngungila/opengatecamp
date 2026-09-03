@@ -15,6 +15,7 @@ return Application::configure(basePath: dirname(__DIR__))
         $middleware->alias([
             'committee.readonly' => \App\Http\Middleware\CommitteeReadonly::class,
             'admin' => \App\Http\Middleware\IsAdmin::class,
+            'not.committee' => \App\Http\Middleware\HideFromCommittee::class,
         ]);
     })
     ->withExceptions(function (Exceptions $exceptions): void {
