@@ -97,6 +97,32 @@ class UserController extends Controller
         return back()->with('success', "Password reset for {$user->name}. New password: {$tempPassword}");
     }
 
+    public function apiUserDetail(User $user)
+    {
+        $user->load('role');
+
+        $permissions = array_map(function ($key) use ($user) {
+            $has = $user->role && ($user->role->is_super || in_array($key, $user->role->permissions ?? []));
+            return ['key' => $key, 'granted' => $has];
+        }, Role::PERMISSIONS);
+
+        return response()->json([
+            'user' => [
+                'id' => $user->id,
+                'name' => $user->name,
+                'email' => $user->email,
+                'phone' => $user->phone,
+                'status' => $user->status,
+                'role' => $user->role?->name ?? '—',
+                'role_id' => $user->role_id,
+                'is_super' => $user->role?->is_super ?? false,
+                'last_login' => $user->last_login_at?->toDateTimeString(),
+                'created' => $user->created_at?->format('d M Y'),
+            ],
+            'permissions' => $permissions,
+        ]);
+    }
+
     public function updatePermissions(Request $request, Role $role)
     {
         $data = $request->validate([

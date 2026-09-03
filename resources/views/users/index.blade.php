@@ -31,7 +31,7 @@
         <thead><tr><th>User</th><th>Role</th><th>Phone</th><th>Status</th><th>Last Login</th><th style="width:60px">Actions</th></tr></thead>
         <tbody>
           @forelse($users as $i => $u)
-          <tr>
+          <tr style="cursor:pointer" data-view-user data-id="{{ $u->id }}" data-name="{{ $u->name }}">
             <td>
               <div class="cell-user">
                 <div class="cell-avatar">{{ $initials($u->name) }}</div>
@@ -161,6 +161,38 @@
     </form>
   </div>
 </div>
+
+<div class="drawer-overlay" id="userDetailDrawer">
+  <div class="drawer-panel">
+    <div class="drawer-head">
+      <div><h3 id="usrDrawerName">User Details</h3><p id="usrDrawerRole" class="badge badge-purple badge-dotted">—</p></div>
+      <button type="button" class="modal-close" data-drawer-close><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><path d="M18 6L6 18M6 6l12 12"/></svg></button>
+    </div>
+    <div class="drawer-body">
+      <div class="profile-detail">
+        <div class="avatar avatar-lg" id="usrDrawerAvatar">—</div>
+        <div>
+          <div style="font-size:16px;font-weight:800" id="usrDrawerFullName">—</div>
+          <div style="font-size:12.5px;color:var(--text-tertiary);font-weight:600" id="usrDrawerEmail">—</div>
+        </div>
+      </div>
+      <div class="info-grid">
+        <div class="info-row"><span>Role</span><b id="usrDrawerRoleVal">—</b></div>
+        <div class="info-row"><span>Status</span><b id="usrDrawerStatus">—</b></div>
+        <div class="info-row"><span>Phone</span><b id="usrDrawerPhone">—</b></div>
+        <div class="info-row"><span>Last Login</span><b id="usrDrawerLastLogin">—</b></div>
+        <div class="info-row"><span>Member Since</span><b id="usrDrawerCreated">—</b></div>
+      </div>
+      <div class="payments-head" style="margin-top:18px">
+        <span>Permissions</span><span class="payments-count" id="usrPermCount">0</span>
+      </div>
+      <div id="usrPermList" class="payments-list"></div>
+    </div>
+    <div class="drawer-foot">
+      <button type="button" class="btn btn-secondary" data-drawer-close>Close</button>
+    </div>
+  </div>
+</div>
 @endsection
 
 @push('scripts')
@@ -211,5 +243,65 @@ function savePermissions(btn){
     }).then(next).catch(function(){ toast('Failed to save permissions','error'); });
   })();
 }
+
+function permLabel(key){
+  var map={
+    'members.view':'View Members','members.manage':'Manage Members',
+    'events.manage':'Manage Events','events.complete':'Complete Events',
+    'pledges.manage':'Manage Pledges',
+    'finance.view':'View Finance','finance.manage':'Manage Finance','finance.approve':'Approve Finance',
+    'communication.send':'Send Communication',
+    'documents.view':'View Documents','documents.manage':'Manage Documents',
+    'reports.view':'View Reports','reports.export':'Export Reports',
+    'users.manage':'Manage Users','roles.manage':'Manage Roles','settings.manage':'Manage Settings','audit.view':'View Audit Logs'
+  };
+  return map[key]||key;
+}
+
+document.addEventListener('DOMContentLoaded', function(){
+  document.querySelectorAll('[data-view-user]').forEach(function(tr){
+    tr.addEventListener('click', function(e){
+      if(e.target.closest('a') || e.target.closest('button') || e.target.closest('form')) return;
+      var id = tr.dataset.id;
+      fetch('{{ url('/api/users') }}/' + id)
+        .then(function(r){ return r.json(); })
+        .then(function(d){
+          var u = d.user;
+          document.getElementById('usrDrawerName').textContent = u.name;
+          document.getElementById('usrDrawerFullName').textContent = u.name;
+          document.getElementById('usrDrawerEmail').textContent = u.email;
+          document.getElementById('usrDrawerRoleVal').textContent = u.role;
+          document.getElementById('usrDrawerRole').textContent = u.is_super ? u.role : (u.role + ' · ' + d.permissions.filter(function(p){ return p.granted; }).length + ' perms');
+
+          var st = u.status;
+          var stEl = document.getElementById('usrDrawerStatus');
+          stEl.textContent = st;
+          stEl.style.color = st === 'Active' ? 'var(--success)' : 'var(--danger)';
+
+          document.getElementById('usrDrawerPhone').textContent = u.phone || '—';
+          document.getElementById('usrDrawerLastLogin').textContent = u.last_login ? new Date(u.last_login).toLocaleString() : 'Never';
+          document.getElementById('usrDrawerCreated').textContent = u.created || '—';
+
+          var av = document.getElementById('usrDrawerAvatar');
+          av.textContent = (u.name||'?').split(' ').filter(function(w){ return ['Fr.','Dr.'].indexOf(w)===-1; }).slice(0,2).map(function(w){ return w.charAt(0); }).join('');
+
+          var list = document.getElementById('usrPermList');
+          list.innerHTML = '';
+          document.getElementById('usrPermCount').textContent = d.permissions.filter(function(p){ return p.granted; }).length;
+          d.permissions.forEach(function(p){
+            var item = document.createElement('div');
+            item.className = 'pay-item';
+            item.innerHTML =
+              '<div class="pay-ico" style="background:' + (p.granted ? 'var(--success-bg)' : 'rgba(15,23,42,.06)') + ';color:' + (p.granted ? 'var(--success)' : 'var(--text-tertiary)') + '"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6L9 17l-5-5"/></svg></div>' +
+              '<div class="pay-main"><div class="pm-name">' + permLabel(p.key) + '</div><div class="pm-sub">' + p.key + '</div></div>' +
+              '<div class="pay-amt" style="text-align:right"><div style="font-size:11px;font-weight:700;color:' + (p.granted ? 'var(--success)' : 'var(--text-tertiary)') + '">' + (p.granted ? 'Granted' : '—') + '</div></div>';
+            list.appendChild(item);
+          });
+          openDrawerById('userDetailDrawer');
+        })
+        .catch(function(){ toast('Could not load user details', 'error'); });
+    });
+  });
+});
 </script>
 @endpush

@@ -73,6 +73,7 @@ Route::middleware(['auth', 'committee.readonly'])->group(function () {
     Route::delete('/users/{user}', [UserController::class, 'destroy'])->name('users.destroy');
     Route::patch('/users/{user}/suspend', [UserController::class, 'toggleSuspend'])->name('users.suspend');
     Route::patch('/users/{user}/password', [UserController::class, 'resetPassword'])->name('users.password');
+    Route::get('/api/users/{user}', [UserController::class, 'apiUserDetail'])->name('users.api');
     Route::put('/roles/{role}/permissions', [UserController::class, 'updatePermissions'])->name('roles.permissions');
 
     Route::get('/settings', [SettingsController::class, 'index'])->name('settings.index');
