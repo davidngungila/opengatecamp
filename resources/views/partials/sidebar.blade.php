@@ -4,7 +4,8 @@
     $base = $seg[0];
     $isFinance = $base === 'accounting';
     $isComms = $base === 'messaging';
-    $isSystem = in_array($base, ['users', 'settings']);
+    $isSystem = $base === 'users';
+    $isSettings = $base === 'settings';
 @endphp
 
 <aside class="sidebar" id="sidebar">
@@ -179,6 +180,27 @@
             </div>
             <div class="nav-children {{ $isSystem ? 'open' : '' }}">
                 <a href="{{ url('/users') }}" class="nav-child {{ $p === 'users' ? 'active' : '' }}">Users &amp; Roles</a>
+            </div>
+        </div>
+
+        <!-- Settings Group -->
+        <div class="nav-group">
+            <div class="tooltip-wrap">
+                <button type="button" class="nav-parent {{ $isSettings ? 'expanded' : '' }}" onclick="toggleNavGroup(this)">
+                    <span class="nav-icon">
+                        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round">
+                            <circle cx="12" cy="12" r="3"/>
+                            <path d="M19.4 15a1.7 1.7 0 00.3 1.9l.1.1a2 2 0 11-2.8 2.8l-.1-.1a1.7 1.7 0 00-1.9-.3 1.7 1.7 0 00-1 1.6V21a2 2 0 01-4 0v-.1a1.7 1.7 0 00-1-1.6 1.7 1.7 0 00-1.9.3l-.1.1a2 2 0 11-2.8-2.8l.1-.1a1.7 1.7 0 00.3-1.9 1.7 1.7 0 00-1.6-1H3a2 2 0 010-4h.1a1.7 1.7 0 001.6-1 1.7 1.7 0 00-.3-1.9l-.1-.1a2 2 0 112.8-2.8l.1.1a1.7 1.7 0 001.9.3H9a1.7 1.7 0 001-1.6V3a2 2 0 014 0v.1a1.7 1.7 0 001 1.6 1.7 1.7 0 001.9-.3l.1-.1a2 2 0 112.8 2.8l-.1.1a1.7 1.7 0 00-.3 1.9V9a1.7 1.7 0 001.6 1H21a2 2 0 010 4h-.1a1.7 1.7 0 00-1.6 1z"/>
+                        </svg>
+                    </span>
+                    <span class="nav-label">Settings</span>
+                    <svg class="chevron" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4">
+                        <path d="M9 18l6-6-6-6"/>
+                    </svg>
+                </button>
+                <span class="tt">Settings</span>
+            </div>
+            <div class="nav-children {{ $isSettings ? 'open' : '' }}">
                 <a href="{{ route('settings.page.general') }}" class="nav-child {{ $p === 'settings/general' ? 'active' : '' }}">General / Church Profile</a>
                 <a href="{{ route('settings.page.notifications') }}" class="nav-child {{ $p === 'settings/notifications' ? 'active' : '' }}">Notifications</a>
                 <a href="{{ route('settings.page.accounting') }}" class="nav-child {{ $p === 'settings/accounting' ? 'active' : '' }}">Accounting</a>
