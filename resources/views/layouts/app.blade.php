@@ -13,6 +13,7 @@
 @endunless
 @include('partials.styles-core')
 @include('partials.styles-components')
+@stack('styles')
 </head>
 <body>
 
