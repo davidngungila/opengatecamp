@@ -48,7 +48,7 @@
 
   {{-- Account balances row --}}
   <div class="section-head" style="margin-top:6px"><div><h2>Account Balances</h2><div class="sub">Net position per money account for the period.</div></div></div>
-  <div class="stat-grid" style="grid-template-columns:repeat(auto-fit, minmax(200px, 1fr));margin-bottom:24px">
+  <div class="stat-grid acct-bal-grid" style="margin-bottom:24px">
     @foreach($balances as $b)
     <div class="glass-card" style="padding:16px;text-align:center;cursor:pointer" data-view-cash-acct data-id="{{ $b['account']->id }}">
       <div style="font-size:11px;text-transform:uppercase;letter-spacing:1px;color:var(--text-muted);margin-bottom:6px;word-break:break-word">{{ $b['account']->code }} — {{ $b['account']->name }}</div>

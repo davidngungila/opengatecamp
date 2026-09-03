@@ -367,6 +367,14 @@ input:checked + .slider::before{transform:translateX(18px);}
 
 .kpi-grid.cols-3{grid-template-columns:repeat(3,1fr);}
 .kpi-grid.cols-2{grid-template-columns:repeat(2,1fr);}
+
+.acct-bal-grid{grid-template-columns:repeat(3,1fr);}
+@media (max-width:860px){
+  .acct-bal-grid{grid-template-columns:repeat(2,1fr);}
+}
+@media (max-width:520px){
+  .acct-bal-grid{grid-template-columns:1fr;}
+}
 @media (max-width:860px){
   .kpi-grid.cols-3{grid-template-columns:1fr 1fr;}
   .kpi-grid.cols-2{grid-template-columns:1fr 1fr;}
