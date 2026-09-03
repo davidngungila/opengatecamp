@@ -118,7 +118,6 @@
                 <a href="{{ route('messaging.templates') }}" class="nav-child {{ request()->routeIs('messaging.templates') ? 'active' : '' }}">Templates</a>
                 <a href="{{ route('messaging.history') }}" class="nav-child {{ request()->routeIs('messaging.history') || request()->routeIs('messaging.show') ? 'active' : '' }}">History</a>
                 <a href="{{ route('messaging.notifications') }}" class="nav-child {{ request()->routeIs('messaging.notifications') ? 'active' : '' }}">Notification Logs</a>
-                <a href="{{ route('messaging.settings') }}" class="nav-child {{ request()->routeIs('messaging.settings') ? 'active' : '' }}">Settings</a>
             </div>
         </div>
         @endif
