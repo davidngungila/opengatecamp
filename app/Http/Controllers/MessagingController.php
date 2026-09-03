@@ -89,12 +89,18 @@ class MessagingController extends Controller
 
     public function settings()
     {
-        return view('messaging.settings', $this->sharedData());
+        return view('messaging.settings', $this->sharedData() + [
+            'providers'  => $this->smsProviders(),
+            'primaryKey' => $this->smsPrimaryKey(),
+        ]);
     }
 
     public function emailSettings()
     {
-        return view('messaging.settings-email', $this->sharedData());
+        return view('messaging.settings-email', $this->sharedData() + [
+            'providers'  => $this->emailProviders(),
+            'primaryKey' => $this->emailPrimaryKey(),
+        ]);
     }
 
     public function saveEmailSettings(Request $request)
@@ -124,6 +130,81 @@ class MessagingController extends Controller
         AuditLog::record('Updated Email (SMTP) settings', 'Communication — Settings', 'Host: '.($data['mail_host'] ?: 'not set'));
 
         return back()->with('success', 'Email (SMTP) settings saved successfully.');
+    }
+
+    private function smsProviders(): array
+    {
+        $providers = json_decode((string) Setting::get('sms.providers', '[]'), true) ?: [];
+
+        if (empty($providers)) {
+            $token = Setting::get('sms.api_token', '');
+            if ($token !== '') {
+                $providers = [[
+                    'key'       => 'default',
+                    'name'      => 'Default Provider',
+                    'api_token' => $token,
+                    'sender_id' => Setting::get('sms.sender_id', 'TMCS MoCU'),
+                ]];
+                Setting::put('sms.providers', json_encode($providers));
+                Setting::put('sms.primary', 'default');
+                $this->syncSmsPrimary();
+            }
+        }
+
+        $primary = $this->smsPrimaryKey();
+
+        return array_values(array_map(function ($p) use ($primary) {
+            $p['is_primary'] = ($p['key'] ?? null) === $primary;
+
+            return $p;
+        }, $providers));
+    }
+
+    private function smsPrimaryKey(): ?string
+    {
+        $key = Setting::get('sms.primary', '');
+
+        return $key !== '' ? $key : null;
+    }
+
+    private function emailProviders(): array
+    {
+        $providers = json_decode((string) Setting::get('mail.providers', '[]'), true) ?: [];
+
+        if (empty($providers)) {
+            $host = Setting::get('mail.host', '');
+            if ($host !== '') {
+                $providers = [[
+                    'key'          => 'default',
+                    'name'         => 'Default Provider',
+                    'host'         => $host,
+                    'port'         => Setting::get('mail.port', ''),
+                    'username'     => Setting::get('mail.username', ''),
+                    'password'     => Setting::get('mail.password', ''),
+                    'encryption'   => Setting::get('mail.encryption', 'tls'),
+                    'from_address' => Setting::get('mail.from_address', ''),
+                    'from_name'    => Setting::get('mail.from_name', ''),
+                ]];
+                Setting::put('mail.providers', json_encode($providers));
+                Setting::put('mail.primary', 'default');
+                $this->syncEmailPrimary();
+            }
+        }
+
+        $primary = $this->emailPrimaryKey();
+
+        return array_values(array_map(function ($p) use ($primary) {
+            $p['is_primary'] = ($p['key'] ?? null) === $primary;
+
+            return $p;
+        }, $providers));
+    }
+
+    private function emailPrimaryKey(): ?string
+    {
+        $key = Setting::get('mail.primary', '');
+
+        return $key !== '' ? $key : null;
     }
 
     /**
@@ -303,6 +384,277 @@ class MessagingController extends Controller
         AuditLog::record('Updated SMS API settings', 'Communication — Settings', 'Sender: '.($data['sender_id'] ?: 'TMCS MoCU'));
 
         return back()->with('success', 'SMS API settings saved successfully. You can now send SMS messages.');
+    }
+
+    private function readSmsProviders(): array
+    {
+        return json_decode((string) Setting::get('sms.providers', '[]'), true) ?: [];
+    }
+
+    private function writeSmsProviders(array $providers): void
+    {
+        Setting::put('sms.providers', json_encode(array_values($providers)));
+        $this->syncSmsPrimary();
+    }
+
+    private function syncSmsPrimary(): void
+    {
+        $providers = $this->readSmsProviders();
+        $primary = $this->smsPrimaryKey() ?? ($providers[0]['key'] ?? null);
+
+        if ($primary === null) {
+            Setting::put('sms.primary', '');
+            Setting::put('sms.api_token', '');
+            Setting::put('sms.sender_id', 'TMCS MoCU');
+
+            return;
+        }
+
+        $match = collect($providers)->firstWhere('key', $primary);
+        if (! $match) {
+            $match = $providers[0] ?? null;
+            $primary = $match['key'] ?? null;
+        }
+
+        Setting::put('sms.primary', $primary);
+        Setting::put('sms.api_token', $match['api_token'] ?? '');
+        Setting::put('sms.sender_id', $match['sender_id'] ?: 'TMCS MoCU');
+    }
+
+    private function readEmailProviders(): array
+    {
+        return json_decode((string) Setting::get('mail.providers', '[]'), true) ?: [];
+    }
+
+    private function writeEmailProviders(array $providers): void
+    {
+        Setting::put('mail.providers', json_encode(array_values($providers)));
+        $this->syncEmailPrimary();
+    }
+
+    private function syncEmailPrimary(): void
+    {
+        $providers = $this->readEmailProviders();
+        $primary = $this->emailPrimaryKey() ?? ($providers[0]['key'] ?? null);
+
+        if ($primary === null) {
+            foreach (['host', 'port', 'username', 'password', 'encryption', 'from_address', 'from_name'] as $f) {
+                Setting::put('mail.'.$f, '');
+            }
+            Setting::put('mail.primary', '');
+
+            return;
+        }
+
+        $match = collect($providers)->firstWhere('key', $primary);
+        if (! $match) {
+            $match = $providers[0] ?? null;
+            $primary = $match['key'] ?? null;
+        }
+
+        Setting::put('mail.primary', $primary);
+        Setting::put('mail.host',         $match['host'] ?? '');
+        Setting::put('mail.port',         $match['port'] ?? '');
+        Setting::put('mail.username',     $match['username'] ?? '');
+        Setting::put('mail.password',     $match['password'] ?? '');
+        Setting::put('mail.encryption',   $match['encryption'] ?? '');
+        Setting::put('mail.from_address', $match['from_address'] ?? '');
+        Setting::put('mail.from_name',    $match['from_name'] ?? '');
+    }
+
+    public function smsProviderStore(Request $request)
+    {
+        $data = $request->validate([
+            'name'      => 'required|string|max:120',
+            'api_token' => 'required|string|max:255',
+            'sender_id' => 'nullable|string|max:30',
+            'set_primary' => 'nullable|boolean',
+        ]);
+
+        $providers = $this->readSmsProviders();
+        $key = \Illuminate\Support\Str::random(6);
+        $providers[] = [
+            'key' => $key,
+            'name' => $data['name'],
+            'api_token' => $data['api_token'],
+            'sender_id' => $data['sender_id'] ?: 'TMCS MoCU',
+        ];
+
+        if ($request->boolean('set_primary') || empty($this->smsPrimaryKey())) {
+            Setting::put('sms.primary', $key);
+        }
+
+        $this->writeSmsProviders($providers);
+
+        AuditLog::record('Added SMS provider', 'Communication — Settings', $data['name']);
+
+        return back()->with('success', "SMS provider '{$data['name']}' added.");
+    }
+
+    public function smsProviderUpdate(Request $request, string $key)
+    {
+        $data = $request->validate([
+            'name'      => 'required|string|max:120',
+            'api_token' => 'required|string|max:255',
+            'sender_id' => 'nullable|string|max:30',
+        ]);
+
+        $providers = $this->readSmsProviders();
+        $updated = false;
+
+        foreach ($providers as &$p) {
+            if (($p['key'] ?? null) === $key) {
+                $p['name'] = $data['name'];
+                $p['api_token'] = $data['api_token'];
+                $p['sender_id'] = $data['sender_id'] ?: 'TMCS MoCU';
+                $updated = true;
+                break;
+            }
+        }
+        unset($p);
+
+        if (! $updated) {
+            return back()->with('error', 'SMS provider not found.');
+        }
+
+        $this->writeSmsProviders($providers);
+
+        AuditLog::record('Updated SMS provider', 'Communication — Settings', $data['name']);
+
+        return back()->with('success', "SMS provider '{$data['name']}' updated.");
+    }
+
+    public function smsProviderDelete(string $key)
+    {
+        $providers = collect($this->readSmsProviders())->reject(fn ($p) => ($p['key'] ?? null) === $key)->values()->all();
+        $this->writeSmsProviders($providers);
+
+        AuditLog::record('Removed SMS provider', 'Communication — Settings', $key);
+
+        return back()->with('success', 'SMS provider removed.');
+    }
+
+    public function smsProviderPrimary(string $key)
+    {
+        $providers = $this->readSmsProviders();
+
+        if (! collect($providers)->contains('key', $key)) {
+            return back()->with('error', 'SMS provider not found.');
+        }
+
+        Setting::put('sms.primary', $key);
+        $this->syncSmsPrimary();
+
+        AuditLog::record('Set primary SMS provider', 'Communication — Settings', $key);
+
+        return back()->with('success', 'Primary SMS provider updated.');
+    }
+
+    public function emailProviderStore(Request $request)
+    {
+        $data = $request->validate([
+            'name'          => 'required|string|max:120',
+            'host'          => 'required|string|max:255',
+            'port'          => 'nullable|integer|between:1,65535',
+            'username'      => 'nullable|string|max:255',
+            'password'      => 'nullable|string|max:255',
+            'encryption'    => 'nullable|in:tls,ssl,none',
+            'from_address'  => 'nullable|email|max:255',
+            'from_name'     => 'nullable|string|max:255',
+        ]);
+
+        $providers = $this->readEmailProviders();
+        $key = \Illuminate\Support\Str::random(6);
+        $providers[] = [
+            'key' => $key,
+            'name' => $data['name'],
+            'host' => $data['host'],
+            'port' => $data['port'] ?? null,
+            'username' => $data['username'] ?? '',
+            'password' => $data['password'] ?? '',
+            'encryption' => $data['encryption'] ?? 'tls',
+            'from_address' => $data['from_address'] ?? '',
+            'from_name' => $data['from_name'] ?? '',
+        ];
+
+        if ($request->boolean('set_primary') || empty($this->emailPrimaryKey())) {
+            Setting::put('mail.primary', $key);
+        }
+
+        $this->writeEmailProviders($providers);
+
+        AuditLog::record('Added email provider', 'Communication — Settings', $data['name']);
+
+        return back()->with('success', "Email provider '{$data['name']}' added.");
+    }
+
+    public function emailProviderUpdate(Request $request, string $key)
+    {
+        $data = $request->validate([
+            'name'          => 'required|string|max:120',
+            'host'          => 'required|string|max:255',
+            'port'          => 'nullable|integer|between:1,65535',
+            'username'      => 'nullable|string|max:255',
+            'password'      => 'nullable|string|max:255',
+            'encryption'    => 'nullable|in:tls,ssl,none',
+            'from_address'  => 'nullable|email|max:255',
+            'from_name'     => 'nullable|string|max:255',
+        ]);
+
+        $providers = $this->readEmailProviders();
+        $updated = false;
+
+        foreach ($providers as &$p) {
+            if (($p['key'] ?? null) === $key) {
+                $p['name'] = $data['name'];
+                $p['host'] = $data['host'];
+                $p['port'] = $data['port'] ?? null;
+                $p['username'] = $data['username'] ?? '';
+                $p['password'] = $data['password'] ?? '';
+                $p['encryption'] = $data['encryption'] ?? 'tls';
+                $p['from_address'] = $data['from_address'] ?? '';
+                $p['from_name'] = $data['from_name'] ?? '';
+                $updated = true;
+                break;
+            }
+        }
+        unset($p);
+
+        if (! $updated) {
+            return back()->with('error', 'Email provider not found.');
+        }
+
+        $this->writeEmailProviders($providers);
+
+        AuditLog::record('Updated email provider', 'Communication — Settings', $data['name']);
+
+        return back()->with('success', "Email provider '{$data['name']}' updated.");
+    }
+
+    public function emailProviderDelete(string $key)
+    {
+        $providers = collect($this->readEmailProviders())->reject(fn ($p) => ($p['key'] ?? null) === $key)->values()->all();
+        $this->writeEmailProviders($providers);
+
+        AuditLog::record('Removed email provider', 'Communication — Settings', $key);
+
+        return back()->with('success', 'Email provider removed.');
+    }
+
+    public function emailProviderPrimary(string $key)
+    {
+        $providers = $this->readEmailProviders();
+
+        if (! collect($providers)->contains('key', $key)) {
+            return back()->with('error', 'Email provider not found.');
+        }
+
+        Setting::put('mail.primary', $key);
+        $this->syncEmailPrimary();
+
+        AuditLog::record('Set primary email provider', 'Communication — Settings', $key);
+
+        return back()->with('success', 'Primary email provider updated.');
     }
 
     public function useTemplate(Request $request)

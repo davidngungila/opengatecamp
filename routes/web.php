@@ -151,6 +151,16 @@ Route::middleware(['auth', 'committee.readonly'])->group(function () {
         Route::post('/messaging/settings/email', [MessagingController::class, 'saveEmailSettings'])->name('messaging.settings.email.save');
         Route::post('/messaging', [MessagingController::class, 'store'])->name('messaging.store');
         Route::post('/messaging/token', [MessagingController::class, 'saveToken'])->name('messaging.token');
+
+        Route::post('/messaging/settings/sms/providers', [MessagingController::class, 'smsProviderStore'])->name('messaging.settings.sms.provider.store');
+        Route::post('/messaging/settings/sms/providers/{key}', [MessagingController::class, 'smsProviderUpdate'])->name('messaging.settings.sms.provider.update');
+        Route::post('/messaging/settings/sms/providers/{key}/primary', [MessagingController::class, 'smsProviderPrimary'])->name('messaging.settings.sms.provider.primary');
+        Route::delete('/messaging/settings/sms/providers/{key}', [MessagingController::class, 'smsProviderDelete'])->name('messaging.settings.sms.provider.delete');
+
+        Route::post('/messaging/settings/email/providers', [MessagingController::class, 'emailProviderStore'])->name('messaging.settings.email.provider.store');
+        Route::post('/messaging/settings/email/providers/{key}', [MessagingController::class, 'emailProviderUpdate'])->name('messaging.settings.email.provider.update');
+        Route::post('/messaging/settings/email/providers/{key}/primary', [MessagingController::class, 'emailProviderPrimary'])->name('messaging.settings.email.provider.primary');
+        Route::delete('/messaging/settings/email/providers/{key}', [MessagingController::class, 'emailProviderDelete'])->name('messaging.settings.email.provider.delete');
         Route::get('/messaging/recipients', [MessagingController::class, 'getRecipients'])->name('messaging.recipients');
         Route::post('/messaging/use-template', [MessagingController::class, 'useTemplate'])->name('messaging.use-template');
     });
