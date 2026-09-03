@@ -12,7 +12,7 @@
 <div class="fade-in">
   <div class="section-head">
     <div><h2>Chart of Accounts</h2><div class="sub">{{ $accounts->count() }} accounts</div></div>
-    <button type="button" class="btn btn-accent" data-modal-open="accountModal" onclick="resetAccountModal()">+ Add Account</button>
+    <button type="button" class="btn btn-accent" data-drawer-open="accountModal" onclick="resetAccountModal()">+ Add Account</button>
   </div>
 
   <form class="toolbar" method="GET" action="{{ url('/accounting/accounts') }}">
@@ -95,15 +95,15 @@
   </div>
 </div>
 
-<div class="modal-overlay" id="accountModal">
-  <div class="modal-box sm">
-    <div class="modal-head">
+<div class="drawer-overlay" id="accountModal">
+  <div class="drawer-panel">
+    <div class="drawer-head">
       <div><h3 id="acctModalTitle">Add Account</h3></div>
-      <button type="button" class="modal-close" data-modal-close><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><path d="M18 6L6 18M6 6l12 12"/></svg></button>
+      <button type="button" class="modal-close" data-drawer-close><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><path d="M18 6L6 18M6 6l12 12"/></svg></button>
     </div>
     <form id="accountForm" method="POST" action="{{ route('accounting.accounts.store') }}">
       @csrf
-      <div class="modal-body">
+      <div class="drawer-body">
         <div class="form-grid">
           <div class="field"><label>Code *</label><input name="code" required placeholder="e.g. 4050"></div>
           <div class="field"><label>Type *</label>
@@ -116,8 +116,8 @@
           <div class="field full"><label>Name *</label><input name="name" required placeholder="e.g. Bookshop Income"></div>
         </div>
       </div>
-      <div class="modal-foot">
-        <button type="button" class="btn btn-secondary" data-modal-close>Cancel</button>
+      <div class="drawer-foot">
+        <button type="button" class="btn btn-secondary" data-drawer-close>Cancel</button>
         <button type="submit" class="btn btn-accent">Save Account</button>
       </div>
     </form>
@@ -146,7 +146,7 @@ document.addEventListener('click', function(e){
   m.type='hidden'; m.name='_method'; m.value='PUT'; m.id='_amethod';
   form.appendChild(m);
   document.getElementById('acctModalTitle').textContent='Edit Account';
-  openModalById('accountModal');
+  openDrawerById('accountModal');
 });
 
 document.addEventListener('DOMContentLoaded', function(){

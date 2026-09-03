@@ -8,7 +8,7 @@
 <div class="fade-in">
   <div class="section-head">
     <div><h2>Bank Reconciliation</h2><div class="sub">Compare ledger balance with bank statement to ensure accuracy.</div></div>
-    <button type="button" class="btn btn-accent" data-modal-open="recModal">+ New Reconciliation</button>
+    <button type="button" class="btn btn-accent" data-drawer-open="recModal">+ New Reconciliation</button>
   </div>
 
   <div class="glass-card" style="margin-bottom:20px;padding:16px 20px">
@@ -71,15 +71,15 @@
   </div>
 </div>
 
-<div class="modal-overlay" id="recModal">
-  <div class="modal-box md">
-    <div class="modal-head">
+<div class="drawer-overlay" id="recModal">
+  <div class="drawer-panel">
+    <div class="drawer-head">
       <div><h3>New Bank Reconciliation</h3><p>Compare statement vs ledger</p></div>
-      <button type="button" class="modal-close" data-modal-close><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><path d="M18 6L6 18M6 6l12 12"/></svg></button>
+      <button type="button" class="modal-close" data-drawer-close><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><path d="M18 6L6 18M6 6l12 12"/></svg></button>
     </div>
     <form method="POST" action="{{ route('accounting.reconciliation.store') }}">
       @csrf
-      <div class="modal-body">
+      <div class="drawer-body">
         <div class="form-grid">
           <div class="field full"><label>Bank Account *</label>
             <select name="account_id" required>
@@ -91,8 +91,8 @@
           <div class="field full"><label>Notes</label><textarea name="notes" rows="2" placeholder="Optional notes about this reconciliation"></textarea></div>
         </div>
       </div>
-      <div class="modal-foot">
-        <button type="button" class="btn btn-secondary" data-modal-close>Cancel</button>
+      <div class="drawer-foot">
+        <button type="button" class="btn btn-secondary" data-drawer-close>Cancel</button>
         <button type="submit" class="btn btn-accent"
                 data-confirm data-confirm-title="Save reconciliation?"
                 data-confirm-message="The system will compare your statement balance against the ledger."

@@ -12,7 +12,7 @@
 <div class="fade-in">
   <div class="section-head">
     <div><h2>Payments &amp; Expense Management</h2><div class="sub">@if($fy) Period: {{ $fy->name }}. @else All periods. @endif Every payment posts Dr Expense · Cr Cash/Bank.</div></div>
-    <button type="button" class="btn btn-accent" data-modal-open="paymentModal">+ Record Payment</button>
+    <button type="button" class="btn btn-accent" data-drawer-open="paymentModal">+ Record Payment</button>
   </div>
 
   <div class="table-card">
@@ -50,7 +50,7 @@
             </td>
           </tr>
           @empty
-          <tr><td colspan="8"><div class="empty-state"><h3>No payments yet</h3><p>Record the first expense payment.</p><button type="button" class="btn btn-accent" data-modal-open="paymentModal">+ Record Payment</button></div></td></tr>
+          <tr><td colspan="8"><div class="empty-state"><h3>No payments yet</h3><p>Record the first expense payment.</p><button type="button" class="btn btn-accent" data-drawer-open="paymentModal">+ Record Payment</button></div></td></tr>
           @endforelse
         </tbody>
       </table>
@@ -91,16 +91,16 @@
   </div>
 </div>
 
-<div class="modal-overlay" id="paymentModal">
-  <div class="modal-box md">
-    <div class="modal-head">
+<div class="drawer-overlay" id="paymentModal">
+  <div class="drawer-panel">
+    <div class="drawer-head">
       <div><h3>Record Payment</h3><p>Dr Expense · Cr Cash/Bank — auto-balanced</p></div>
-      <button type="button" class="modal-close" data-modal-close><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><path d="M18 6L6 18M6 6l12 12"/></svg></button>
+      <button type="button" class="modal-close" data-drawer-close><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><path d="M18 6L6 18M6 6l12 12"/></svg></button>
     </div>
     <form method="POST" action="{{ route('accounting.payments.store') }}">
       @csrf
       <input type="hidden" name="type" value="payment">
-      <div class="modal-body">
+      <div class="drawer-body">
         <div class="form-grid">
           <div class="field"><label>Date *</label><input type="date" name="pay_date" value="{{ old('pay_date', now()->toDateString()) }}" required></div>
           <div class="field"><label>Amount (TZS) *</label><input type="number" step="0.01" min="0.01" name="amount" required placeholder="0.00"></div>
@@ -121,8 +121,8 @@
           <div class="field full"><label>Description</label><textarea name="description" rows="2"></textarea></div>
         </div>
       </div>
-      <div class="modal-foot">
-        <button type="button" class="btn btn-secondary" data-modal-close>Cancel</button>
+      <div class="drawer-foot">
+        <button type="button" class="btn btn-secondary" data-drawer-close>Cancel</button>
         <button type="submit" class="btn btn-accent"
                 data-confirm data-confirm-title="Record this payment?"
                 data-confirm-message="A balanced journal entry will be posted to the ledger."

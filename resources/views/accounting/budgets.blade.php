@@ -8,7 +8,7 @@
 <div class="fade-in">
   <div class="section-head">
     <div><h2>Budget Management</h2><div class="sub">@if($fy) Period: {{ $fy->name }} — Income TZS {{ number_format($incomeTotal) }}. @else Select a financial year. @endif</div></div>
-    <button type="button" class="btn btn-accent" data-modal-open="budgetModal">+ Add Budget</button>
+    <button type="button" class="btn btn-accent" data-drawer-open="budgetModal">+ Add Budget</button>
   </div>
 
   <form class="toolbar" method="GET" action="{{ route('accounting.budgets') }}">
@@ -108,15 +108,15 @@
   </div>
 </div>
 
-<div class="modal-overlay" id="budgetModal">
-  <div class="modal-box md">
-    <div class="modal-head">
+<div class="drawer-overlay" id="budgetModal">
+  <div class="drawer-panel">
+    <div class="drawer-head">
       <div><h3>Add Budget Line</h3><p>Set spending limit for an expense account</p></div>
-      <button type="button" class="modal-close" data-modal-close><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><path d="M18 6L6 18M6 6l12 12"/></svg></button>
+      <button type="button" class="modal-close" data-drawer-close><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><path d="M18 6L6 18M6 6l12 12"/></svg></button>
     </div>
     <form method="POST" action="{{ route('accounting.budgets.store') }}">
       @csrf
-      <div class="modal-body">
+      <div class="drawer-body">
         <div class="form-grid">
           <div class="field full"><label>Financial Year *</label>
             <select name="fy_id" required>
@@ -137,8 +137,8 @@
           <div class="field full"><label>Budget Amount (TZS) *</label><input type="number" step="0.01" min="0.01" name="amount" required placeholder="0.00"></div>
         </div>
       </div>
-      <div class="modal-foot">
-        <button type="button" class="btn btn-secondary" data-modal-close>Cancel</button>
+      <div class="drawer-foot">
+        <button type="button" class="btn btn-secondary" data-drawer-close>Cancel</button>
         <button type="submit" class="btn btn-accent"
                 data-confirm data-confirm-title="Save this budget?"
                 data-confirm-label="Save Budget">Save</button>
