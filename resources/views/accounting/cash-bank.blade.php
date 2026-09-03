@@ -61,81 +61,78 @@
     @endforeach
   </div>
 
-  <div class="two-col">
-    {{-- Cash flow overview + chart --}}
-    <div class="glass-card">
-      <h2 style="font-size:14px;margin:0 0 6px">Cash Flow Overview</h2>
-      <div class="sub" style="margin-bottom:6px">Monthly inflows vs outflows across money accounts.</div>
-      <div class="chart-wrap" style="height:clamp(180px,30vw,260px)"><canvas id="cashChart"
-        data-labels='@json(collect($monthly)->pluck("label"))'
-        data-in='@json(collect($monthly)->pluck("in"))'
-        data-out='@json(collect($monthly)->pluck("out"))'></canvas></div>
+  {{-- Cash flow overview --}}
+  <div class="glass-card" style="margin-bottom:22px">
+    <h2 style="font-size:14px;margin:0 0 6px">Cash Flow Overview</h2>
+    <div class="sub" style="margin-bottom:6px">Monthly inflows vs outflows across money accounts.</div>
+    <div class="chart-wrap" style="height:clamp(180px,30vw,260px)"><canvas id="cashChart"
+      data-labels='@json(collect($monthly)->pluck("label"))'
+      data-in='@json(collect($monthly)->pluck("in"))'
+      data-out='@json(collect($monthly)->pluck("out"))'></canvas></div>
 
-      @if(count($monthly))
-      <div class="table-scroll" style="margin-top:10px">
-        <table class="data-table mini-table">
-          <thead><tr><th>Month</th><th style="text-align:right">In</th><th style="text-align:right">Out</th><th style="text-align:right">Net</th></tr></thead>
-          <tbody>
-            @foreach($monthly as $row)
-            <tr>
-              <td>{{ $row['label'] }}</td>
-              <td style="text-align:right;color:var(--green-accent);font-weight:600">TZS {{ number_format($row['in']) }}</td>
-              <td style="text-align:right;color:var(--red);font-weight:600">TZS {{ number_format($row['out']) }}</td>
-              <td style="text-align:right;font-weight:700;color:{{ $row['net'] >= 0 ? 'var(--green-accent)' : 'var(--red)' }}">{{ $row['net'] >= 0 ? '+' : '−' }} TZS {{ number_format(abs($row['net'])) }}</td>
-            </tr>
-            @endforeach
-          </tbody>
-        </table>
-      </div>
-      @else
-      <div class="empty-state" style="padding:22px 16px"><p>No cash movements in this period.</p></div>
-      @endif
+    @if(count($monthly))
+    <div class="table-scroll" style="margin-top:10px">
+      <table class="data-table mini-table">
+        <thead><tr><th>Month</th><th style="text-align:right">In</th><th style="text-align:right">Out</th><th style="text-align:right">Net</th></tr></thead>
+        <tbody>
+          @foreach($monthly as $row)
+          <tr>
+            <td>{{ $row['label'] }}</td>
+            <td style="text-align:right;color:var(--green-accent);font-weight:600">TZS {{ number_format($row['in']) }}</td>
+            <td style="text-align:right;color:var(--red);font-weight:600">TZS {{ number_format($row['out']) }}</td>
+            <td style="text-align:right;font-weight:700;color:{{ $row['net'] >= 0 ? 'var(--green-accent)' : 'var(--red)' }}">{{ $row['net'] >= 0 ? '+' : '−' }} TZS {{ number_format(abs($row['net'])) }}</td>
+          </tr>
+          @endforeach
+        </tbody>
+      </table>
     </div>
+    @else
+    <div class="empty-state" style="padding:22px 16px"><p>No cash movements in this period.</p></div>
+    @endif
+  </div>
 
-    <div style="display:flex;flex-direction:column;gap:16px">
-      {{-- Moving filter + latest transactions --}}
-      <div class="glass-card">
-        <h2 style="font-size:14px;margin:0 0 12px">Cash Movements</h2>
-        <form method="GET" action="{{ route('accounting.cash-bank') }}" class="cash-filter-form">
-          <select name="account" class="cash-filter-select">
-            <option value="">All money accounts</option>
-            @foreach($balances as $b)
-              <option value="{{ $b['account']->id }}" {{ (string)$activeAccount === (string)$b['account']->id ? 'selected' : '' }}>{{ $b['account']->code }} — {{ $b['account']->name }}</option>
-            @endforeach
-          </select>
-          <div class="cash-filter-btns">
-            <button type="submit" class="btn btn-secondary btn-sm">Filter</button>
-            @if($activeAccount)<a href="{{ route('accounting.cash-bank') }}" class="btn btn-ghost btn-sm">Clear</a>@endif
-          </div>
-        </form>
-        @forelse($movements as $m)
-        <div class="mini-row" style="cursor:pointer" data-view-cash-movement data-id="{{ $m->id }}">
-          <div class="m-ico" style="background:{{ $m->debit > 0 ? 'var(--green-light)' : '#fef2f2' }};color:{{ $m->debit > 0 ? 'var(--green-accent)' : 'var(--red)' }}">
-            {{ $m->debit > 0 ? 'IN' : 'OUT' }}
-          </div>
-          <div class="m-body">
-            <p>{{ $m->entry->entry_no }} — {{ Str::limit($m->entry->description, 36) }}</p>
-            <span>{{ $m->account->code }} · {{ $m->entry->entry_date->format('d M Y') }}</span>
-          </div>
-          <span style="font-weight:700;color:{{ $m->debit > 0 ? 'var(--green-accent)' : 'var(--red)' }}">
-            {{ $m->debit > 0 ? '+' : '−' }} TZS {{ number_format(max($m->debit, $m->credit)) }}
-          </span>
-        </div>
-        @empty
-        <div class="empty-state" style="padding:20px 12px"><p>No movements for this filter.</p></div>
-        @endforelse
+  {{-- Cash movements --}}
+  <div class="glass-card" style="margin-bottom:22px">
+    <h2 style="font-size:14px;margin:0 0 12px">Cash Movements</h2>
+    <form method="GET" action="{{ route('accounting.cash-bank') }}" class="cash-filter-form">
+      <select name="account" class="cash-filter-select">
+        <option value="">All money accounts</option>
+        @foreach($balances as $b)
+          <option value="{{ $b['account']->id }}" {{ (string)$activeAccount === (string)$b['account']->id ? 'selected' : '' }}>{{ $b['account']->code }} — {{ $b['account']->name }}</option>
+        @endforeach
+      </select>
+      <div class="cash-filter-btns">
+        <button type="submit" class="btn btn-secondary btn-sm">Filter</button>
+        @if($activeAccount)<a href="{{ route('accounting.cash-bank') }}" class="btn btn-ghost btn-sm">Clear</a>@endif
       </div>
+    </form>
+    @forelse($movements as $m)
+    <div class="mini-row" style="cursor:pointer" data-view-cash-movement data-id="{{ $m->id }}">
+      <div class="m-ico" style="background:{{ $m->debit > 0 ? 'var(--green-light)' : '#fef2f2' }};color:{{ $m->debit > 0 ? 'var(--green-accent)' : 'var(--red)' }}">
+        {{ $m->debit > 0 ? 'IN' : 'OUT' }}
+      </div>
+      <div class="m-body">
+        <p>{{ $m->entry->entry_no }} — {{ Str::limit($m->entry->description, 36) }}</p>
+        <span>{{ $m->account->code }} · {{ $m->entry->entry_date->format('d M Y') }}</span>
+      </div>
+      <span style="font-weight:700;color:{{ $m->debit > 0 ? 'var(--green-accent)' : 'var(--red)' }}">
+        {{ $m->debit > 0 ? '+' : '−' }} TZS {{ number_format(max($m->debit, $m->credit)) }}
+      </span>
+    </div>
+    @empty
+    <div class="empty-state" style="padding:20px 12px"><p>No movements for this filter.</p></div>
+    @endforelse
+  </div>
 
-      <div class="glass-card">
-        <h2 style="font-size:14px;margin:0 0 12px">Quick Actions</h2>
-        <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px">
-          <a href="{{ route('accounting.offerings') }}" class="btn btn-secondary btn-sm" style="justify-content:center">+ Receipt</a>
-          <a href="{{ route('accounting.payments') }}" class="btn btn-secondary btn-sm" style="justify-content:center">+ Payment</a>
-          <a href="{{ route('accounting.reconciliation') }}" class="btn btn-secondary btn-sm" style="justify-content:center">Reconciliation</a>
-          <a href="{{ route('accounting.ledger') }}" class="btn btn-secondary btn-sm" style="justify-content:center">Ledger</a>
-          <a href="{{ route('accounting.transactions') }}" class="btn btn-secondary btn-sm" style="justify-content:center;grid-column:1/-1">Transaction History</a>
-        </div>
-      </div>
+  {{-- Quick actions --}}
+  <div class="glass-card">
+    <h2 style="font-size:14px;margin:0 0 12px">Quick Actions</h2>
+    <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(160px,1fr));gap:10px">
+      <a href="{{ route('accounting.offerings') }}" class="btn btn-secondary btn-sm" style="justify-content:center">+ Receipt</a>
+      <a href="{{ route('accounting.payments') }}" class="btn btn-secondary btn-sm" style="justify-content:center">+ Payment</a>
+      <a href="{{ route('accounting.reconciliation') }}" class="btn btn-secondary btn-sm" style="justify-content:center">Reconciliation</a>
+      <a href="{{ route('accounting.ledger') }}" class="btn btn-secondary btn-sm" style="justify-content:center">Ledger</a>
+      <a href="{{ route('accounting.transactions') }}" class="btn btn-secondary btn-sm" style="justify-content:center">Transaction History</a>
     </div>
   </div>
 </div>
