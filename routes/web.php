@@ -146,6 +146,7 @@ Route::middleware(['auth', 'committee.readonly'])->group(function () {
         Route::get('/messaging/sms', [MessagingController::class, 'sms'])->name('messaging.sms');
         Route::get('/messaging/email', [MessagingController::class, 'email'])->name('messaging.email');
         Route::get('/messaging/notifications', [MessagingController::class, 'notifications'])->name('messaging.notifications');
+        Route::post('/messaging/notifications/mark-all-read', [MessagingController::class, 'markAllNotificationsRead'])->name('messaging.notifications.mark-all-read');
         Route::get('/messaging/history', [MessagingController::class, 'history'])->name('messaging.history');
         Route::get('/messaging/history/{message}', [MessagingController::class, 'show'])->name('messaging.show');
         Route::get('/messaging/templates', [MessagingController::class, 'templates'])->name('messaging.templates');

@@ -45,6 +45,15 @@ class MessagingController extends Controller
         ]);
     }
 
+    public function markAllNotificationsRead()
+    {
+        $count = AuditLog::markAllRead();
+
+        AuditLog::record('Marked all notifications as read', 'Communication — Notifications', "{$count} notification(s) marked read");
+
+        return back()->with('success', 'All notifications marked as read.');
+    }
+
     public function templates()
     {
         return view('messaging.templates', $this->sharedData());
@@ -575,6 +584,16 @@ class MessagingController extends Controller
             'Communication — Settings',
             'Provider: '.$provider['name'].' — '.$data['phone'].' ('.($result['status'] ?? '?').')'
         );
+
+        session()->flash('sms_test_result', [
+            'success' => $result['success'],
+            'provider' => $provider['name'],
+            'sender_id' => $provider['sender_id'] ?? 'TMCS MoCU',
+            'phone' => $data['phone'],
+            'status' => $result['status'] ?? 'UNKNOWN',
+            'message_id' => $result['api_message_id'] ?? null,
+            'raw' => isset($result['raw']) ? json_encode($result['raw'], JSON_PRETTY_PRINT | JSON_UNESCAPED_SLASHES) : null,
+        ]);
 
         if ($result['success']) {
             return back()->with('success', "Test SMS sent via provider '{$provider['name']}'.");

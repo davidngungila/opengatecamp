@@ -25,10 +25,19 @@
     <div style="position:relative">
       <button type="button" class="icon-btn" data-panel-toggle="notifPanel" onclick="togglePanel('notifPanel')" title="Notifications">
         <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 8a6 6 0 10-12 0c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.7 21a2 2 0 01-3.4 0"/></svg>
-        <span class="badge-dot"></span>
+        @php $unreadCount = \App\Models\AuditLog::unreadCount(); @endphp
+        @if($unreadCount > 0)
+        <span class="badge-dot" style="position:absolute;top:2px;right:2px;min-width:16px;height:16px;border-radius:999px;background:#ef4444;color:#fff;font-size:10px;font-weight:800;display:flex;align-items:center;justify-content:center;padding:0 4px">{{ $unreadCount > 99 ? '99+' : $unreadCount }}</span>
+        @endif
       </button>
       <div class="dropdown-panel" id="notifPanel">
-        <div class="dropdown-header"><strong>Notifications</strong><button type="button" class="link-btn" onclick="toast('All notifications marked as read','success')">Mark all read</button></div>
+        <div class="dropdown-header">
+          <strong>Notifications</strong>
+          <form method="POST" action="{{ route('messaging.notifications.mark-all-read') }}" id="markAllReadForm">
+            @csrf
+            <button type="submit" class="link-btn">Mark all read</button>
+          </form>
+        </div>
         <div class="dropdown-list">
           @php
               $notifEvents = \App\Models\Event::where('status','open_registration')->orderBy('start_date')->take(2)->get();
