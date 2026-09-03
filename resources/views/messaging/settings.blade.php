@@ -22,7 +22,7 @@
         <h2 style="font-size:14.5px;margin:0 0 4px">SMS Providers</h2>
         <p style="color:var(--text-muted);font-size:13px;margin:0">Manage your <b>messaging-service.co.tz</b> API credentials. Add multiple providers and mark one as <b>Primary</b> — the primary provider is used when sending SMS.</p>
       </div>
-      <button type="button" class="btn btn-accent" data-drawer-open="smsProviderDrawer" data-bind="" data-mode="add">Add Provider</button>
+      <button type="button" class="btn btn-accent" data-sms-open-btn data-mode="add">Add Provider</button>
     </div>
 
     @if($smsConfigured)
@@ -41,7 +41,12 @@
           <thead><tr><th>Provider</th><th>Sender ID</th><th>Status</th><th style="text-align:right">Actions</th></tr></thead>
           <tbody>
             @forelse($providers as $p)
-            <tr>
+            <tr style="cursor:pointer" data-sms-open-row
+                data-mode="edit"
+                data-name="{{ $p['name'] }}"
+                data-sender_id="{{ $p['sender_id'] ?? '' }}"
+                data-api_token="{{ $p['api_token'] ?? '' }}"
+                data-key="{{ $p['key'] }}">
               <td>
                 <div class="cell-user">
                   <div class="cell-avatar">{{ Str::limit($p['name'], 2, '') }}</div>
@@ -58,8 +63,8 @@
               </td>
               <td style="text-align:right">
                 <div class="flex gap-8" style="align-items:center;justify-content:flex-end;gap:8px">
-                  <button type="button" class="btn btn-ghost btn-sm"
-                    data-drawer-open="smsProviderDrawer" data-mode="edit"
+                  <button type="button" class="btn btn-ghost btn-sm" data-sms-open-btn
+                    data-mode="edit"
                     data-name="{{ $p['name'] }}"
                     data-sender_id="{{ $p['sender_id'] ?? '' }}"
                     data-api_token="{{ $p['api_token'] ?? '' }}"
@@ -156,27 +161,33 @@
 
 @push('scripts')
 <script>
-document.addEventListener('click', function(e){
-  var btn = e.target.closest('[data-drawer-open="smsProviderDrawer"]');
-  if(!btn) return;
-
-  var mode = btn.getAttribute('data-mode') || 'add';
+function spawnSmsFrom(el){
+  var isEdit = el.getAttribute('data-mode') === 'edit';
   var form = document.getElementById('spForm');
-  var isEdit = mode === 'edit';
 
   document.getElementById('spTitle').textContent = isEdit ? 'Edit SMS Provider' : 'Add SMS Provider';
   document.getElementById('spSub').textContent = isEdit ? 'SMS API credentials' : 'New SMS API credentials';
   document.getElementById('spSubmit').textContent = isEdit ? 'Update Provider' : 'Save Provider';
-  document.getElementById('spKey').value = isEdit ? (btn.getAttribute('data-key') || '') : '';
-  document.getElementById('spName').value = isEdit ? (btn.getAttribute('data-name') || '') : '';
-  document.getElementById('spToken').value = isEdit ? (btn.getAttribute('data-api_token') || '') : '';
-  document.getElementById('spSender').value = isEdit ? (btn.getAttribute('data-sender_id') || '') : '';
+  document.getElementById('spKey').value = isEdit ? (el.getAttribute('data-key') || '') : '';
+  document.getElementById('spName').value = isEdit ? (el.getAttribute('data-name') || '') : '';
+  document.getElementById('spToken').value = isEdit ? (el.getAttribute('data-api_token') || '') : '';
+  document.getElementById('spSender').value = isEdit ? (el.getAttribute('data-sender_id') || '') : '';
   document.getElementById('spPrimary').checked = false;
   document.getElementById('spPrimaryWrap').style.display = isEdit ? 'none' : '';
 
   form.action = isEdit
     ? '{{ route("messaging.settings.sms.provider.update", "__KEY__") }}'.replace('__KEY__', encodeURIComponent(document.getElementById('spKey').value))
     : '{{ route("messaging.settings.sms.provider.store") }}';
+
+  openDrawerById('smsProviderDrawer');
+}
+
+document.addEventListener('click', function(e){
+  var btn = e.target.closest('[data-sms-open-btn]');
+  if(btn){ e.preventDefault(); spawnSmsFrom(btn); return; }
+  if(e.target.closest('button, form, a, input, select, textarea')) return;
+  var row = e.target.closest('[data-sms-open-row]');
+  if(row){ spawnSmsFrom(row); }
 });
 </script>
 @endpush

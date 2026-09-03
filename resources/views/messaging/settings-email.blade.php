@@ -24,7 +24,7 @@
         <h2 style="font-size:14.5px;margin:0 0 4px">Email (SMTP) Providers</h2>
         <p style="color:var(--text-muted);font-size:13px;margin:0">Manage SMTP server credentials. Add multiple providers and mark one as <b>Primary</b> — the primary provider is used for outbound email.</p>
       </div>
-      <button type="button" class="btn btn-accent" data-drawer-open="epDrawer" data-mode="add">Add Provider</button>
+      <button type="button" class="btn btn-accent" data-ep-open-btn data-mode="add">Add Provider</button>
     </div>
 
     @php $mailConfigured = !empty($providers) && collect($providers)->firstWhere('is_primary', true); @endphp
@@ -44,7 +44,17 @@
           <thead><tr><th>Provider</th><th>Host</th><th>From</th><th>Status</th><th style="text-align:right">Actions</th></tr></thead>
           <tbody>
             @forelse($providers as $p)
-            <tr>
+            <tr style="cursor:pointer" data-ep-open-row
+                data-mode="edit"
+                data-name="{{ $p['name'] }}"
+                data-host="{{ $p['host'] ?? '' }}"
+                data-port="{{ $p['port'] ?? '' }}"
+                data-username="{{ $p['username'] ?? '' }}"
+                data-password="{{ $p['password'] ?? '' }}"
+                data-encryption="{{ $p['encryption'] ?? 'tls' }}"
+                data-from_address="{{ $p['from_address'] ?? '' }}"
+                data-from_name="{{ $p['from_name'] ?? '' }}"
+                data-key="{{ $p['key'] }}">
               <td>
                 <div class="cell-user">
                   <div class="cell-avatar">{{ Str::limit($p['name'], 2, '') }}</div>
@@ -62,8 +72,8 @@
               </td>
               <td style="text-align:right">
                 <div class="flex gap-8" style="align-items:center;justify-content:flex-end;gap:8px">
-                  <button type="button" class="btn btn-ghost btn-sm"
-                    data-drawer-open="epDrawer" data-mode="edit"
+                  <button type="button" class="btn btn-ghost btn-sm" data-ep-open-btn
+                    data-mode="edit"
                     data-name="{{ $p['name'] }}"
                     data-host="{{ $p['host'] ?? '' }}"
                     data-port="{{ $p['port'] ?? '' }}"
@@ -165,32 +175,38 @@
 
 @push('scripts')
 <script>
-document.addEventListener('click', function(e){
-  var btn = e.target.closest('[data-drawer-open="epDrawer"]');
-  if(!btn) return;
-
-  var mode = btn.getAttribute('data-mode') || 'add';
+function spawnEpFrom(el){
+  var isEdit = el.getAttribute('data-mode') === 'edit';
   var form = document.getElementById('epForm');
-  var isEdit = mode === 'edit';
 
   document.getElementById('epTitle').textContent = isEdit ? 'Edit Email Provider' : 'Add Email Provider';
   document.getElementById('epSub').textContent = isEdit ? 'SMTP server credentials' : 'New SMTP server credentials';
   document.getElementById('epSubmit').textContent = isEdit ? 'Update Provider' : 'Save Provider';
-  document.getElementById('epKey').value = isEdit ? (btn.getAttribute('data-key') || '') : '';
-  document.getElementById('epName').value = isEdit ? (btn.getAttribute('data-name') || '') : '';
-  document.getElementById('epHost').value = isEdit ? (btn.getAttribute('data-host') || '') : '';
-  document.getElementById('epPort').value = isEdit ? (btn.getAttribute('data-port') || '') : '';
-  document.getElementById('epUsername').value = isEdit ? (btn.getAttribute('data-username') || '') : '';
-  document.getElementById('epPassword').value = isEdit ? (btn.getAttribute('data-password') || '') : '';
-  document.getElementById('epEncryption').value = isEdit ? (btn.getAttribute('data-encryption') || 'tls') : 'tls';
-  document.getElementById('epFromAddress').value = isEdit ? (btn.getAttribute('data-from_address') || '') : '';
-  document.getElementById('epFromName').value = isEdit ? (btn.getAttribute('data-from_name') || '') : '';
+  document.getElementById('epKey').value = isEdit ? (el.getAttribute('data-key') || '') : '';
+  document.getElementById('epName').value = isEdit ? (el.getAttribute('data-name') || '') : '';
+  document.getElementById('epHost').value = isEdit ? (el.getAttribute('data-host') || '') : '';
+  document.getElementById('epPort').value = isEdit ? (el.getAttribute('data-port') || '') : '';
+  document.getElementById('epUsername').value = isEdit ? (el.getAttribute('data-username') || '') : '';
+  document.getElementById('epPassword').value = isEdit ? (el.getAttribute('data-password') || '') : '';
+  document.getElementById('epEncryption').value = isEdit ? (el.getAttribute('data-encryption') || 'tls') : 'tls';
+  document.getElementById('epFromAddress').value = isEdit ? (el.getAttribute('data-from_address') || '') : '';
+  document.getElementById('epFromName').value = isEdit ? (el.getAttribute('data-from_name') || '') : '';
   document.getElementById('epPrimary').checked = false;
   document.getElementById('epPrimaryWrap').style.display = isEdit ? 'none' : '';
 
   form.action = isEdit
     ? '{{ route("messaging.settings.email.provider.update", "__KEY__") }}'.replace('__KEY__', encodeURIComponent(document.getElementById('epKey').value))
     : '{{ route("messaging.settings.email.provider.store") }}';
+
+  openDrawerById('epDrawer');
+}
+
+document.addEventListener('click', function(e){
+  var btn = e.target.closest('[data-ep-open-btn]');
+  if(btn){ e.preventDefault(); spawnEpFrom(btn); return; }
+  if(e.target.closest('button, form, a, input, select, textarea')) return;
+  var row = e.target.closest('[data-ep-open-row]');
+  if(row){ spawnEpFrom(row); }
 });
 </script>
 @endpush
