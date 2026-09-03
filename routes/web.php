@@ -77,7 +77,18 @@ Route::middleware(['auth', 'committee.readonly'])->group(function () {
         Route::get('/api/users/{user}', [UserController::class, 'apiUserDetail'])->name('users.api');
         Route::put('/roles/{role}/permissions', [UserController::class, 'updatePermissions'])->name('roles.permissions');
 
-        Route::get('/settings', [SettingsController::class, 'index'])->name('settings.index');
+        Route::get('/settings', fn () => redirect()->route('settings.page.general'))->name('settings.index');
+
+        Route::get('/settings/general', [SettingsController::class, 'generalPage'])->name('settings.page.general');
+        Route::get('/settings/notifications', [SettingsController::class, 'notificationsPage'])->name('settings.page.notifications');
+        Route::get('/settings/accounting', [SettingsController::class, 'accountingPage'])->name('settings.page.accounting');
+        Route::get('/settings/financial-years', [SettingsController::class, 'financialYearsPage'])->name('settings.page.years');
+        Route::get('/settings/fellowships', [SettingsController::class, 'fellowshipsPage'])->name('settings.page.fellowships');
+        Route::get('/settings/security', [SettingsController::class, 'securityPage'])->name('settings.page.security');
+        Route::get('/settings/backup', [SettingsController::class, 'backupPage'])->name('settings.page.backup');
+        Route::get('/settings/audit', [SettingsController::class, 'auditPage'])->name('settings.page.audit');
+        Route::get('/settings/backup/download', [SettingsController::class, 'backup'])->name('settings.backup');
+
         Route::post('/settings/general', [SettingsController::class, 'updateGeneral'])->name('settings.general');
         Route::post('/settings/notifications', [SettingsController::class, 'updateNotifications'])->name('settings.notifications');
         Route::post('/settings/accounting', [SettingsController::class, 'updateAccounting'])->name('settings.accounting');
@@ -87,7 +98,6 @@ Route::middleware(['auth', 'committee.readonly'])->group(function () {
         Route::put('/settings/financial-years/{year}', [SettingsController::class, 'updateYear'])->name('settings.years.update');
         Route::delete('/settings/financial-years/{year}', [SettingsController::class, 'destroyYear'])->name('settings.years.destroy');
         Route::delete('/settings/audit', [SettingsController::class, 'clearAudit'])->name('settings.audit.clear');
-        Route::get('/settings/backup', [SettingsController::class, 'backup'])->name('settings.backup');
     });
 
     Route::get('/settings/financial-years/{yearId}/switch', [SettingsController::class, 'switchYear'])->whereNumber('yearId')->name('settings.years.switch');

@@ -16,18 +16,58 @@ class SettingsController extends Controller
 {
     public function index(Request $request)
     {
-        $tab = $request->query('tab', 'general');
-        $valid = ['general', 'appearance', 'notifications', 'security', 'backup', 'audit', 'financial-years', 'accounting', 'fellowships'];
+        return redirect()->route('settings.page.general');
+    }
 
-        return view('settings.index', [
-            'tab' => in_array($tab, $valid) ? $tab : 'general',
-            'auditLogs' => AuditLog::latest()->paginate(10, ['*'], 'page', $request->query('page', 1)),
-            'years' => FinancialYear::orderByDesc('start_date')->get(),
-            'adminUser' => User::whereHas('role', fn ($q) => $q->where('name', 'Super Administrator'))->first(),
+    public function generalPage()
+    {
+        return view('settings.pages.general');
+    }
+
+    public function notificationsPage()
+    {
+        return view('settings.pages.notifications');
+    }
+
+    public function accountingPage()
+    {
+        return view('settings.pages.accounting', [
             'cashAccounts' => Account::where('is_cash', true)->orderBy('code')->get(),
             'incomeAccounts' => Account::where('type', 'income')->orderBy('code')->get(),
             'expenseAccounts' => Account::where('type', 'expense')->orderBy('code')->get(),
+        ]);
+    }
+
+    public function financialYearsPage()
+    {
+        return view('settings.pages.financial-years', [
+            'years' => FinancialYear::orderByDesc('start_date')->get(),
+        ]);
+    }
+
+    public function fellowshipsPage()
+    {
+        return view('settings.pages.fellowships', [
             'fellowships' => $this->fellowshipList(),
+        ]);
+    }
+
+    public function securityPage(Request $request)
+    {
+        return view('settings.pages.security', [
+            'adminUser' => User::whereHas('role', fn ($q) => $q->where('name', 'Super Administrator'))->first(),
+        ]);
+    }
+
+    public function backupPage()
+    {
+        return view('settings.pages.backup');
+    }
+
+    public function auditPage(Request $request)
+    {
+        return view('settings.pages.audit', [
+            'auditLogs' => AuditLog::latest()->paginate(10, ['*'], 'page', $request->query('page', 1)),
         ]);
     }
 

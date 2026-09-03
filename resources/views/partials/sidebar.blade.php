@@ -179,7 +179,14 @@
             </div>
             <div class="nav-children {{ $isSystem ? 'open' : '' }}">
                 <a href="{{ url('/users') }}" class="nav-child {{ $p === 'users' ? 'active' : '' }}">Users &amp; Roles</a>
-                <a href="{{ url('/settings') }}" class="nav-child {{ $p === 'settings' ? 'active' : '' }}">Settings</a>
+                <a href="{{ route('settings.page.general') }}" class="nav-child {{ $p === 'settings/general' ? 'active' : '' }}">General / Church Profile</a>
+                <a href="{{ route('settings.page.notifications') }}" class="nav-child {{ $p === 'settings/notifications' ? 'active' : '' }}">Notifications</a>
+                <a href="{{ route('settings.page.accounting') }}" class="nav-child {{ $p === 'settings/accounting' ? 'active' : '' }}">Accounting</a>
+                <a href="{{ route('settings.page.years') }}" class="nav-child {{ $p === 'settings/financial-years' ? 'active' : '' }}">Financial Years</a>
+                <a href="{{ route('settings.page.fellowships') }}" class="nav-child {{ $p === 'settings/fellowships' ? 'active' : '' }}">University Fellowships</a>
+                <a href="{{ route('settings.page.security') }}" class="nav-child {{ $p === 'settings/security' ? 'active' : '' }}">Security</a>
+                <a href="{{ route('settings.page.backup') }}" class="nav-child {{ $p === 'settings/backup' ? 'active' : '' }}">Backup</a>
+                <a href="{{ route('settings.page.audit') }}" class="nav-child {{ $p === 'settings/audit' ? 'active' : '' }}">Audit Logs</a>
             </div>
         </div>
         @endif
