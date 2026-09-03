@@ -550,6 +550,39 @@ class MessagingController extends Controller
         return back()->with('success', 'Primary SMS provider updated.');
     }
 
+    public function testSmsProvider(Request $request)
+    {
+        $data = $request->validate([
+            'key'     => 'required|string',
+            'phone'   => 'required|string|max:20',
+            'message' => 'required|string|max:2000',
+        ]);
+
+        $provider = collect($this->readSmsProviders())->firstWhere('key', $data['key']);
+        if (! $provider) {
+            return back()->withInput()->with('error', 'SMS provider not found.');
+        }
+
+        $sms = new SmsService($provider['api_token'] ?? '', $provider['sender_id'] ?? 'TMCS MoCU');
+        if (! $sms->isConfigured()) {
+            return back()->withInput()->with('error', "Provider '{$provider['name']}' has no API token configured.");
+        }
+
+        $result = $sms->send($data['phone'], $data['message']);
+
+        AuditLog::record(
+            $result['success'] ? 'Sent test SMS' : 'Test SMS failed',
+            'Communication — Settings',
+            'Provider: '.$provider['name'].' — '.$data['phone'].' ('.($result['status'] ?? '?').')'
+        );
+
+        if ($result['success']) {
+            return back()->with('success', "Test SMS sent via provider '{$provider['name']}'.");
+        }
+
+        return back()->withInput()->with('error', "Test SMS via '{$provider['name']}' failed: ".($result['status'] ?? 'unknown error'));
+    }
+
     public function emailProviderStore(Request $request)
     {
         $data = $request->validate([

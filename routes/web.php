@@ -155,6 +155,7 @@ Route::middleware(['auth', 'committee.readonly'])->group(function () {
         Route::post('/messaging/settings/sms/providers', [MessagingController::class, 'smsProviderStore'])->name('messaging.settings.sms.provider.store');
         Route::post('/messaging/settings/sms/providers/{key}', [MessagingController::class, 'smsProviderUpdate'])->name('messaging.settings.sms.provider.update');
         Route::post('/messaging/settings/sms/providers/{key}/primary', [MessagingController::class, 'smsProviderPrimary'])->name('messaging.settings.sms.provider.primary');
+        Route::post('/messaging/settings/sms/providers/{key}/test', [MessagingController::class, 'testSmsProvider'])->name('messaging.settings.sms.provider.test');
         Route::delete('/messaging/settings/sms/providers/{key}', [MessagingController::class, 'smsProviderDelete'])->name('messaging.settings.sms.provider.delete');
 
         Route::post('/messaging/settings/email/providers', [MessagingController::class, 'emailProviderStore'])->name('messaging.settings.email.provider.store');

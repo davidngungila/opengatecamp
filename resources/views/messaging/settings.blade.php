@@ -69,6 +69,8 @@
                     data-sender_id="{{ $p['sender_id'] ?? '' }}"
                     data-api_token="{{ $p['api_token'] ?? '' }}"
                     data-key="{{ $p['key'] }}">View / Edit</button>
+                  <button type="button" class="btn btn-secondary btn-sm" data-sms-test-open
+                    data-key="{{ $p['key'] }}" data-name="{{ $p['name'] }}">Test</button>
                   @unless($p['is_primary'] ?? false)
                   <form method="POST" action="{{ route('messaging.settings.sms.provider.primary', $p['key']) }}">
                     @csrf
@@ -94,26 +96,8 @@
   </div>
 
   <div class="glass-card" style="margin-top:18px">
-    <h2 style="font-size:14.5px;margin:0 0 14px">Test SMS</h2>
-    <p style="color:var(--text-muted);font-size:13px;margin-bottom:14px">Send a test SMS to verify your primary API provider is working.</p>
-    <form method="POST" action="{{ route('messaging.store') }}">
-      @csrf
-      <input type="hidden" name="channel" value="sms">
-      <input type="hidden" name="recipients" value="Test">
-      <div class="form-grid">
-        <div class="field full">
-          <label>Phone Number</label>
-          <input name="phone" required placeholder="e.g. 0622239304" style="font-family:monospace;font-size:15px;letter-spacing:0.5px">
-        </div>
-        <div class="field full">
-          <label>Message</label>
-          <input name="message" required value="Test SMS from Open Gate Camp Mission Management System" placeholder="Test message">
-        </div>
-      </div>
-      <div style="margin-top:12px">
-        <button type="submit" name="action" value="send" class="btn btn-secondary">Send Test SMS</button>
-      </div>
-    </form>
+    <h2 style="font-size:14.5px;margin:0 0 8px">Test SMS</h2>
+    <p style="color:var(--text-muted);font-size:13px;margin:0">To send a test SMS with a specific provider, click the <b>Test</b> button in that provider's row. The test is sent using that provider's own credentials.</p>
   </div>
 </div>
 
@@ -157,6 +141,35 @@
     </form>
   </div>
 </div>
+
+<div class="drawer-overlay" id="testSmsDrawer">
+  <div class="drawer-panel">
+    <div class="drawer-head">
+      <div><h3 id="tsTitle">Test SMS</h3><p class="cu-sub" id="tsSub">Send a test via the selected provider</p></div>
+      <button type="button" class="modal-close" data-drawer-close><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><path d="M18 6L6 18M6 6l12 12"/></svg></button>
+    </div>
+    <form method="POST" action="{{ route('messaging.settings.sms.provider.test', '__KEY__') }}" id="tsForm">
+      @csrf
+      <input type="hidden" name="key" id="tsKey">
+      <div class="drawer-body">
+        <div class="form-grid">
+          <div class="field full">
+            <label>Phone Number</label>
+            <input name="phone" required placeholder="e.g. 0622239304" style="font-family:monospace;font-size:15px;letter-spacing:0.5px">
+          </div>
+          <div class="field full">
+            <label>Message</label>
+            <textarea name="message" rows="4" required placeholder="Test message" style="width:100%;padding:12px;border:1px solid var(--border,#e5e7eb);border-radius:10px;background:#fff;color:var(--text-primary);font-size:14px;resize:vertical">Test SMS from Open Gate Camp Mission Management System</textarea>
+          </div>
+        </div>
+      </div>
+      <div class="drawer-foot">
+        <button type="button" class="btn btn-ghost" data-drawer-close>Cancel</button>
+        <button type="submit" class="btn btn-accent" id="tsSubmit">Send Test SMS</button>
+      </div>
+    </form>
+  </div>
+</div>
 @endsection
 
 @push('scripts')
@@ -188,6 +201,20 @@ document.addEventListener('click', function(e){
   if(e.target.closest('button, form, a, input, select, textarea')) return;
   var row = e.target.closest('[data-sms-open-row]');
   if(row){ spawnSmsFrom(row); }
+});
+
+document.addEventListener('click', function(e){
+  var btn = e.target.closest('[data-sms-test-open]');
+  if(!btn) return;
+  e.preventDefault();
+  var key = btn.getAttribute('data-key') || '';
+  var name = btn.getAttribute('data-name') || 'provider';
+  document.getElementById('tsKey').value = key;
+  document.getElementById('tsSub').textContent = 'Send a test via ' + name;
+  document.getElementById('tsTitle').textContent = 'Test SMS — ' + name;
+  document.getElementById('tsForm').action =
+    '{{ route("messaging.settings.sms.provider.test", "__KEY__") }}'.replace('__KEY__', encodeURIComponent(key));
+  openDrawerById('testSmsDrawer');
 });
 </script>
 @endpush

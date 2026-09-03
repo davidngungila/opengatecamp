@@ -12,10 +12,10 @@ class SmsService
     private string $token;
     private string $senderId;
 
-    public function __construct()
+    public function __construct(?string $token = null, ?string $senderId = null)
     {
-        $this->token    = Setting::get('sms.api_token', '');
-        $this->senderId = Setting::get('sms.sender_id', 'TMCS MoCU');
+        $this->token    = $token    ?? Setting::get('sms.api_token', '');
+        $this->senderId = $senderId ?? Setting::get('sms.sender_id', 'TMCS MoCU');
     }
 
     public function isConfigured(): bool
