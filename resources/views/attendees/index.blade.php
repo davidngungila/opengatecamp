@@ -40,7 +40,8 @@
             $bal = ($a->fee_amount !== null) ? max(0, $a->fee_amount - ($a->amount_paid ?? 0)) : null;
           @endphp
           <tr style="cursor:pointer" data-view-attendee
-            data-id="{{ $a->id }}"
+            data-id="{{ $a->hashed_id }}"
+            data-nid="{{ $a->id }}"
             data-name="{{ $a->name }}"
             data-event="{{ $a->event?->title }}"
             data-phone="{{ $a->phone }}"
@@ -90,7 +91,7 @@
                 </button>
                 <div class="action-menu" id="am-att-{{ $a->id }}">
                   <button type="button" data-view-attendee-trigger
-                          data-id="{{ $a->id }}" data-name="{{ $a->name }}" data-event="{{ $a->event?->title }}"
+                          data-id="{{ $a->hashed_id }}" data-nid="{{ $a->id }}" data-name="{{ $a->name }}" data-event="{{ $a->event?->title }}"
                           data-phone="{{ $a->phone }}" data-email="{{ $a->email }}"
                           data-amount="{{ $a->amount_paid }}" data-fee="{{ $a->fee_amount }}"
                           data-method="{{ $a->payment_method }}"
@@ -100,11 +101,11 @@
                           data-fellowship="{{ $a->fellowship ?? '—' }}"
                           data-pickup="{{ $a->pickupLocation?->name ?? '—' }}"
                           data-notes="{{ $a->notes }}">View Details</button>
-                  <button type="button" data-record-att-payment data-id="{{ $a->id }}" data-name="{{ $a->name }}" data-amount="{{ $a->amount_paid }}">Record Payment</button>
-                  <button type="button" data-send-att-sms data-id="{{ $a->id }}" data-name="{{ $a->name }}" data-phone="{{ $a->phone }}">Send SMS</button>
+                  <button type="button" data-record-att-payment data-id="{{ $a->hashed_id }}" data-name="{{ $a->name }}" data-amount="{{ $a->amount_paid }}">Record Payment</button>
+                  <button type="button" data-send-att-sms data-id="{{ $a->hashed_id }}" data-name="{{ $a->name }}" data-phone="{{ $a->phone }}">Send SMS</button>
                   @if($a->hasCompletedContribution())
                   <a href="{{ route('attendees.ticket.pdf', $a) }}" target="_blank" class="action-link" style="display:block;width:100%;padding:8px 14px;font-size:12.5px;color:var(--text-primary);text-decoration:none;box-sizing:border-box">Print Ticket (PDF)</a>
-                  <button type="button" data-send-att-ticket data-id="{{ $a->id }}" data-name="{{ $a->name }}" data-phone="{{ $a->phone }}" data-ticket="{{ $a->getTicketNo() }}">Send Ticket SMS</button>
+                  <button type="button" data-send-att-ticket data-id="{{ $a->hashed_id }}" data-name="{{ $a->name }}" data-phone="{{ $a->phone }}" data-ticket="{{ $a->getTicketNo() }}">Send Ticket SMS</button>
                   @endif
                 </div>
               </div>
@@ -333,7 +334,7 @@ document.addEventListener('DOMContentLoaded', function(){
     curAtt = d;
     var initials = (d.name||'?').trim().split(' ').map(function(w){return w.charAt(0);}).slice(0,2).join('');
     document.getElementById('attDetailsAvatar').textContent = initials;
-    document.getElementById('attDetailsId').textContent = '#' + (d.id || '—');
+    document.getElementById('attDetailsId').textContent = '#' + (d.nid || d.id || '—');
     document.getElementById('attDetailsName').textContent = d.name || '—';
     var st = document.getElementById('attDetailsStatus');
     var colors = {registered:'success',pending:'warning',attended:'accent',cancelled:'neutral'};

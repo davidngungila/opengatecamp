@@ -65,7 +65,7 @@
             @php
               $region = $a->pickup_location === 'arusha' ? 'Arusha' : ($a->pickup_location === 'moshi' ? 'Moshi' : '—');
             @endphp
-            <tr class="admit-row" style="cursor:pointer" data-id="{{ $a->id }}"
+            <tr class="admit-row" style="cursor:pointer" data-id="{{ $a->hashed_id }}"
                 data-ticket="{{ $a->getTicketNo() }}"
                 data-name="{{ $a->name }}"
                 data-phone="{{ $a->phone }}"

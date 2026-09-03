@@ -3,9 +3,12 @@
 namespace App\Models;
 
 use Illuminate\Database\Eloquent\Model;
+use App\Models\Concerns\EncryptedRouteKey;
 
 class EventAttendee extends Model
 {
+    use EncryptedRouteKey;
+
     protected $fillable = [
         'event_id', 'member_id', 'name', 'phone', 'email', 'fellowship', 'status',
         'amount_paid', 'fee_amount', 'payment_method', 'pickup_location', 'notes', 'registered_on',
