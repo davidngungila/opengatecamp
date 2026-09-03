@@ -8,7 +8,7 @@
   <div class="section-head">
     <h2>Messaging Settings</h2>
   </div>
-  @include('messaging.partials.settings-nav', ['active' => 'sms'])
+  @include('messaging.partials.settings-nav', ['active' => 'sms', 'configured' => $smsConfigured])
   @if(session('error'))
   <div style="background:#fef2f2;border:1px solid #fecaca;border-radius:8px;padding:12px 16px;margin-bottom:18px;color:#991b1b;font-size:13.5px"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:-2px"><path d="M10.29 3.86L1.82 18a2 2 0 001.71 3h16.94a2 2 0 001.71-3L13.71 3.86a2 2 0 00-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg> {{ session('error') }}</div>
   @endif
@@ -24,16 +24,6 @@
       </div>
       <button type="button" class="btn btn-accent" data-sms-open-btn data-mode="add">Add Provider</button>
     </div>
-
-    @if($smsConfigured)
-    <div style="display:inline-flex;align-items:center;gap:6px;padding:6px 14px;background:var(--green-light);border:1px solid rgba(22,163,74,.15);border-radius:8px;margin-bottom:18px">
-      <span style="color:var(--green-accent);font-size:13px;font-weight:700"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:-1px"><path d="M20 6L9 17l-5-5"/></svg> API Configured</span>
-    </div>
-    @else
-    <div style="display:inline-flex;align-items:center;gap:6px;padding:6px 14px;background:#fef2f2;border:1px solid #fecaca;border-radius:8px;margin-bottom:18px">
-      <span style="color:#991b1b;font-size:13px;font-weight:700"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:-1px"><path d="M10.29 3.86L1.82 18a2 2 0 001.71 3h16.94a2 2 0 001.71-3L13.71 3.86a2 2 0 00-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg> Not configured</span>
-    </div>
-    @endif
 
     <div class="table-card" style="box-shadow:none;border:1px solid var(--border,#e5e7eb)">
       <div class="table-scroll">
@@ -93,11 +83,6 @@
         </table>
       </div>
     </div>
-  </div>
-
-  <div class="glass-card" style="margin-top:18px">
-    <h2 style="font-size:14.5px;margin:0 0 8px">Test SMS</h2>
-    <p style="color:var(--text-muted);font-size:13px;margin:0">To send a test SMS with a specific provider, click the <b>Test</b> button in that provider's row. The test is sent using that provider's own credentials.</p>
   </div>
 </div>
 

@@ -9,7 +9,8 @@
     <h2>Email Settings</h2>
     <p style="color:var(--text-secondary);font-size:13px;margin:4px 0 0">Configure SMTP providers for outbound emails.</p>
   </div>
-  @include('messaging.partials.settings-nav', ['active' => 'email'])
+  @php $mailConfigured = !empty($providers) && collect($providers)->firstWhere('is_primary', true); @endphp
+  @include('messaging.partials.settings-nav', ['active' => 'email', 'configured' => (bool) $mailConfigured])
 
   @if(session('error'))
   <div style="background:#fef2f2;border:1px solid #fecaca;border-radius:8px;padding:12px 16px;margin-bottom:18px;color:#991b1b;font-size:13.5px">⚠ {{ session('error') }}</div>
@@ -26,17 +27,6 @@
       </div>
       <button type="button" class="btn btn-accent" data-ep-open-btn data-mode="add">Add Provider</button>
     </div>
-
-    @php $mailConfigured = !empty($providers) && collect($providers)->firstWhere('is_primary', true); @endphp
-    @if($mailConfigured)
-    <div style="display:inline-flex;align-items:center;gap:6px;padding:6px 14px;background:var(--green-light);border:1px solid rgba(22,163,74,.15);border-radius:8px;margin:0 0 18px">
-      <span style="color:var(--green-accent);font-size:13px;font-weight:700">✓ SMTP Configured — {{ $mailConfigured['host'] }}:{{ $mailConfigured['port'] }}</span>
-    </div>
-    @else
-    <div style="display:inline-flex;align-items:center;gap:6px;padding:6px 14px;background:#fef2f2;border:1px solid #fecaca;border-radius:8px;margin:0 0 18px">
-      <span style="color:#991b1b;font-size:13px;font-weight:700">⌾ Not configured</span>
-    </div>
-    @endif
 
     <div class="table-card" style="box-shadow:none;border:1px solid var(--border,#e5e7eb)">
       <div class="table-scroll">
