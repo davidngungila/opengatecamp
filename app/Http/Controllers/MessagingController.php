@@ -92,6 +92,40 @@ class MessagingController extends Controller
         return view('messaging.settings', $this->sharedData());
     }
 
+    public function emailSettings()
+    {
+        return view('messaging.settings-email', $this->sharedData());
+    }
+
+    public function saveEmailSettings(Request $request)
+    {
+        $data = $request->validate([
+            'mail_host'         => 'nullable|string|max:255',
+            'mail_port'         => 'nullable|integer|between:1,65535',
+            'mail_username'     => 'nullable|string|max:255',
+            'mail_password'     => 'nullable|string|max:255',
+            'mail_encryption'   => 'nullable|in:tls,ssl,none',
+            'mail_from_address' => 'nullable|email|max:255',
+            'mail_from_name'    => 'nullable|string|max:255',
+        ]);
+
+        foreach ([
+            'mail_host'         => 'mail.host',
+            'mail_port'         => 'mail.port',
+            'mail_username'     => 'mail.username',
+            'mail_password'     => 'mail.password',
+            'mail_encryption'   => 'mail.encryption',
+            'mail_from_address' => 'mail.from_address',
+            'mail_from_name'    => 'mail.from_name',
+        ] as $field => $key) {
+            Setting::put($key, $data[$field] ?? null);
+        }
+
+        AuditLog::record('Updated Email (SMTP) settings', 'Communication — Settings', 'Host: '.($data['mail_host'] ?: 'not set'));
+
+        return back()->with('success', 'Email (SMTP) settings saved successfully.');
+    }
+
     /**
      * AJAX: Get phone numbers for a given recipient filter.
      */

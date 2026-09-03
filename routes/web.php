@@ -147,6 +147,8 @@ Route::middleware(['auth', 'committee.readonly'])->group(function () {
         Route::get('/messaging/history/{message}', [MessagingController::class, 'show'])->name('messaging.show');
         Route::get('/messaging/templates', [MessagingController::class, 'templates'])->name('messaging.templates');
         Route::get('/messaging/settings', [MessagingController::class, 'settings'])->name('messaging.settings');
+        Route::get('/messaging/settings/email', [MessagingController::class, 'emailSettings'])->name('messaging.settings.email');
+        Route::post('/messaging/settings/email', [MessagingController::class, 'saveEmailSettings'])->name('messaging.settings.email.save');
         Route::post('/messaging', [MessagingController::class, 'store'])->name('messaging.store');
         Route::post('/messaging/token', [MessagingController::class, 'saveToken'])->name('messaging.token');
         Route::get('/messaging/recipients', [MessagingController::class, 'getRecipients'])->name('messaging.recipients');

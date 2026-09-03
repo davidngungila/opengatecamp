@@ -5,7 +5,7 @@
     $isFinance = $base === 'accounting';
     $isComms = $base === 'messaging';
     $isSystem = $base === 'users';
-    $isSettings = $base === 'settings';
+    $isSettings = $base === 'settings' || str_starts_with($p, 'messaging/settings');
 @endphp
 
 <aside class="sidebar" id="sidebar">
@@ -209,6 +209,8 @@
                 <a href="{{ route('settings.page.security') }}" class="nav-child {{ $p === 'settings/security' ? 'active' : '' }}">Security</a>
                 <a href="{{ route('settings.page.backup') }}" class="nav-child {{ $p === 'settings/backup' ? 'active' : '' }}">Backup</a>
                 <a href="{{ route('settings.page.audit') }}" class="nav-child {{ $p === 'settings/audit' ? 'active' : '' }}">Audit Logs</a>
+                <a href="{{ route('messaging.settings') }}" class="nav-child {{ $p === 'messaging/settings' ? 'active' : '' }}">Messaging — SMS</a>
+                <a href="{{ route('messaging.settings.email') }}" class="nav-child {{ $p === 'messaging/settings/email' ? 'active' : '' }}">Messaging — Email</a>
             </div>
         </div>
         @endif
