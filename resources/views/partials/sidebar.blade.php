@@ -156,6 +156,7 @@
         </div>
 
         <!-- Administration Group -->
+        @if($isAdmin)
         <div class="nav-group">
             <div class="tooltip-wrap">
                 <button type="button" class="nav-parent {{ $isSystem ? 'expanded' : '' }}" onclick="toggleNavGroup(this)">
@@ -177,6 +178,7 @@
                 <a href="{{ url('/settings') }}" class="nav-child {{ $p === 'settings' ? 'active' : '' }}">Settings</a>
             </div>
         </div>
+        @endif
 
     </nav>
 </aside>

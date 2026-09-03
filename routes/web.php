@@ -67,27 +67,30 @@ Route::middleware(['auth', 'committee.readonly'])->group(function () {
 
     Route::resource('families', FamilyController::class)->except(['show', 'create', 'edit']);
 
-    Route::get('/users', [UserController::class, 'index'])->name('users.index');
-    Route::post('/users', [UserController::class, 'store'])->name('users.store');
-    Route::put('/users/{user}', [UserController::class, 'update'])->name('users.update');
-    Route::delete('/users/{user}', [UserController::class, 'destroy'])->name('users.destroy');
-    Route::patch('/users/{user}/suspend', [UserController::class, 'toggleSuspend'])->name('users.suspend');
-    Route::patch('/users/{user}/password', [UserController::class, 'resetPassword'])->name('users.password');
-    Route::get('/api/users/{user}', [UserController::class, 'apiUserDetail'])->name('users.api');
-    Route::put('/roles/{role}/permissions', [UserController::class, 'updatePermissions'])->name('roles.permissions');
+    Route::middleware('admin')->group(function () {
+        Route::get('/users', [UserController::class, 'index'])->name('users.index');
+        Route::post('/users', [UserController::class, 'store'])->name('users.store');
+        Route::put('/users/{user}', [UserController::class, 'update'])->name('users.update');
+        Route::delete('/users/{user}', [UserController::class, 'destroy'])->name('users.destroy');
+        Route::patch('/users/{user}/suspend', [UserController::class, 'toggleSuspend'])->name('users.suspend');
+        Route::patch('/users/{user}/password', [UserController::class, 'resetPassword'])->name('users.password');
+        Route::get('/api/users/{user}', [UserController::class, 'apiUserDetail'])->name('users.api');
+        Route::put('/roles/{role}/permissions', [UserController::class, 'updatePermissions'])->name('roles.permissions');
 
-    Route::get('/settings', [SettingsController::class, 'index'])->name('settings.index');
-    Route::post('/settings/general', [SettingsController::class, 'updateGeneral'])->name('settings.general');
-    Route::post('/settings/notifications', [SettingsController::class, 'updateNotifications'])->name('settings.notifications');
-    Route::post('/settings/accounting', [SettingsController::class, 'updateAccounting'])->name('settings.accounting');
-    Route::post('/settings/fellowships', [SettingsController::class, 'updateFellowships'])->name('settings.fellowships');
-    Route::post('/settings/security', [SettingsController::class, 'updateSecurity'])->name('settings.security');
-    Route::post('/settings/financial-years', [SettingsController::class, 'storeYear'])->name('settings.years.store');
-    Route::put('/settings/financial-years/{year}', [SettingsController::class, 'updateYear'])->name('settings.years.update');
-    Route::delete('/settings/financial-years/{year}', [SettingsController::class, 'destroyYear'])->name('settings.years.destroy');
+        Route::get('/settings', [SettingsController::class, 'index'])->name('settings.index');
+        Route::post('/settings/general', [SettingsController::class, 'updateGeneral'])->name('settings.general');
+        Route::post('/settings/notifications', [SettingsController::class, 'updateNotifications'])->name('settings.notifications');
+        Route::post('/settings/accounting', [SettingsController::class, 'updateAccounting'])->name('settings.accounting');
+        Route::post('/settings/fellowships', [SettingsController::class, 'updateFellowships'])->name('settings.fellowships');
+        Route::post('/settings/security', [SettingsController::class, 'updateSecurity'])->name('settings.security');
+        Route::post('/settings/financial-years', [SettingsController::class, 'storeYear'])->name('settings.years.store');
+        Route::put('/settings/financial-years/{year}', [SettingsController::class, 'updateYear'])->name('settings.years.update');
+        Route::delete('/settings/financial-years/{year}', [SettingsController::class, 'destroyYear'])->name('settings.years.destroy');
+        Route::delete('/settings/audit', [SettingsController::class, 'clearAudit'])->name('settings.audit.clear');
+        Route::get('/settings/backup', [SettingsController::class, 'backup'])->name('settings.backup');
+    });
+
     Route::get('/settings/financial-years/{yearId}/switch', [SettingsController::class, 'switchYear'])->whereNumber('yearId')->name('settings.years.switch');
-    Route::delete('/settings/audit', [SettingsController::class, 'clearAudit'])->name('settings.audit.clear');
-    Route::get('/settings/backup', [SettingsController::class, 'backup'])->name('settings.backup');
 
     Route::get('/events', fn () => redirect()->route('dashboard'))->name('events.index');
     Route::post('/events', [EventController::class, 'store'])->name('events.store');
