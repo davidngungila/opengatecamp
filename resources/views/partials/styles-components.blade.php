@@ -22,6 +22,7 @@ table.mini-table tbody tr:last-child td{border-bottom:none;}
 .spark-box{position:relative;height:32px;width:100%;}
 
 .two-col{display:grid;grid-template-columns:1.6fr 1fr;gap:20px;margin-bottom:22px;align-items:start;}
+.two-col>*{min-width:0;}
 .chart-tabs{display:flex;gap:6px;background:rgba(15,23,42,.05);padding:4px;border-radius:10px;}
 .chart-tabs button{border:none;background:transparent;padding:6px 12px;border-radius:7px;font-size:12px;font-weight:700;color:var(--text-secondary);}
 .chart-tabs button.active{background:var(--white);color:var(--blue-accent);box-shadow:var(--shadow-sm);}
@@ -50,6 +51,7 @@ table.mini-table tbody tr:last-child td{border-bottom:none;}
 .mini-row .m-body{flex:1;min-width:0;}
 .mini-row .m-body p{margin:0;font-size:13px;font-weight:700;color:var(--text-primary);}
 .mini-row .m-body span{font-size:11.5px;color:var(--text-tertiary);font-weight:600;}
+.mini-row>span:last-child{flex-shrink:0;white-space:nowrap;}
 
 .btn{
   display:inline-flex;align-items:center;justify-content:center;gap:8px;
