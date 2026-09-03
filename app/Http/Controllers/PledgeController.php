@@ -189,18 +189,10 @@ class PledgeController extends Controller
 
             $paid = $pledge->payments()->sum('amount');
 
-            if ($isFulfilled) {
-                $pledge->update([
-                    'amount' => (float) $pledge->amount + (float) $data['amount'],
-                    'paid_amount' => $paid,
-                    'status' => 'fulfilled',
-                ]);
-            } else {
-                $pledge->update([
-                    'paid_amount' => $paid,
-                    'status' => $paid >= $pledge->amount ? 'fulfilled' : ($paid > 0 ? 'partial' : 'pending'),
-                ]);
-            }
+            $pledge->update([
+                'paid_amount' => $paid,
+                'status' => $paid >= $pledge->amount ? 'fulfilled' : ($paid > 0 ? 'partial' : 'pending'),
+            ]);
 
             return $payment;
         });
