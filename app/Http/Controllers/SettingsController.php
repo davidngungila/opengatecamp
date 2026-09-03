@@ -228,8 +228,46 @@ class SettingsController extends Controller
     public function updateGeneral(Request $request)
     {
         $data = $request->validate([
+            'event_name' => 'required|string|max:255',
+            'event_status' => 'nullable|string|max:50',
+            'event_description' => 'nullable|string|max:2000',
+            'event_venue' => 'nullable|string|max:255',
+            'event_location' => 'nullable|string|max:255',
+            'event_start_date' => 'nullable|date',
+            'event_end_date' => 'nullable|date|after_or_equal:event_start_date',
+            'event_start_time' => 'nullable',
+            'event_end_time' => 'nullable',
+            'event_capacity' => 'nullable|integer|min:0',
+            'event_registration_fee' => 'nullable|numeric|min:0',
+            'event_organizer' => 'nullable|string|max:255',
+        ]);
+
+        foreach ([
+            'event_name' => 'event.name',
+            'event_status' => 'event.status',
+            'event_description' => 'event.description',
+            'event_venue' => 'event.venue',
+            'event_location' => 'event.location',
+            'event_start_date' => 'event.start_date',
+            'event_end_date' => 'event.end_date',
+            'event_start_time' => 'event.start_time',
+            'event_end_time' => 'event.end_time',
+            'event_capacity' => 'event.capacity',
+            'event_registration_fee' => 'event.registration_fee',
+            'event_organizer' => 'event.organizer',
+        ] as $field => $key) {
+            Setting::put($key, $data[$field] ?? null);
+        }
+
+        AuditLog::record('Updated event settings', 'Settings &mdash; Event');
+
+        return back()->with('success', 'Event settings saved successfully.');
+    }
+
+    public function updateOrganization(Request $request)
+    {
+        $data = $request->validate([
             'church_name' => 'required|string|max:255',
-            'event_name' => 'nullable|string|max:255',
             'church_phone' => 'nullable|string|max:30',
             'church_email' => 'nullable|email|max:255',
             'church_website' => 'nullable|string|max:255',
@@ -239,7 +277,6 @@ class SettingsController extends Controller
 
         foreach ([
             'church_name' => 'church.name',
-            'event_name' => 'event.name',
             'church_phone' => 'church.phone',
             'church_email' => 'church.email',
             'church_website' => 'church.website',
@@ -249,9 +286,9 @@ class SettingsController extends Controller
             Setting::put($key, $data[$field] ?? null);
         }
 
-        AuditLog::record('Updated church profile', 'Settings');
+        AuditLog::record('Updated organization profile', 'Settings');
 
-        return back()->with('success', 'Church profile saved successfully.');
+        return back()->with('success', 'Organization settings saved successfully.');
     }
 
     public function updateNotifications(Request $request)

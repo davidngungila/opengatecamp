@@ -200,7 +200,7 @@
                 <span class="tt">Settings</span>
             </div>
             <div class="nav-children {{ $isSettings ? 'open' : '' }}">
-                <a href="{{ route('settings.page.general') }}" class="nav-child {{ $p === 'settings/general' ? 'active' : '' }}">General / Church Profile</a>
+                <a href="{{ route('settings.page.general') }}" class="nav-child {{ $p === 'settings/general' ? 'active' : '' }}">Event Settings</a>
                 <a href="{{ route('settings.page.notifications') }}" class="nav-child {{ $p === 'settings/notifications' ? 'active' : '' }}">Notifications</a>
                 <a href="{{ route('settings.page.accounting') }}" class="nav-child {{ $p === 'settings/accounting' ? 'active' : '' }}">Accounting</a>
                 <a href="{{ route('settings.page.years') }}" class="nav-child {{ $p === 'settings/financial-years' ? 'active' : '' }}">Financial Years</a>
