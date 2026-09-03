@@ -91,6 +91,59 @@ class SettingsController extends Controller
         return back()->with('success', 'Fellowship list saved successfully.');
     }
 
+    public function storeFellowship(Request $request)
+    {
+        $data = $request->validate(['name' => 'required|string|max:255']);
+
+        $list = $this->fellowshipList();
+        $list[] = trim($data['name']);
+
+        $this->saveFellowshipList($list);
+
+        AuditLog::record('Added university fellowship', 'Settings &mdash; Fellowships', $data['name']);
+
+        return back()->with('success', "Fellowship '{$data['name']}' added.");
+    }
+
+    public function updateFellowship(Request $request, int $index)
+    {
+        $data = $request->validate(['name' => 'required|string|max:255']);
+
+        $list = $this->fellowshipList();
+        if (! isset($list[$index])) {
+            return back()->with('error', 'Fellowship not found.');
+        }
+
+        $list[$index] = trim($data['name']);
+
+        $this->saveFellowshipList(array_values($list));
+
+        AuditLog::record('Updated university fellowship', 'Settings &mdash; Fellowships', $data['name']);
+
+        return back()->with('success', "Fellowship '{$data['name']}' updated.");
+    }
+
+    public function destroyFellowship(int $index)
+    {
+        $list = $this->fellowshipList();
+        if (! isset($list[$index])) {
+            return back()->with('error', 'Fellowship not found.');
+        }
+
+        unset($list[$index]);
+
+        $this->saveFellowshipList(array_values($list));
+
+        AuditLog::record('Removed university fellowship', 'Settings &mdash; Fellowships', 'Removed 1 fellowship');
+
+        return back()->with('success', 'Fellowship removed.');
+    }
+
+    private function saveFellowshipList(array $list): void
+    {
+        Setting::put('fellowships.list', implode("\n", array_values($list)));
+    }
+
     private function fellowshipList(): array
     {
         $raw = (string) Setting::get('fellowships.list', '');

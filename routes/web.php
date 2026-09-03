@@ -93,6 +93,9 @@ Route::middleware(['auth', 'committee.readonly'])->group(function () {
         Route::post('/settings/notifications', [SettingsController::class, 'updateNotifications'])->name('settings.notifications');
         Route::post('/settings/accounting', [SettingsController::class, 'updateAccounting'])->name('settings.accounting');
         Route::post('/settings/fellowships', [SettingsController::class, 'updateFellowships'])->name('settings.fellowships');
+        Route::post('/settings/fellowships/providers', [SettingsController::class, 'storeFellowship'])->name('settings.fellowships.store');
+        Route::put('/settings/fellowships/providers/{index}', [SettingsController::class, 'updateFellowship'])->whereNumber('index')->name('settings.fellowships.update');
+        Route::delete('/settings/fellowships/providers/{index}', [SettingsController::class, 'destroyFellowship'])->whereNumber('index')->name('settings.fellowships.destroy');
         Route::post('/settings/security', [SettingsController::class, 'updateSecurity'])->name('settings.security');
         Route::post('/settings/financial-years', [SettingsController::class, 'storeYear'])->name('settings.years.store');
         Route::put('/settings/financial-years/{year}', [SettingsController::class, 'updateYear'])->name('settings.years.update');
