@@ -319,14 +319,13 @@ document.addEventListener('DOMContentLoaded', function(){
   });
   document.getElementById('attActTicketSms').addEventListener('click', function(){
     var msg = 'Send ticket (' + (curAtt.ticket||'') + ') to ' + (curAtt.name||'this attendee') + ' by SMS?';
-    if (!confirm(msg)) return;
     var f = document.createElement('form');
     f.method = 'POST';
     f.action = "{{ url('/attendees') }}/" + curAtt.id + "/ticket/sms";
     var t = document.createElement('input'); t.type='hidden'; t.name='_token'; t.value = document.querySelector('meta[name="csrf-token"]').content;
     f.appendChild(t);
     document.body.appendChild(f);
-    f.submit();
+    confirmAction(f, 'Send ticket by SMS', msg, 'Send SMS');
   });
 
   function openAttDrawer(d){
@@ -405,14 +404,13 @@ document.addEventListener('DOMContentLoaded', function(){
     btn.addEventListener('click', function(){
       var d = btn.dataset;
       var msg = 'Send ticket (' + (d.ticket||'') + ') to ' + (d.name||'this attendee') + ' by SMS?';
-      if (!confirm(msg)) return;
       var f = document.createElement('form');
       f.method = 'POST';
       f.action = "{{ url('/attendees') }}/" + d.id + "/ticket/sms";
       var t = document.createElement('input'); t.type='hidden'; t.name='_token'; t.value = document.querySelector('meta[name="csrf-token"]').content;
       f.appendChild(t);
       document.body.appendChild(f);
-      f.submit();
+      confirmAction(f, 'Send ticket by SMS', msg, 'Send SMS');
     });
   });
 });
