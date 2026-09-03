@@ -50,7 +50,7 @@
   <div class="section-head" style="margin-top:6px"><div><h2>Account Balances</h2><div class="sub">Net position per money account for the period.</div></div></div>
   <div class="stat-grid" style="grid-template-columns:repeat(auto-fit, minmax(220px, 1fr));margin-bottom:24px">
     @foreach($balances as $b)
-    <div class="glass-card" style="padding:16px 20px;text-align:center">
+    <div class="glass-card" style="padding:16px 20px;text-align:center;cursor:pointer" data-view-cash-acct data-id="{{ $b['account']->id }}">
       <div style="font-size:11px;text-transform:uppercase;letter-spacing:1px;color:var(--text-muted);margin-bottom:6px">{{ $b['account']->code }} — {{ $b['account']->name }}</div>
       <div style="font-size:24px;font-weight:700;color:var(--blue-accent)">TZS {{ number_format($b['balance']) }}</div>
       <div style="font-size:11px;color:var(--text-tertiary);margin-top:8px;display:flex;justify-content:center;gap:14px">
@@ -107,7 +107,7 @@
           @if($activeAccount)<a href="{{ route('accounting.cash-bank') }}" class="btn btn-ghost btn-sm" style="height:36px;align-self:center;flex:0 0 auto">Clear</a>@endif
         </form>
         @forelse($movements as $m)
-        <div class="mini-row">
+        <div class="mini-row" style="cursor:pointer" data-view-cash-movement data-id="{{ $m->id }}">
           <div class="m-ico" style="background:{{ $m->debit > 0 ? 'var(--green-light)' : '#fef2f2' }};color:{{ $m->debit > 0 ? 'var(--green-accent)' : 'var(--red)' }}">
             {{ $m->debit > 0 ? 'IN' : 'OUT' }}
           </div>
@@ -138,7 +138,137 @@
   </div>
 </div>
 
+<div class="drawer-overlay" id="cashAcctDrawer">
+  <div class="drawer-panel">
+    <div class="drawer-head">
+      <div><h3 id="cashAcctDrawerTitle">Account Details</h3><p class="badge badge-info badge-dotted">Money Account</p></div>
+      <button type="button" class="modal-close" data-drawer-close><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><path d="M18 6L6 18M6 6l12 12"/></svg></button>
+    </div>
+    <div class="drawer-body">
+      <div class="info-grid">
+        <div class="info-row"><span>Code</span><b id="cashAcctDrawerCode">—</b></div>
+        <div class="info-row"><span>Name</span><b id="cashAcctDrawerName">—</b></div>
+        <div class="info-row"><span>Total Inflows</span><b id="cashAcctDrawerIn" style="color:var(--success)">—</b></div>
+        <div class="info-row"><span>Total Outflows</span><b id="cashAcctDrawerOut" style="color:var(--red)">—</b></div>
+        <div class="info-row"><span>Net Balance</span><b id="cashAcctDrawerNet" style="color:var(--blue-accent)">—</b></div>
+      </div>
+      <div class="payments-head" style="margin-top:18px">
+        <span>Recent Activity</span><span class="payments-count" id="cashAcctLinesCount">0</span>
+      </div>
+      <div id="cashAcctLines" class="payments-list"></div>
+      <div style="margin-top:14px">
+        <a id="cashAcctLedgerLink" href="#" class="btn btn-secondary btn-sm" style="width:100%;justify-content:center">View Full Ledger</a>
+      </div>
+    </div>
+    <div class="drawer-foot">
+      <button type="button" class="btn btn-secondary" data-drawer-close>Close</button>
+    </div>
+  </div>
+</div>
+
+<div class="drawer-overlay" id="cashMovDetailDrawer">
+  <div class="drawer-panel">
+    <div class="drawer-head">
+      <div><h3>Movement Details</h3><p id="cashMovDrawerEntry" class="badge badge-neutral badge-dotted">—</p></div>
+      <button type="button" class="modal-close" data-drawer-close><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><path d="M18 6L6 18M6 6l12 12"/></svg></button>
+    </div>
+    <div class="drawer-body">
+      <div class="info-grid">
+        <div class="info-row"><span>Entry No</span><b id="cashMovDrawerEntryNo">—</b></div>
+        <div class="info-row"><span>Date</span><b id="cashMovDrawerDate">—</b></div>
+        <div class="info-row"><span>Description</span><b id="cashMovDrawerDesc" style="white-space:normal">—</b></div>
+        <div class="info-row"><span>Reference</span><b id="cashMovDrawerRef">—</b></div>
+        <div class="info-row"><span>Account</span><b id="cashMovDrawerAccount">—</b></div>
+        <div class="info-row"><span>Amount</span><b id="cashMovDrawerAmount">—</b></div>
+      </div>
+      <div class="payments-head" style="margin-top:18px">
+        <span>All Journal Lines</span><span class="payments-count" id="cashMovLinesCount">0</span>
+      </div>
+      <div id="cashMovLines" class="payments-list"></div>
+    </div>
+    <div class="drawer-foot">
+      <button type="button" class="btn btn-secondary" data-drawer-close>Close</button>
+    </div>
+  </div>
+</div>
+@endsection
+
 @push('scripts')
+<script>
+document.addEventListener('DOMContentLoaded', function(){
+  document.querySelectorAll('[data-view-cash-acct]').forEach(function(el){
+    el.addEventListener('click', function(){
+      var id = el.dataset.id;
+      fetch('{{ url("/accounting/api/accounts") }}/' + id)
+        .then(function(r){ return r.json(); })
+        .then(function(d){
+          var a = d.account;
+          document.getElementById('cashAcctDrawerTitle').textContent = a.code + ' — ' + a.name;
+          document.getElementById('cashAcctDrawerCode').textContent = a.code;
+          document.getElementById('cashAcctDrawerName').textContent = a.name;
+          document.getElementById('cashAcctDrawerIn').textContent = 'TZS ' + d.debit.toLocaleString();
+          document.getElementById('cashAcctDrawerOut').textContent = 'TZS ' + d.credit.toLocaleString();
+          document.getElementById('cashAcctDrawerNet').textContent = 'TZS ' + Math.abs(d.net).toLocaleString();
+
+          document.getElementById('cashAcctLinesCount').textContent = d.recentLines.length;
+          var list = document.getElementById('cashAcctLines');
+          list.innerHTML = '';
+          if(d.recentLines.length === 0){
+            list.innerHTML = '<div class="pay-empty">No recent activity</div>';
+          } else {
+            d.recentLines.forEach(function(l){
+              var isDr = Number(l.debit) > 0;
+              var item = document.createElement('div');
+              item.className = 'pay-item';
+              item.innerHTML =
+                '<div class="pay-ico" style="background:' + (isDr ? 'var(--success-bg)' : 'var(--danger-bg)') + ';color:' + (isDr ? 'var(--success)' : 'var(--red)') + '"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6L9 17l-5-5"/></svg></div>' +
+                '<div class="pay-main"><div class="pm-name">' + l.entry_no + '</div><div class="pm-sub">' + l.date + ' · ' + (l.description || '') + '</div></div>' +
+                '<div class="pay-amt" style="text-align:right"><div>' + (isDr ? '+ TZS ' + Number(l.debit).toLocaleString() : '') + '</div><div style="color:var(--red);font-size:11px">' + (!isDr && Number(l.credit) > 0 ? '− TZS ' + Number(l.credit).toLocaleString() : '') + '</div></div>';
+              list.appendChild(item);
+            });
+          }
+
+          document.getElementById('cashAcctLedgerLink').href = '{{ url("/accounting/ledger") }}?account=' + a.id;
+          openDrawerById('cashAcctDrawer');
+        });
+    });
+  });
+
+  document.querySelectorAll('[data-view-cash-movement]').forEach(function(el){
+    el.addEventListener('click', function(){
+      var id = el.dataset.id;
+      fetch('{{ url("/accounting/api/cash-movements") }}/' + id)
+        .then(function(r){ return r.json(); })
+        .then(function(d){
+          var isDr = Number(d.debit) > 0;
+          document.getElementById('cashMovDrawerEntry').textContent = d.entry_no;
+          document.getElementById('cashMovDrawerEntryNo').textContent = d.entry_no;
+          document.getElementById('cashMovDrawerDate').textContent = d.entry_date;
+          document.getElementById('cashMovDrawerDesc').textContent = d.description || '—';
+          document.getElementById('cashMovDrawerRef').textContent = d.reference || '—';
+          document.getElementById('cashMovDrawerAccount').textContent = d.account.code + ' — ' + d.account.name;
+          document.getElementById('cashMovDrawerAmount').textContent = (isDr ? '+ ' : '− ') + 'TZS ' + Number(isDr ? d.debit : d.credit).toLocaleString();
+          document.getElementById('cashMovDrawerAmount').style.color = isDr ? 'var(--success)' : 'var(--red)';
+
+          document.getElementById('cashMovLinesCount').textContent = d.allLines.length;
+          var list = document.getElementById('cashMovLines');
+          list.innerHTML = '';
+          d.allLines.forEach(function(l){
+            var lIsDr = Number(l.debit) > 0;
+            var item = document.createElement('div');
+            item.className = 'pay-item';
+            item.innerHTML =
+              '<div class="pay-ico" style="background:' + (lIsDr ? 'var(--success-bg)' : 'var(--danger-bg)') + ';color:' + (lIsDr ? 'var(--success)' : 'var(--red)') + '"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6L9 17l-5-5"/></svg></div>' +
+              '<div class="pay-main"><div class="pm-name">' + (l.code ? l.code + ' — ' + l.account : '—') + '</div></div>' +
+              '<div class="pay-amt" style="text-align:right"><div>' + (lIsDr ? 'Dr TZS ' + Number(l.debit).toLocaleString() : '') + '</div><div style="color:var(--red);font-size:11px">' + (!lIsDr && Number(l.credit) > 0 ? 'Cr TZS ' + Number(l.credit).toLocaleString() : '') + '</div></div>';
+            list.appendChild(item);
+          });
+          openDrawerById('cashMovDetailDrawer');
+        });
+    });
+  });
+});
+</script>
 <script>try{(function(){
   if(typeof Chart==='undefined') return;
   var cv=document.getElementById('cashChart');

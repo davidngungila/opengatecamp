@@ -174,4 +174,15 @@ Route::middleware(['auth', 'committee.readonly'])->group(function () {
     Route::post('/accounting/reconciliation', [AccountingController::class, 'storeReconciliation'])->name('accounting.reconciliation.store');
     Route::get('/accounting/transactions', [AccountingController::class, 'transactions'])->name('accounting.transactions');
     Route::get('/accounting/transactions/{entry}/receipt', [AccountingController::class, 'receiptPdf'])->name('accounting.transactions.receipt');
+
+    // JSON detail endpoints for drawers
+    Route::get('/accounting/api/overview', [AccountingController::class, 'apiOverview'])->name('accounting.api.overview');
+    Route::get('/accounting/api/receipts/{doc}', [AccountingController::class, 'offeringDetail'])->name('accounting.api.receipt');
+    Route::get('/accounting/api/payments/{doc}', [AccountingController::class, 'paymentDetail'])->name('accounting.api.payment');
+    Route::get('/accounting/api/accounts/{account}', [AccountingController::class, 'apiAccountDetail'])->name('accounting.api.account');
+    Route::get('/accounting/api/journal/{entry}', [AccountingController::class, 'apiJournalDetail'])->name('accounting.api.journal');
+    Route::get('/accounting/api/trial-balance/{account}', [AccountingController::class, 'apiTrialBalanceDetail'])->name('accounting.api.trial-balance');
+    Route::get('/accounting/api/ledger/{line}', [AccountingController::class, 'apiLedgerDetail'])->name('accounting.api.ledger');
+    Route::get('/accounting/api/budgets/{budget}', [AccountingController::class, 'apiBudgetDetail'])->name('accounting.api.budget');
+    Route::get('/accounting/api/cash-movements/{line}', [AccountingController::class, 'apiCashMovementDetail'])->name('accounting.api.cash-movement');
 });

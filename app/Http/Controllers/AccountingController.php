@@ -278,6 +278,18 @@ class AccountingController extends Controller
         return $this->documentPage($request, 'receipt', 'accounting.offerings', 'accounting/offerings');
     }
 
+    public function offeringDetail(ReceiptPayment $doc)
+    {
+        $doc->load(['categoryAccount', 'moneyAccount', 'journalEntry.lines.account']);
+        return response()->json($doc);
+    }
+
+    public function paymentDetail(ReceiptPayment $doc)
+    {
+        $doc->load(['categoryAccount', 'moneyAccount', 'journalEntry.lines.account']);
+        return response()->json($doc);
+    }
+
     public function storeOffering(Request $request)
     {
         return $this->storeDocument($request, 'receipt');
@@ -812,5 +824,208 @@ class AccountingController extends Controller
             'result' => round($income - $expense, 2),
             'cash' => round((float) $cash, 2),
         ];
+    }
+
+    public function apiOverview()
+    {
+        [$fy, $between] = $this->fyWindow();
+
+        $incomeAccounts = Account::where('type', 'income')->orderBy('code')->get()
+            ->map(function (Account $a) use ($between) {
+                $d = (float) $this->baseLineQuery($between)->clone()->where('account_id', $a->id)->sum('debit');
+                $c = (float) $this->baseLineQuery($between)->clone()->where('account_id', $a->id)->sum('credit');
+                $net = round(abs($c - $d), 2);
+                return $net > 0 ? ['code' => $a->code, 'name' => $a->name, 'amount' => $net] : null;
+            })->filter()->values();
+
+        $expenseAccounts = Account::where('type', 'expense')->orderBy('code')->get()
+            ->map(function (Account $a) use ($between) {
+                $d = (float) $this->baseLineQuery($between)->clone()->where('account_id', $a->id)->sum('debit');
+                $c = (float) $this->baseLineQuery($between)->clone()->where('account_id', $a->id)->sum('credit');
+                $net = round(abs($d - $c), 2);
+                return $net > 0 ? ['code' => $a->code, 'name' => $a->name, 'amount' => $net] : null;
+            })->filter()->values();
+
+        $cashAccounts = Account::whereIn('code', ['1000', '1010', '1020'])->orderBy('code')->get()
+            ->map(function (Account $a) use ($between) {
+                $d = (float) $this->baseLineQuery($between)->clone()->where('account_id', $a->id)->sum('debit');
+                $c = (float) $this->baseLineQuery($between)->clone()->where('account_id', $a->id)->sum('credit');
+                return ['code' => $a->code, 'name' => $a->name, 'balance' => round($d - $c, 2)];
+            })->filter(fn ($b) => $b['balance'] != 0)->values();
+
+        return response()->json([
+            'fy' => $fy ? $fy->name : 'All periods',
+            'incomeAccounts' => $incomeAccounts,
+            'expenseAccounts' => $expenseAccounts,
+            'cashAccounts' => $cashAccounts,
+            'totalIncome' => $incomeAccounts->sum('amount'),
+            'totalExpense' => $expenseAccounts->sum('amount'),
+        ]);
+    }
+
+    public function apiAccountDetail(Account $account)
+    {
+        [$fy, $between] = $this->fyWindow();
+
+        $debit = (float) $this->baseLineQuery($between)->clone()->where('account_id', $account->id)->sum('debit');
+        $credit = (float) $this->baseLineQuery($between)->clone()->where('account_id', $account->id)->sum('credit');
+
+        $recentLines = JournalLine::with('entry')
+            ->where('account_id', $account->id)
+            ->whereHas('entry', fn ($q) => $q->where('status', 'posted'))
+            ->when($fy, fn ($q) => $q->whereHas('entry', fn ($e) => $e->whereBetween('entry_date', $between)))
+            ->latest('id')->take(10)->get()
+            ->map(fn ($l) => [
+                'date' => $l->entry->entry_date->format('d M Y'),
+                'entry_no' => $l->entry->entry_no,
+                'description' => $l->description ?: $l->entry->description,
+                'debit' => (float) $l->debit,
+                'credit' => (float) $l->credit,
+            ]);
+
+        return response()->json([
+            'account' => ['id' => $account->id, 'code' => $account->code, 'name' => $account->name, 'type' => $account->type],
+            'debit' => round($debit, 2),
+            'credit' => round($credit, 2),
+            'net' => round($debit - $credit, 2),
+            'recentLines' => $recentLines,
+        ]);
+    }
+
+    public function apiJournalDetail(JournalEntry $entry)
+    {
+        $entry->load('lines.account');
+        $doc = ReceiptPayment::where('journal_entry_id', $entry->id)->first();
+
+        return response()->json([
+            'entry' => [
+                'entry_no' => $entry->entry_no,
+                'entry_date' => $entry->entry_date->format('d M Y'),
+                'description' => $entry->description,
+                'reference' => $entry->reference,
+                'status' => $entry->status,
+                'created_by' => $entry->created_by,
+                'created_at' => $entry->created_at?->format('d M Y H:i'),
+            ],
+            'lines' => $entry->lines->map(fn ($l) => [
+                'code' => $l->account?->code,
+                'account' => $l->account?->name,
+                'description' => $l->description,
+                'debit' => (float) $l->debit,
+                'credit' => (float) $l->credit,
+            ]),
+            'total_debit' => (float) $entry->lines->sum('debit'),
+            'total_credit' => (float) $entry->lines->sum('credit'),
+            'doc' => $doc ? [
+                'doc_no' => $doc->doc_no,
+                'type' => $doc->type,
+                'party' => $doc->party,
+                'amount' => (float) $doc->amount,
+            ] : null,
+        ]);
+    }
+
+    public function apiTrialBalanceDetail(Account $account)
+    {
+        [$fy, $between] = $this->fyWindow();
+
+        $debit = (float) $this->baseLineQuery($between)->clone()->where('account_id', $account->id)->sum('debit');
+        $credit = (float) $this->baseLineQuery($between)->clone()->where('account_id', $account->id)->sum('credit');
+
+        $recentLines = JournalLine::with('entry')
+            ->where('account_id', $account->id)
+            ->whereHas('entry', fn ($q) => $q->where('status', 'posted'))
+            ->when($fy, fn ($q) => $q->whereHas('entry', fn ($e) => $e->whereBetween('entry_date', $between)))
+            ->latest('id')->take(10)->get()
+            ->map(fn ($l) => [
+                'date' => $l->entry->entry_date->format('d M Y'),
+                'entry_no' => $l->entry->entry_no,
+                'description' => $l->description ?: $l->entry->description,
+                'debit' => (float) $l->debit,
+                'credit' => (float) $l->credit,
+            ]);
+
+        return response()->json([
+            'account' => ['id' => $account->id, 'code' => $account->code, 'name' => $account->name, 'type' => $account->type],
+            'debit' => round($debit, 2),
+            'credit' => round($credit, 2),
+            'net' => round($debit - $credit, 2),
+            'recentLines' => $recentLines,
+        ]);
+    }
+
+    public function apiLedgerDetail(JournalLine $line)
+    {
+        $line->load(['entry.lines.account', 'account']);
+
+        return response()->json([
+            'entry_no' => $line->entry->entry_no,
+            'entry_date' => $line->entry->entry_date->format('d M Y'),
+            'description' => $line->description ?: $line->entry->description,
+            'reference' => $line->entry->reference,
+            'status' => $line->entry->status,
+            'account' => ['code' => $line->account->code, 'name' => $line->account->name],
+            'debit' => (float) $line->debit,
+            'credit' => (float) $line->credit,
+            'allLines' => $line->entry->lines->map(fn ($l) => [
+                'code' => $l->account?->code,
+                'account' => $l->account?->name,
+                'debit' => (float) $l->debit,
+                'credit' => (float) $l->credit,
+            ]),
+        ]);
+    }
+
+    public function apiBudgetDetail(Budget $budget)
+    {
+        $budget->load(['account', 'event', 'fy']);
+        [$fy, $between] = $this->fyWindow();
+
+        $actual = (float) $this->baseLineQuery($between)->clone()->where('account_id', $budget->account_id)->sum('debit')
+            - (float) $this->baseLineQuery($between)->clone()->where('account_id', $budget->account_id)->sum('credit');
+
+        $recentLines = JournalLine::with('entry')
+            ->where('account_id', $budget->account_id)
+            ->whereHas('entry', fn ($q) => $q->where('status', 'posted'))
+            ->when($fy, fn ($q) => $q->whereHas('entry', fn ($e) => $e->whereBetween('entry_date', $between)))
+            ->latest('id')->take(10)->get()
+            ->map(fn ($l) => [
+                'date' => $l->entry->entry_date->format('d M Y'),
+                'entry_no' => $l->entry->entry_no,
+                'description' => $l->description ?: $l->entry->description,
+                'debit' => (float) $l->debit,
+                'credit' => (float) $l->credit,
+            ]);
+
+        return response()->json([
+            'account' => ['code' => $budget->account->code, 'name' => $budget->account->name],
+            'event' => $budget->event ? $budget->event->title : null,
+            'fy' => $budget->fy->name,
+            'amount' => (float) $budget->amount,
+            'actual' => round($actual, 2),
+            'variance' => round((float) $budget->amount - $actual, 2),
+            'recentLines' => $recentLines,
+        ]);
+    }
+
+    public function apiCashMovementDetail(JournalLine $line)
+    {
+        $line->load(['entry.lines.account', 'account']);
+
+        return response()->json([
+            'entry_no' => $line->entry->entry_no,
+            'entry_date' => $line->entry->entry_date->format('d M Y'),
+            'description' => $line->entry->description,
+            'reference' => $line->entry->reference,
+            'account' => ['code' => $line->account->code, 'name' => $line->account->name],
+            'debit' => (float) $line->debit,
+            'credit' => (float) $line->credit,
+            'allLines' => $line->entry->lines->map(fn ($l) => [
+                'code' => $l->account?->code,
+                'account' => $l->account?->name,
+                'debit' => (float) $l->debit,
+                'credit' => (float) $l->credit,
+            ]),
+        ]);
     }
 }
