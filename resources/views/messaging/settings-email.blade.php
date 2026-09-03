@@ -10,7 +10,6 @@
     <p style="color:var(--text-secondary);font-size:13px;margin:4px 0 0">Configure SMTP providers for outbound emails.</p>
   </div>
   @php $mailConfigured = !empty($providers) && collect($providers)->firstWhere('is_primary', true); @endphp
-  @include('messaging.partials.settings-nav', ['active' => 'email', 'configured' => (bool) $mailConfigured])
 
   @if(session('error'))
   <div style="background:#fef2f2;border:1px solid #fecaca;border-radius:8px;padding:12px 16px;margin-bottom:18px;color:#991b1b;font-size:13.5px">⚠ {{ session('error') }}</div>
