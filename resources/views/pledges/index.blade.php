@@ -319,14 +319,7 @@ document.addEventListener('DOMContentLoaded', function(){
 
   document.querySelectorAll('[data-record-payment]').forEach(function(btn){
     btn.addEventListener('click', function(){
-      var d = btn.dataset;
-      document.getElementById('paymentPledgeName').textContent = d.name;
-      document.getElementById('paymentPledged').textContent = 'TZS ' + Number(d.amount).toLocaleString();
-      document.getElementById('paymentRemaining').textContent = 'TZS ' + Number(d.remaining).toLocaleString();
-      document.getElementById('paymentAmount').value = d.remaining;
-      document.getElementById('paymentAmount').max = d.remaining;
-      document.getElementById('paymentForm').action = "{{ url('/pledges') }}/" + d.id + "/payments";
-      openDrawerById('pledgePaymentDrawer');
+      openPaymentDrawer(btn.dataset);
     });
   });
   document.querySelectorAll('[data-edit-pledge]').forEach(function(btn){
@@ -341,18 +334,22 @@ document.addEventListener('DOMContentLoaded', function(){
   });
 
   document.getElementById('drawerPaymentBtn').addEventListener('click', function(){
-    var d = this.dataset;
-    var remaining = Number(d.remaining||0);
-    if(remaining <= 0){ toast('This pledge is fully paid','warning'); return; }
-    document.getElementById('paymentPledgeName').textContent = d.name;
-    document.getElementById('paymentPledged').textContent = 'TZS ' + Number(d.amount||0).toLocaleString();
-    document.getElementById('paymentRemaining').textContent = 'TZS ' + remaining.toLocaleString();
-    document.getElementById('paymentAmount').value = remaining;
-    document.getElementById('paymentAmount').max = remaining;
-    document.getElementById('paymentForm').action = "{{ url('/pledges') }}/" + d.id + "/payments";
-    closeDrawerById('pledgeDetailDrawer');
-    openDrawerById('pledgePaymentDrawer');
+    openPaymentDrawer(this.dataset);
   });
+
+  function openPaymentDrawer(d){
+    var remaining = Number(d.remaining||0);
+    var fulfilled = remaining <= 0;
+    document.getElementById('paymentPledgeName').textContent = d.name + (fulfilled ? ' — extra contribution' : '');
+    document.getElementById('paymentPledged').textContent = 'TZS ' + Number(d.amount||0).toLocaleString();
+    document.getElementById('paymentRemaining').textContent = fulfilled ? 'Fully paid — add an extra amount' : 'TZS ' + remaining.toLocaleString();
+    document.getElementById('paymentRemaining').style.color = fulfilled ? 'var(--success)' : 'var(--warning)';
+    document.getElementById('paymentAmount').value = '';
+    document.getElementById('paymentAmount').max = '';
+    document.getElementById('paymentForm').action = "{{ url('/pledges') }}/" + d.id + "/payments";
+    if(document.getElementById('pledgeDetailDrawer').classList.contains('open')) closeDrawerById('pledgeDetailDrawer');
+    openDrawerById('pledgePaymentDrawer');
+  }
 });
 </script>
 @endpush

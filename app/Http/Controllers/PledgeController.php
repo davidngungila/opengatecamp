@@ -161,11 +161,16 @@ class PledgeController extends Controller
             'pay_date' => 'required|date',
         ]);
 
-        if ($data['amount'] > $pledge->getRemainingAttribute() && $pledge->status !== 'fulfilled') {
-            $data['amount'] = min($data['amount'], $pledge->getRemainingAttribute());
+        $remaining = $pledge->getRemainingAttribute();
+        $isFulfilled = $pledge->status === 'fulfilled' || $remaining <= 0;
+
+        if ($isFulfilled) {
+            $data['amount'] = max(1, $data['amount']);
+        } elseif ($data['amount'] > $remaining) {
+            $data['amount'] = min($data['amount'], $remaining);
         }
 
-        $payment = DB::transaction(function () use ($data, $pledge) {
+        $payment = DB::transaction(function () use ($data, $pledge, $isFulfilled) {
             $data['pledge_id'] = $pledge->id;
             $data['recorded_by'] = auth()->user()?->name;
 
@@ -183,10 +188,19 @@ class PledgeController extends Controller
             $payment = PledgePayment::create($data);
 
             $paid = $pledge->payments()->sum('amount');
-            $pledge->update([
-                'paid_amount' => $paid,
-                'status' => $paid >= $pledge->amount ? 'fulfilled' : ($paid > 0 ? 'partial' : 'pending'),
-            ]);
+
+            if ($isFulfilled) {
+                $pledge->update([
+                    'amount' => (float) $pledge->amount + (float) $data['amount'],
+                    'paid_amount' => $paid,
+                    'status' => 'fulfilled',
+                ]);
+            } else {
+                $pledge->update([
+                    'paid_amount' => $paid,
+                    'status' => $paid >= $pledge->amount ? 'fulfilled' : ($paid > 0 ? 'partial' : 'pending'),
+                ]);
+            }
 
             return $payment;
         });
