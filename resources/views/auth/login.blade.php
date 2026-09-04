@@ -23,12 +23,12 @@
 .slider-track{position:absolute;inset:0;}
 .slider-slide{position:absolute;inset:0;background-size:cover;background-position:center;opacity:0;transition:opacity 1.1s ease;display:flex;align-items:flex-start;}
 .slider-slide.active{opacity:1;}
-.slide-shade{position:absolute;inset:0;background:linear-gradient(180deg, rgba(6,16,36,.25) 0%, rgba(6,16,36,.35) 45%, rgba(6,16,36,.85) 100%);}
+.slide-shade{position:absolute;inset:0;background:linear-gradient(180deg, rgba(6,16,36,.75) 0%, rgba(6,16,36,.38) 30%, rgba(6,16,36,.2) 50%, rgba(6,16,36,.45) 78%, rgba(6,16,36,.8) 100%);}
 .slide-caption{position:relative;z-index:2;padding:172px 46px 44px;max-width:100%;}
-.slide-caption .slide-tag{display:inline-flex;align-items:center;gap:8px;color:rgba(255,255,255,.85);font-size:11px;font-weight:700;letter-spacing:1.5px;text-transform:uppercase;margin-bottom:12px;}
+.slide-caption .slide-tag{display:inline-flex;align-items:center;gap:8px;color:rgba(255,255,255,.92);font-size:11px;font-weight:700;letter-spacing:1.5px;text-transform:uppercase;margin-bottom:12px;text-shadow:0 1px 6px rgba(0,0,0,.5);}
 .slide-caption .slide-tag:before{content:'';width:26px;height:2px;background:linear-gradient(90deg, #4C86F5, transparent);border-radius:2px;}
-.slide-caption h2{color:#fff;font-size:26px;font-weight:800;line-height:1.2;margin:0 0 8px;}
-.slide-caption p{color:rgba(255,255,255,.7);font-size:13.5px;font-weight:500;margin:0;max-width:380px;}
+.slide-caption h2{color:#fff;font-size:26px;font-weight:800;line-height:1.2;margin:0 0 8px;text-shadow:0 2px 10px rgba(0,0,0,.55);}
+.slide-caption p{color:rgba(255,255,255,.88);font-size:13.5px;font-weight:500;margin:0;max-width:380px;text-shadow:0 1px 8px rgba(0,0,0,.5);}
 .slide-caption .slide-brand{position:absolute;top:-64px;left:0;}
 .slider-nav{position:absolute;left:0;right:0;bottom:20px;display:flex;justify-content:center;gap:8px;z-index:3;}
 .slider-dot{width:8px;height:8px;border-radius:999px;border:none;cursor:pointer;background:rgba(255,255,255,.35);transition:all .25s;padding:0;}
