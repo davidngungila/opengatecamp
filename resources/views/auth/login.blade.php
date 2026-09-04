@@ -44,9 +44,6 @@
 <div class="login-shell">
   <div class="login-card fade-in">
     <div class="login-brand">
-      <div class="brand-mark">
-        <svg width="24" height="24" viewBox="0 0 24 24" fill="none"><path d="M12 2L4 6v6c0 5 3.4 8.6 8 10 4.6-1.4 8-5 8-10V6l-8-4z" fill="white" fill-opacity=".95"/><path d="M12 6v12M9 9h6" stroke="#0B1F3A" stroke-width="1.6" stroke-linecap="round"/></svg>
-      </div>
       <div>
         <strong>OpenGate Camp Connect</strong>
         <span>Connecting Students &middot; Restoring Faith &middot; Encountering Jesus</span>
