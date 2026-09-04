@@ -26,7 +26,7 @@
     $sColors = array_map(fn($k) => $colorMap[$k], $sKeys);
     $trendLabels = json_encode(array_keys($trend));
     $trendValues = json_encode(array_values($trend));
-    $tzs = fn($n) => 'TZS&nbsp;' . number_format((float) $n);
+    $tzs = fn($n) => 'TZS ' . number_format((float) $n);
 @endphp
 <div class="fade-in">
 
