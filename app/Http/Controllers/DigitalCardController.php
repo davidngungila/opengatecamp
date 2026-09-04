@@ -89,8 +89,8 @@ class DigitalCardController extends Controller
     public function update(Request $request, DigitalCard $card)
     {
         $data = $request->validate([
-            'title' => 'required|string|max:255',
-            'message' => 'required|string',
+            'title' => 'nullable|string|max:255',
+            'message' => 'nullable|string',
             'card_type' => 'required|in:camp_invitation,fundraising,thank_you,birthday,christmas,general',
             'background_color' => 'nullable|string|max:7',
             'accent_color' => 'nullable|string|max:7',
@@ -144,7 +144,7 @@ class DigitalCardController extends Controller
             return back()->with('error', 'No valid phone numbers provided.');
         }
 
-        $sms = new SmsService;
+        $sms = app(SmsService::class);
         if (! $sms->isConfigured()) {
             return back()->with('error', 'SMS API token not configured.');
         }
@@ -284,11 +284,13 @@ class DigitalCardController extends Controller
         $mpdf->Output("DigitalCard-{$card->card_no}.pdf", 'D');
     }
 
-    public function preview(Request $request, DigitalCard $card)
+    public function preview(DigitalCard $card)
     {
-        $recipient = $this->recipientFromRequest($request, $card->id);
+        $qrData = app(QrCodeService::class)->pngDataUri(
+            "OGCM|CARD|{$card->card_no}|{$card->hash}"
+        );
 
-        return view('digital-cards.public', ['card' => $card, 'preview' => true, 'recipient' => $recipient]);
+        return view('digital-cards.preview', compact('card', 'qrData'));
     }
 
     public function show(Request $request, string $hash)

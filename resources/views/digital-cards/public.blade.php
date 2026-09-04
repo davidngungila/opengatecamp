@@ -63,16 +63,9 @@
     box-shadow:0 10px 28px rgba(0,0,0,.22);
   }
   .brand-mark .logo svg{width:27px;height:27px;}
+  .brand-mark .logo img{width:32px;height:32px;border-radius:8px;}
   .brand-mark .org-name{font-weight:800;font-size:16px;letter-spacing:.5px;text-transform:uppercase;line-height:1.2;color:#fff;}
   .brand-mark .org-sub{font-size:10px;letter-spacing:2.5px;color:rgba(255,255,255,.72);text-transform:uppercase;}
-  .type-badge{
-    display:inline-flex;align-items:center;gap:6px;
-    font-size:11px;font-weight:800;letter-spacing:2px;text-transform:uppercase;
-    color:#0a0f1e;background:var(--card-accent);
-    border-radius:999px;padding:8px 16px;margin-bottom:22px;
-    box-shadow:0 8px 22px rgba(0,0,0,.25);
-  }
-  .type-badge .dot{width:6px;height:6px;border-radius:50%;background:#0a0f1e;}
   h1.title{
     font-size:clamp(30px,7vw,48px);font-weight:800;line-height:1.15;letter-spacing:-.5px;
     margin-bottom:14px;
@@ -290,7 +283,7 @@
   @media (max-width:360px){
     .hero{padding-top:28px;}
     .brand-mark .logo{width:42px;height:42px;}
-    .type-badge{font-size:10px;letter-spacing:1.5px;padding:7px 12px;}
+    .brand-mark .logo img{width:26px;height:26px;border-radius:7px;}
     .amount-preset{gap:6px;}
     .amount-preset button{font-size:12px;padding:11px 4px;}
     .pay-grid{gap:6px;}
@@ -317,20 +310,29 @@
     <div class="hero-inner">
       <div class="brand-mark">
         <div class="logo">
+          @if(file_exists(public_path('logo.png')))
+          <img src="{{ asset('logo.png') }}" alt="Open Gate Camp Mission">
+          @else
           <svg viewBox="0 0 24 24" fill="none">
             <path d="M12 2L4 6v6c0 5 3.4 8.6 8 10 4.6-1.4 8-5 8-10V6l-8-4z" fill="{{ $card->card_type === 'birthday' ? '#ffffff' : $card->accent_color }}"/>
             <path d="M12 6v12M9 9h6" stroke="{{ $card->card_type === 'birthday' ? '#e11d48' : '#0a0f1e' }}" stroke-width="1.6" stroke-linecap="round"/>
           </svg>
+          @endif
         </div>
         <div>
           <div class="org-name">Open Gate</div>
           <div class="org-sub">Camp Mission</div>
         </div>
       </div>
-      <span class="type-badge"><span class="dot"></span>{{ $card->getTypeLabel() }}</span>
+      @if($card->title)
       <h1 class="title">{{ $card->title }}</h1>
+      @endif
+      @if($card->title || $card->message)
       <div class="ornament"><span class="line"></span><span class="diamond"></span><span class="line"></span></div>
+      @endif
+      @if($card->message)
       <div class="message">{{ $card->message }}</div>
+      @endif
     </div>
   </header>
 

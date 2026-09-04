@@ -179,11 +179,13 @@ class DigitalCardsFlowTest extends TestCase
 
         $this->assertDatabaseHas('digital_cards', ['id' => $card->id, 'status' => 'active', 'is_published' => 1]);
 
-        // Preview page renders
+        // Preview page renders as ticket-size sheet
         $this->actingAs($user)
             ->get("/digital-cards/{$card->id}/preview")
             ->assertOk()
-            ->assertSee('Store Test');
+            ->assertSee('Store Test')
+            ->assertSee('DIGITAL CARD')
+            ->assertSee('Pakua PDF');
 
         // PDF endpoint should not error (browser flow serves the binary directly)
         $this->actingAs($user)

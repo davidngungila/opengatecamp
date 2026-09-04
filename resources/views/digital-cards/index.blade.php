@@ -167,11 +167,11 @@
       @csrf @method('PUT')
       <div class="drawer-body">
         <div class="form-grid">
-          <div class="field"><label>Title *</label><input name="title" id="editCardTitle" required></div>
+          <div class="field"><label>Title</label><input name="title" id="editCardTitle" placeholder="Optional — leave blank to hide"></div>
           <div class="field"><label>Card Type *</label><select name="card_type" id="editCardType">
             @foreach($types as $k=>$t)<option value="{{ $k }}">{{ $t }}</option>@endforeach
           </select></div>
-          <div class="field full"><label>Message *</label><textarea name="message" id="editCardMessage" required></textarea></div>
+          <div class="field full"><label>Message</label><textarea name="message" id="editCardMessage" placeholder="Optional — leave blank to hide"></textarea></div>
           <div class="field"><label>Linked Event</label><select name="event_id" id="editCardEvent">
             <option value="">— None —</option>
             @foreach($events as $e)<option value="{{ $e->id }}">{{ $e->title }} · {{ $e->start_date?->format('d M Y') }}</option>@endforeach
