@@ -58,7 +58,7 @@
         <thead><tr><th>Card No</th><th>Title / Type</th><th>Event</th><th>Collected</th><th>Target</th><th>Progress</th><th>Status</th><th style="width:60px">Actions</th></tr></thead>
         <tbody>
           @forelse($cards as $card)
-          <tr>
+          <tr data-card-url="{{ route('cards.details', $card) }}">
             <td><span class="badge badge-neutral badge-dotted">{{ $card->card_no }}</span></td>
             <td>
               <div class="cell-user">
@@ -88,6 +88,7 @@
                   <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><circle cx="12" cy="5" r=".6"/><circle cx="12" cy="12" r=".6"/><circle cx="12" cy="19" r=".6"/></svg>
                 </button>
                 <div class="action-menu" id="am-card-{{ $card->id }}">
+                  <a href="{{ route('cards.details', $card) }}">View Details</a>
                   <a href="{{ route('cards.preview', $card) }}" target="_blank">Preview</a>
                   @if(!$isCommittee)
                   <button type="button" data-edit-card data-id="{{ $card->id }}" data-title="{{ $card->title }}" data-message="{{ $card->message }}" data-type="{{ $card->card_type }}" data-bg="{{ $card->background_color }}" data-accent="{{ $card->accent_color }}" data-event="{{ $card->event_id }}" data-target="{{ $card->target_amount }}" data-note="{{ $card->contributor_note }}" data-cta="{{ $card->cta_text }}" data-sms="{{ $card->sms_text }}">Edit</button>
@@ -277,6 +278,14 @@
       }).join('\n');
     });
   }
+
+  document.querySelectorAll('tr[data-card-url]').forEach(function(tr){
+    tr.style.cursor = 'pointer';
+    tr.addEventListener('click', function(e){
+      if (e.target.closest('.action-menu-wrap') || e.target.closest('button') || e.target.closest('a')) return;
+      window.location.href = tr.dataset.cardUrl;
+    });
+  });
 })();
 </script>
 @endpush

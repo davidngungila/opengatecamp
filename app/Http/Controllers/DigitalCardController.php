@@ -53,6 +53,21 @@ class DigitalCardController extends Controller
         ));
     }
 
+    public function details(DigitalCard $card)
+    {
+        $card->loadMissing(['event', 'contributions', 'recipients']);
+
+        $contributions = $card->contributions->sortByDesc('created_at')->values();
+        $confirmedTotal = $card->contributions->where('status', 'confirmed')->sum('amount');
+
+        return view('digital-cards.details', [
+            'card' => $card,
+            'contributions' => $contributions,
+            'recipients' => $card->recipients->sortByDesc('created_at')->values(),
+            'confirmedTotal' => $confirmedTotal,
+        ]);
+    }
+
     public function store(Request $request)
     {
         $data = $request->validate([

@@ -148,6 +148,7 @@ Route::middleware(['auth', 'committee.readonly'])->group(function () {
 
     // ── Digital Cards ────────────────────────────────────
     Route::get('/digital-cards', [DigitalCardController::class, 'index'])->name('cards.index');
+    Route::get('/digital-cards/{card}', [DigitalCardController::class, 'details'])->name('cards.details');
     Route::post('/digital-cards', [DigitalCardController::class, 'store'])->name('cards.store');
     Route::put('/digital-cards/{card}', [DigitalCardController::class, 'update'])->name('cards.update');
     Route::delete('/digital-cards/{card}', [DigitalCardController::class, 'destroy'])->name('cards.destroy');

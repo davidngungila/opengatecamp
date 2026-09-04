@@ -201,6 +201,15 @@ class DigitalCardsFlowTest extends TestCase
             ->assertOk()
             ->assertSee(route('cards.publicPdf', $card->hash));
 
+        // Details page shows one card's full information
+        $this->actingAs($user)
+            ->get("/digital-cards/{$card->id}")
+            ->assertOk()
+            ->assertSee($card->card_no)
+            ->assertSee('Contributions')
+            ->assertSee('SMS Recipients')
+            ->assertSee($card->public_url);
+
         // Delete
         $this->actingAs($user)
             ->delete("/digital-cards/{$card->id}")
