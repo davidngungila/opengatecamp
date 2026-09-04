@@ -145,6 +145,18 @@
   .cta-btn.alt:hover{filter:none;background:rgba(var(--accent-rgb),.08);}
   .cta-btn:hover{transform:translateY(-2px);box-shadow:0 18px 42px rgba(var(--accent-rgb),.38);filter:brightness(1.04);}
   .cta-btn:active{transform:translateY(0);}
+  .pdf-link{
+    text-align:center;margin-top:18px;font-size:13.5px;font-weight:700;
+  }
+  .pdf-link a{
+    display:inline-flex;align-items:center;gap:8px;
+    color:#64748b;text-decoration:none;
+    border:1.5px solid #e2e8f0;background:#fff;
+    padding:10px 18px;border-radius:999px;
+    transition:color .18s ease, border-color .18s ease, transform .18s ease;
+  }
+  .pdf-link a:hover{color:var(--card-accent);border-color:var(--card-accent);transform:translateY(-1px);}
+  .pdf-link .ico{width:16px;height:16px;stroke-width:2;}
   .contributor-note{
     font-size:13px;color:#6b7280;text-align:center;margin-top:16px;line-height:1.5;
   }
@@ -372,6 +384,12 @@
         <div class="cta-grid">
           <button type="button" class="cta-btn" id="ctaBtn">Changia Sasa</button>
           <button type="button" class="cta-btn alt" id="pledgeBtn">Weka Ahadi Leo</button>
+        </div>
+        <div class="pdf-link">
+          <a href="{{ route('cards.publicPdf', $card->hash) }}">
+            <svg class="ico" viewBox="0 0 24 24" fill="none" stroke="currentColor"><path d="M12 3v12m0 0 4-4m-4 4-4-4M4 17v2a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-2"/></svg>
+            Pakua PDF
+          </a>
         </div>
         @if($card->contributor_note)
         <div class="contributor-note">{{ $card->contributor_note }}</div>

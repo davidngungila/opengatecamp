@@ -190,6 +190,15 @@ class DigitalCardsFlowTest extends TestCase
             ->get("/digital-cards/{$card->id}/pdf")
             ->assertStatus(200);
 
+        // Public PDF (receipt/ticket style) is downloadable without auth
+        $this->get("/card/{$card->hash}/pdf")
+            ->assertStatus(200);
+
+        // Public page offers the PDF download link
+        $this->get("/card/{$card->hash}")
+            ->assertOk()
+            ->assertSee(route('cards.publicPdf', $card->hash));
+
         // Delete
         $this->actingAs($user)
             ->delete("/digital-cards/{$card->id}")

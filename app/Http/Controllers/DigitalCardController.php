@@ -250,6 +250,20 @@ class DigitalCardController extends Controller
 
     public function downloadPdf(DigitalCard $card)
     {
+        $this->streamPdf($card);
+    }
+
+    public function publicPdf(string $hash)
+    {
+        $card = DigitalCard::where('hash', $hash)
+            ->whereIn('status', ['active', 'closed'])
+            ->firstOrFail();
+
+        $this->streamPdf($card);
+    }
+
+    private function streamPdf(DigitalCard $card): void
+    {
         $qrData = app(QrCodeService::class)->pngDataUri(
             "OGCM|CARD|{$card->card_no}|{$card->hash}"
         );

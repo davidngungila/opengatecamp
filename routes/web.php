@@ -1,21 +1,21 @@
 <?php
 
-use App\Http\Controllers\AccountingController;
 use App\Http\Controllers\AccountController;
+use App\Http\Controllers\AccountingController;
 use App\Http\Controllers\AuthController;
+use App\Http\Controllers\CheckInController;
 use App\Http\Controllers\DashboardController;
 use App\Http\Controllers\DigitalCardController;
 use App\Http\Controllers\DocumentController;
 use App\Http\Controllers\EventController;
 use App\Http\Controllers\FamilyController;
 use App\Http\Controllers\MemberController;
+use App\Http\Controllers\MemberPortalController;
+use App\Http\Controllers\MessagingController;
 use App\Http\Controllers\PledgeController;
 use App\Http\Controllers\SettingsController;
 use App\Http\Controllers\UserController;
 use App\Http\Controllers\VerificationController;
-use App\Http\Controllers\MessagingController;
-use App\Http\Controllers\MemberPortalController;
-use App\Http\Controllers\CheckInController;
 use Illuminate\Support\Facades\Route;
 
 Route::get('/login', [AuthController::class, 'showLogin'])->name('login');
@@ -27,6 +27,7 @@ Route::get('/verify', [VerificationController::class, 'verify'])->name('verify')
 
 // Public digital card view (no auth required — shared via SMS link)
 Route::get('/card/{hash}', [DigitalCardController::class, 'show'])->name('cards.show');
+Route::get('/card/{hash}/pdf', [DigitalCardController::class, 'publicPdf'])->name('cards.publicPdf');
 Route::post('/card/{hash}/contribute', [DigitalCardController::class, 'contribute'])->name('cards.contribute');
 
 Route::middleware(['auth', 'committee.readonly'])->group(function () {
