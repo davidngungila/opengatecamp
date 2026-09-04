@@ -30,6 +30,11 @@
     -webkit-font-smoothing:antialiased;
     display:flex;flex-direction:column;align-items:center;
     padding:32px 16px 48px;
+    overflow-x:hidden;
+    padding-top:max(32px, env(safe-area-inset-top, 0px));
+    padding-bottom:max(48px, calc(env(safe-area-inset-bottom, 0px) + 16px));
+    padding-left:max(16px, env(safe-area-inset-left, 0px));
+    padding-right:max(16px, env(safe-area-inset-right, 0px));
   }
   .brand-mark{
     display:flex;align-items:center;gap:10px;margin-bottom:28px;
@@ -44,7 +49,7 @@
   .brand-mark .org-name{font-weight:800;font-size:15px;letter-spacing:.5px;text-transform:uppercase;line-height:1.2;color:#0f172a;}
   .brand-mark .org-sub{font-size:10px;letter-spacing:2.5px;color:#64748b;text-transform:uppercase;}
   .card{
-    width:100%;max-width:520px;
+    width:100%;max-width:min(520px,100%);
     background:#ffffff;
     border:1px solid #e9edf3;
     border-radius:26px;
@@ -239,6 +244,26 @@
   .qr-line{display:flex;align-items:center;justify-content:center;gap:10px;margin-top:26px;color:#6b7280;}
   .qr-line svg{width:15px;height:15px;}
 
+  @media (max-width:760px){
+    .field input,.field select,.field textarea{font-size:16px;}
+  }
+  @media (min-width:768px){
+    body{padding:48px 24px 64px;}
+    .card{max-width:min(560px,100%);}
+    .brand-mark{margin-bottom:36px;}
+    .brand-mark .logo{width:52px;height:52px;border-radius:16px;}
+    .brand-mark .logo svg{width:30px;height:30px;}
+    .brand-mark .org-name{font-size:17px;}
+    .brand-mark .org-sub{font-size:11px;}
+    .banner{padding:48px 44px 34px;}
+    .card-body{padding:32px 40px 38px;}
+    h1.title{font-size:clamp(30px,4vw,40px);}
+    .message{font-size:16px;}
+    .amount-preset button{padding:13px 8px;font-size:14px;}
+    .pay-opt{padding:16px 10px 14px;}
+    .pay-opt svg{width:26px;height:26px;}
+    .footer-org{margin-top:40px;}
+  }
   @media (max-width:520px){
     body{padding:20px 12px 40px;}
     .card{border-radius:20px;}
@@ -246,6 +271,31 @@
     .card-body{padding:22px 20px 26px;}
     .grid-2{grid-template-columns:1fr;}
     .amount-preset{grid-template-columns:repeat(3,1fr);}
+  }
+  @media (max-width:360px){
+    body{padding-left:10px;padding-right:10px;padding-bottom:32px;}
+    .card{border-radius:16px;}
+    .banner{padding:26px 16px 20px;}
+    .card-body{padding:18px 16px 22px;}
+    .type-badge{font-size:10px;letter-spacing:1.5px;padding:6px 11px;}
+    .amount-preset{gap:6px;}
+    .amount-preset button{font-size:12px;padding:10px 4px;}
+    .pay-grid{gap:6px;}
+    .pay-opt{padding:12px 4px 10px;}
+    .pay-opt b{font-size:11px;}
+    .pay-opt span{font-size:9px;}
+    .form-wrap{padding:16px 14px;}
+    .submit-row{grid-template-columns:1fr;}
+    .submit-row .cancel{text-align:center;}
+    .footer-org span{font-size:10px;}
+  }
+  @media (max-height:500px){
+    body{padding-top:16px;padding-bottom:24px;}
+    .banner{padding:22px 22px 18px;}
+  }
+  .cta-btn:focus-visible,.mode-btn:focus-visible,.amount-preset button:focus-visible,.submit-row input[type=submit]:focus-visible,.cancel:focus-visible{outline:2px solid var(--card-accent);outline-offset:2px;}
+  @media (prefers-reduced-motion:reduce){
+    *{animation:none!important;transition:none!important;}
   }
 </style>
 </head>
