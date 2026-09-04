@@ -75,7 +75,7 @@
       <span>Connecting Students &middot; Restoring Faith &middot; Encountering Jesus</span>
     </div>
     <div class="slider-track">
-      <div class="slider-slide active" style="background-image:url('https://images.unsplash.com/photo-1523240795612-9a054b0db644?auto=format&fit=crop&w=1400&q=80')">
+      <div class="slider-slide active" style="background-image:url('https://images.unsplash.com/photo-1523240795612-9a054b0db644?auto=format&fit=crop&w=2400&q=85')">
         <div class="slide-shade"></div>
         <div class="slide-caption">
           <span class="slide-tag">Connecting Students</span>
@@ -83,7 +83,7 @@
           <p>Bringing students together around God's Word, on campus and beyond.</p>
         </div>
       </div>
-      <div class="slider-slide" style="background-image:url('https://images.unsplash.com/photo-1441974231531-c6227db76b6e?auto=format&fit=crop&w=1400&q=80')">
+      <div class="slider-slide" style="background-image:url('https://images.unsplash.com/photo-1441974231531-c6227db76b6e?auto=format&fit=crop&w=2400&q=85')">
         <div class="slide-shade"></div>
         <div class="slide-caption">
           <span class="slide-tag">Restoring Faith</span>
@@ -91,7 +91,7 @@
           <p>Worship, testimonies and quiet moments that restore hope and purpose.</p>
         </div>
       </div>
-      <div class="slider-slide" style="background-image:url('https://images.unsplash.com/photo-1519681393784-d120267933ba?auto=format&fit=crop&w=1400&q=80')">
+      <div class="slider-slide" style="background-image:url('https://images.unsplash.com/photo-1519681393784-d120267933ba?auto=format&fit=crop&w=2400&q=85')">
         <div class="slide-shade"></div>
         <div class="slide-caption">
           <span class="slide-tag">Encountering Jesus</span>
@@ -99,7 +99,7 @@
           <p>Every session is an invitation to meet Jesus and be transformed by His grace.</p>
         </div>
       </div>
-      <div class="slider-slide" style="background-image:url('https://images.unsplash.com/photo-1502082553048-f009c37129b9?auto=format&fit=crop&w=1400&q=80')">
+      <div class="slider-slide" style="background-image:url('https://images.unsplash.com/photo-1502082553048-f009c37129b9?auto=format&fit=crop&w=2400&q=85')">
         <div class="slide-shade"></div>
         <div class="slide-caption">
           <span class="slide-tag">OpenGate Camp Connect</span>
