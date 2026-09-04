@@ -21,36 +21,88 @@ class DigitalCardController extends Controller
 {
     public function index(Request $request)
     {
-        $cardType = $request->query('type');
-        $status = $request->query('status');
-        $q = trim((string) $request->query('q'));
-
-        $query = DigitalCard::with(['event', 'contributions']);
-
-        $query->when($cardType, fn ($qr) => $qr->where('card_type', $cardType))
-            ->when($status, fn ($qr) => $qr->where('status', $status))
-            ->when($q !== '', fn ($qr) => $qr->where(fn ($w) => $w
-                ->where('title', 'like', "%{$q}%")
-                ->orWhere('card_no', 'like', "%{$q}%")
-                ->orWhere('message', 'like', "%{$q}%")));
-
-        $cards = $query->orderByDesc('created_at')->paginate(15)->withQueryString();
-
-        $totals = [
-            'total_cards' => DigitalCard::count(),
-            'active_cards' => DigitalCard::where('status', 'active')->count(),
-            'total_amount' => DigitalCard::sum('total_contributions'),
-            'total_received' => DigitalCard::sum('contributions_count'),
-        ];
-
         $events = Event::orderByDesc('start_date')->get();
+
+        $cards = DigitalCard::with(['event', 'contributions.digitalCard', 'recipients.digitalCard'])->get();
+
+        $availableEventIds = $cards->pluck('event_id')->filter()->unique()->values()->all();
+        $requested = (int) $request->query('e');
+
+        if (in_array($requested, $availableEventIds, true)) {
+            $eventId = $requested;
+        } else {
+            $primary = $cards
+                ->sortByDesc(fn ($c) => $c->contributions->where('status', 'confirmed')->sum('amount'))
+                ->first() ?? $cards->sortByDesc('created_at')->first();
+            $eventId = $primary?->event_id;
+        }
+
+        $eventCards = $cards->where('event_id', $eventId)->values();
+        $selectedEvent = $eventId ? Event::find($eventId) : null;
+
+        $contributions = $eventCards->flatMap->contributions->sortByDesc('created_at')->values();
+        $recipients = $eventCards->flatMap->recipients->sortByDesc('created_at')->values();
+        $confirmedTotal = $contributions->where('status', 'confirmed')->sum('amount');
+        $targetTotal = $eventCards->sum('target_amount');
+        $progressPercent = $targetTotal > 0 ? round($confirmedTotal / $targetTotal * 100, 1) : 0;
+
+        $primaryCard = $eventCards
+            ->sortByDesc(fn ($c) => $c->contributions->where('status', 'confirmed')->sum('amount'))
+            ->first() ?? $eventCards->first();
+
         $types = DigitalCard::types();
         $statuses = DigitalCard::statuses();
+        $methodLabels = DigitalCardContribution::methods();
+        $contributionStatuses = DigitalCardContribution::statuses();
 
         return view('digital-cards.index', compact(
-            'cards', 'events', 'types', 'statuses', 'totals',
-            'cardType', 'status', 'q'
+            'events', 'eventId', 'eventCards', 'selectedEvent', 'contributions',
+            'recipients', 'confirmedTotal', 'targetTotal', 'progressPercent',
+            'primaryCard', 'types', 'statuses', 'methodLabels', 'contributionStatuses',
         ));
+    }
+
+    public function addContribution(Request $request, DigitalCard $card)
+    {
+        $data = $request->validate([
+            'contributor_name' => 'required|string|max:255',
+            'contributor_phone' => 'nullable|string|max:20',
+            'contributor_email' => 'nullable|email|max:255',
+            'amount' => 'required|numeric|min:100',
+            'method' => 'required|in:cash,bank,mobile',
+            'reference_no' => 'nullable|string|max:100',
+            'note' => 'nullable|string|max:500',
+        ]);
+
+        DB::transaction(function () use ($data, $card) {
+            $posting = app(AccountingPostingService::class);
+            $entry = $posting->postMoneyIn([
+                'date' => now()->format('Y-m-d'),
+                'description' => "Digital card contribution — {$card->card_no}: {$card->title}",
+                'reference' => $data['reference_no'] ?? null,
+                'amount' => $data['amount'],
+                'method' => $data['method'],
+                'incomeAccount' => $posting->incomeAccount('acct.pledge_income', '4020'),
+            ]);
+
+            DigitalCardContribution::create([
+                ...$data,
+                'digital_card_id' => $card->id,
+                'journal_entry_id' => $entry->id,
+                'status' => 'confirmed',
+            ]);
+
+            $card->increment('contributions_count');
+            $card->increment('total_contributions', $data['amount']);
+        });
+
+        AuditLog::record(
+            'Recorded digital card contribution',
+            'Digital Cards',
+            "{$card->card_no} — TZS ".number_format($data['amount']).' from '.$data['contributor_name']
+        );
+
+        return back()->with('success', 'TZS '.number_format($data['amount'])." contribution recorded for {$data['contributor_name']}.");
     }
 
     public function details(Request $request, DigitalCard $card)

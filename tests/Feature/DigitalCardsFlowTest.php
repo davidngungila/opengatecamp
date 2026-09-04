@@ -4,7 +4,9 @@ namespace Tests\Feature;
 
 use App\Models\Account;
 use App\Models\DigitalCard;
+use App\Models\DigitalCardContribution;
 use App\Models\DigitalCardRecipient;
+use App\Models\Event;
 use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Str;
@@ -20,6 +22,95 @@ class DigitalCardsFlowTest extends TestCase
         Account::create(['code' => '1010', 'name' => 'Cash on Hand', 'type' => 'asset', 'is_cash' => true]);
         Account::create(['code' => '1020', 'name' => 'Mobile Money Float', 'type' => 'asset', 'is_cash' => true]);
         Account::create(['code' => '4020', 'name' => 'Donation Income', 'type' => 'income']);
+    }
+
+    private function makeCard(?Event $event = null, array $extra = []): DigitalCard
+    {
+        return DigitalCard::create(array_merge([
+            'card_no' => DigitalCard::nextCardNo(),
+            'title' => 'Dashboard Card',
+            'message' => 'Message',
+            'card_type' => 'fundraising',
+            'background_color' => '#1a237e',
+            'accent_color' => '#ffd700',
+            'event_id' => $event?->id,
+            'target_amount' => 200000,
+            'hash' => Str::random(32),
+            'status' => 'active',
+            'is_published' => 1,
+        ], $extra));
+    }
+
+    public function test_dashboard_aggregates_single_event(): void
+    {
+        $user = User::factory()->create();
+
+        $eventA = Event::create(['title' => 'Camp 2026', 'event_type' => 'camp', 'start_date' => now()]);
+        $eventB = Event::create(['title' => 'Conference 2026', 'event_type' => 'conference', 'start_date' => now()]);
+
+        $cardA = $this->makeCard($eventA);
+        $cardB = $this->makeCard($eventA, ['target_amount' => 800000]);
+        $cardC = $this->makeCard($eventB);
+
+        DigitalCardContribution::create(['digital_card_id' => $cardA->id, 'contributor_name' => 'Asha', 'amount' => 50000, 'method' => 'mobile', 'status' => 'confirmed']);
+        DigitalCardContribution::create(['digital_card_id' => $cardB->id, 'contributor_name' => 'Baraka', 'amount' => 25000, 'method' => 'cash', 'status' => 'confirmed']);
+        DigitalCardContribution::create(['digital_card_id' => $cardB->id, 'contributor_name' => 'Pumba', 'amount' => 90000, 'method' => 'bank', 'status' => 'failed']);
+        DigitalCardContribution::create(['digital_card_id' => $cardC->id, 'contributor_name' => 'Other Event', 'amount' => 999999, 'method' => 'cash', 'status' => 'confirmed']);
+
+        // No ?e= → auto-selects the event whose card has the highest confirmed total (Camp card A/B vs Conference card C).
+        $this->actingAs($user)
+            ->get('/digital-cards')
+            ->assertOk()
+            ->assertSee('Conference 2026')
+            ->assertSee('Other Event')
+            ->assertSee('999,999')
+            ->assertDontSee('Asha');
+
+        // ?e= override scopes everything to the chosen event and aggregates its cards.
+        $this->actingAs($user)
+            ->get('/digital-cards?e='.$eventA->id)
+            ->assertOk()
+            ->assertSee('Camp 2026')
+            ->assertSee('Asha')
+            ->assertSee('Baraka')
+            ->assertSee('Pumba')
+            ->assertSee('TZS 75,000')
+            ->assertSee('TZS 1,000,000')
+            ->assertDontSee('Other Event')
+            ->assertDontSee('999,999');
+    }
+
+    public function test_admin_can_record_contribution(): void
+    {
+        $this->seedAccounts();
+
+        $user = User::factory()->create();
+        $event = Event::create(['title' => 'Giving Event', 'event_type' => 'camp', 'start_date' => now()]);
+        $card = $this->makeCard($event);
+
+        $this->actingAs($user)
+            ->post("/digital-cards/{$card->id}/add-contribution", [
+                'contributor_name' => 'Grace Mushi',
+                'contributor_phone' => '+255712000000',
+                'amount' => 120000,
+                'method' => 'bank',
+                'reference_no' => 'REF-2001',
+                'note' => 'Bank transfer from Grace',
+            ])->assertRedirect();
+
+        $card->refresh();
+        $this->assertEquals(1, $card->contributions_count);
+        $this->assertEquals(120000, $card->total_contributions);
+
+        $this->assertDatabaseHas('digital_card_contributions', [
+            'digital_card_id' => $card->id,
+            'contributor_name' => 'Grace Mushi',
+            'amount' => 120000,
+            'method' => 'bank',
+            'reference_no' => 'REF-2001',
+            'status' => 'confirmed',
+        ]);
+        $this->assertDatabaseHas('journal_entries', ['description' => "Digital card contribution — {$card->card_no}: {$card->title}"]);
     }
 
     public function test_update_card_saves_blank_title_and_message_as_empty_strings(): void

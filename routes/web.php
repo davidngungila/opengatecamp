@@ -153,6 +153,7 @@ Route::middleware(['auth', 'committee.readonly'])->group(function () {
     Route::put('/digital-cards/{card}', [DigitalCardController::class, 'update'])->name('cards.update');
     Route::delete('/digital-cards/{card}', [DigitalCardController::class, 'destroy'])->name('cards.destroy');
     Route::post('/digital-cards/{card}/status', [DigitalCardController::class, 'updateStatus'])->name('cards.status');
+    Route::post('/digital-cards/{card}/add-contribution', [DigitalCardController::class, 'addContribution'])->name('cards.addContribution');
     Route::post('/digital-cards/{card}/send-sms', [DigitalCardController::class, 'sendSms'])->name('cards.sendSms');
     Route::get('/digital-cards/{card}/pdf', [DigitalCardController::class, 'downloadPdf'])->name('cards.pdf');
     Route::get('/digital-cards/{card}/preview', [DigitalCardController::class, 'preview'])->name('cards.preview');
