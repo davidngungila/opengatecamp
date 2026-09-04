@@ -17,7 +17,7 @@
 .login-card{width:100%;max-width:420px;background:var(--glass-bg-solid);backdrop-filter:blur(18px);
   border:1px solid var(--glass-border);border-radius:var(--radius-xl);box-shadow:var(--shadow-lg);
   padding:36px 32px;}
-.login-brand{display:flex;align-items:center;gap:12px;margin-bottom:26px;}
+.login-brand{display:flex;align-items:center;justify-content:center;gap:12px;margin-bottom:26px;text-align:center;}
 .login-brand .brand-mark{width:46px;height:46px;border-radius:13px;background:linear-gradient(135deg, var(--blue-accent), #4C86F5);
   display:flex;align-items:center;justify-content:center;box-shadow:0 6px 16px rgba(37,99,235,.4);flex-shrink:0;}
 .login-brand strong{display:block;font-size:16px;font-weight:800;line-height:1.25;}
