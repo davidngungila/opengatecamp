@@ -16,24 +16,19 @@
 
 /* Left image slider */
 .login-slider{flex:0 0 55%;max-width:55%;position:relative;overflow:hidden;background:#0B1F3A;}
-.slider-brand{position:absolute;top:32px;left:46px;right:auto;z-index:4;padding:20px 26px;max-width:calc(100% - 92px);
-  background:rgba(6,16,36,.5);backdrop-filter:blur(14px);-webkit-backdrop-filter:blur(14px);
-  border:1px solid rgba(255,255,255,.14);border-radius:16px;box-shadow:0 8px 30px rgba(0,0,0,.25);}
+.slider-brand{position:absolute;top:0;left:0;right:0;z-index:4;padding:34px 46px;}
 .slider-brand strong{display:block;color:#fff;font-size:36px;font-weight:800;line-height:1.15;text-shadow:0 2px 12px rgba(0,0,0,.35);}
-.slider-brand span{display:block;color:rgba(255,255,255,.9);font-size:17px;font-weight:600;letter-spacing:.4px;margin-top:8px;text-shadow:0 1px 8px rgba(0,0,0,.35);}
+.slider-brand span{display:block;color:rgba(255,255,255,.85);font-size:17px;font-weight:600;letter-spacing:.4px;margin-top:8px;text-shadow:0 1px 8px rgba(0,0,0,.35);}
 .slider-brand .brand-bar{width:44px;height:4px;background:linear-gradient(90deg,#4C86F5,transparent);border-radius:3px;margin-bottom:14px;}
 .slider-track{position:absolute;inset:0;}
 .slider-slide{position:absolute;inset:0;background-size:cover;background-position:center;opacity:0;transition:opacity 1.1s ease;display:flex;align-items:flex-start;}
 .slider-slide.active{opacity:1;}
 .slide-shade{position:absolute;inset:0;background:linear-gradient(180deg, rgba(6,16,36,.25) 0%, rgba(6,16,36,.35) 45%, rgba(6,16,36,.85) 100%);}
 .slide-caption{position:relative;z-index:2;padding:172px 46px 44px;max-width:100%;}
-.slide-caption .caption-card{margin-top:6px;padding:22px 26px;border-radius:16px;
-  background:rgba(6,16,36,.5);backdrop-filter:blur(14px);-webkit-backdrop-filter:blur(14px);
-  border:1px solid rgba(255,255,255,.14);box-shadow:0 8px 30px rgba(0,0,0,.25);max-width:470px;}
-.slide-caption .slide-tag{display:inline-flex;align-items:center;gap:8px;color:rgba(255,255,255,.92);font-size:12px;font-weight:700;letter-spacing:1.5px;text-transform:uppercase;margin-bottom:12px;}
+.slide-caption .slide-tag{display:inline-flex;align-items:center;gap:8px;color:rgba(255,255,255,.85);font-size:11px;font-weight:700;letter-spacing:1.5px;text-transform:uppercase;margin-bottom:12px;}
 .slide-caption .slide-tag:before{content:'';width:26px;height:2px;background:linear-gradient(90deg, #4C86F5, transparent);border-radius:2px;}
 .slide-caption h2{color:#fff;font-size:26px;font-weight:800;line-height:1.2;margin:0 0 8px;}
-.slide-caption p{color:rgba(255,255,255,.85);font-size:13.5px;font-weight:500;margin:0;max-width:400px;}
+.slide-caption p{color:rgba(255,255,255,.7);font-size:13.5px;font-weight:500;margin:0;max-width:380px;}
 .slide-caption .slide-brand{position:absolute;top:-64px;left:0;}
 .slider-nav{position:absolute;left:0;right:0;bottom:20px;display:flex;justify-content:center;gap:8px;z-index:3;}
 .slider-dot{width:8px;height:8px;border-radius:999px;border:none;cursor:pointer;background:rgba(255,255,255,.35);transition:all .25s;padding:0;}
@@ -83,41 +78,33 @@
       <div class="slider-slide active" style="background-image:url('https://res.cloudinary.com/dpyppzvzj/image/upload/v1775477696/0104_65_z85w9h.jpg')">
         <div class="slide-shade"></div>
         <div class="slide-caption">
-          <div class="caption-card">
-            <span class="slide-tag">Connecting Students</span>
-            <h2>One family. One mission.</h2>
-            <p>Bringing students together around God's Word, on campus and beyond.</p>
-          </div>
+          <span class="slide-tag">Connecting Students</span>
+          <h2>One family. One mission.</h2>
+          <p>Bringing students together around God's Word, on campus and beyond.</p>
         </div>
       </div>
       <div class="slider-slide" style="background-image:url('https://res.cloudinary.com/dpyppzvzj/image/upload/v1775477708/0104_84_tapexp.jpg')">
         <div class="slide-shade"></div>
         <div class="slide-caption">
-          <div class="caption-card">
-            <span class="slide-tag">Restoring Faith</span>
-            <h2>A place to be renewed.</h2>
-            <p>Worship, testimonies and quiet moments that restore hope and purpose.</p>
-          </div>
+          <span class="slide-tag">Restoring Faith</span>
+          <h2>A place to be renewed.</h2>
+          <p>Worship, testimonies and quiet moments that restore hope and purpose.</p>
         </div>
       </div>
       <div class="slider-slide" style="background-image:url('https://res.cloudinary.com/dpyppzvzj/image/upload/v1775477760/0204_23_jc7eqh.jpg')">
         <div class="slide-shade"></div>
         <div class="slide-caption">
-          <div class="caption-card">
-            <span class="slide-tag">Encountering Jesus</span>
-            <h2>Lives changed at camp.</h2>
-            <p>Every session is an invitation to meet Jesus and be transformed by His grace.</p>
-          </div>
+          <span class="slide-tag">Encountering Jesus</span>
+          <h2>Lives changed at camp.</h2>
+          <p>Every session is an invitation to meet Jesus and be transformed by His grace.</p>
         </div>
       </div>
       <div class="slider-slide" style="background-image:url('https://res.cloudinary.com/dpyppzvzj/image/upload/v1775477720/0104_95_qxaupn.jpg')">
         <div class="slide-shade"></div>
         <div class="slide-caption">
-          <div class="caption-card">
-            <span class="slide-tag">OpenGate Camp Connect</span>
-            <h2>Connecting. Restoring. Encountering.</h2>
-            <p>Your camp management and mission hub — registrations, pledges and more in one place.</p>
-          </div>
+          <span class="slide-tag">OpenGate Camp Connect</span>
+          <h2>Connecting. Restoring. Encountering.</h2>
+          <p>Your camp management and mission hub — registrations, pledges and more in one place.</p>
         </div>
       </div>
     </div>
