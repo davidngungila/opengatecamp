@@ -4,6 +4,7 @@ use App\Http\Controllers\AccountingController;
 use App\Http\Controllers\AccountController;
 use App\Http\Controllers\AuthController;
 use App\Http\Controllers\DashboardController;
+use App\Http\Controllers\DigitalCardController;
 use App\Http\Controllers\DocumentController;
 use App\Http\Controllers\EventController;
 use App\Http\Controllers\FamilyController;
@@ -23,6 +24,10 @@ Route::post('/logout', [AuthController::class, 'logout'])->name('logout');
 
 // Public verification page (receipt / ticket QR scan)
 Route::get('/verify', [VerificationController::class, 'verify'])->name('verify');
+
+// Public digital card view (no auth required — shared via SMS link)
+Route::get('/card/{hash}', [DigitalCardController::class, 'show'])->name('cards.show');
+Route::post('/card/{hash}/contribute', [DigitalCardController::class, 'contribute'])->name('cards.contribute');
 
 Route::middleware(['auth', 'committee.readonly'])->group(function () {
 
@@ -139,6 +144,16 @@ Route::middleware(['auth', 'committee.readonly'])->group(function () {
     Route::post('/pledges/{pledge}/payments', [PledgeController::class, 'recordPayment'])->name('pledges.payments');
     Route::post('/pledges/{pledge}/remind', [PledgeController::class, 'remind'])->name('pledges.remind');
     Route::post('/pledges/{pledge}/thanks', [PledgeController::class, 'sendThanks'])->name('pledges.thanks');
+
+    // ── Digital Cards ────────────────────────────────────
+    Route::get('/digital-cards', [DigitalCardController::class, 'index'])->name('cards.index');
+    Route::post('/digital-cards', [DigitalCardController::class, 'store'])->name('cards.store');
+    Route::put('/digital-cards/{card}', [DigitalCardController::class, 'update'])->name('cards.update');
+    Route::delete('/digital-cards/{card}', [DigitalCardController::class, 'destroy'])->name('cards.destroy');
+    Route::post('/digital-cards/{card}/status', [DigitalCardController::class, 'updateStatus'])->name('cards.status');
+    Route::post('/digital-cards/{card}/send-sms', [DigitalCardController::class, 'sendSms'])->name('cards.sendSms');
+    Route::get('/digital-cards/{card}/pdf', [DigitalCardController::class, 'downloadPdf'])->name('cards.pdf');
+    Route::get('/digital-cards/{card}/preview', [DigitalCardController::class, 'preview'])->name('cards.preview');
 
     Route::get('/calendar-legacy', fn () => redirect()->route('calendar.index'))->name('calendar.legacy');
 

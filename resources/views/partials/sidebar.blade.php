@@ -95,6 +95,21 @@
             <span class="tt">Pledges</span>
         </div>
 
+        <!-- Digital Cards -->
+        <div class="tooltip-wrap">
+            <a href="{{ route('cards.index') }}" class="nav-single {{ $base === 'digital-cards' ? 'active' : '' }}">
+                <span class="nav-icon">
+                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round">
+                        <rect x="2" y="5" width="20" height="14" rx="2"/>
+                        <path d="M2 10h20"/>
+                        <path d="M6 15h4"/>
+                    </svg>
+                </span>
+                <span class="nav-label">Digital Cards</span>
+            </a>
+            <span class="tt">Digital Cards</span>
+        </div>
+
         <!-- Communication Group -->
         @if(!$isCommittee)
         <div class="nav-group">
