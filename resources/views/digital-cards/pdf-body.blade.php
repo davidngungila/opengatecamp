@@ -4,6 +4,8 @@
   @font-face { font-family: Manrope; src: url("{{ ($web ?? false) ? asset('fonts/Manrope-ExtraBold.ttf') : storage_path('fonts/Manrope-ExtraBold.ttf') }}"); font-weight: 800; font-style: normal; }
   .pdf-page{font-family:Manrope,Arial,sans-serif;color:#000;font-size:10px;line-height:1.5;width:100%;}
   .pdf-page *{box-sizing:border-box;margin:0;padding:0;}
+  .pdf-page .logo{text-align:center;margin-bottom:5px;}
+  .pdf-page .logo img{width:30mm;height:30mm;}
   .pdf-page .center{text-align:center;}
   .pdf-page .org{font-size:12px;font-weight:800;text-transform:uppercase;letter-spacing:1px;}
   .pdf-page .org-sub{font-size:7.5px;letter-spacing:1.5px;font-weight:bold;}
@@ -51,6 +53,14 @@
   .pdf-page .foot{margin-top:7px;text-align:center;font-size:7.5px;line-height:1.4;border-top:1px dashed #000;padding-top:4px;}
 </style>
 <div class="pdf-page">
+
+  <div class="logo">
+    @if($web ?? false)
+    <img src="{{ asset('logo.png') }}" alt="Open Gate Camp Mission">
+    @elseif(file_exists(public_path('logo.png')))
+    <img src="{{ public_path('logo.png') }}" alt="Open Gate Camp Mission">
+    @endif
+  </div>
 
   <div class="center org">UMOJA WA VYUO</div>
   <div class="center org-sub">KARISMATIKI KATOLIKI TANZANIA</div>
