@@ -16,6 +16,10 @@
 
 /* Left image slider */
 .login-slider{flex:0 0 55%;max-width:55%;position:relative;overflow:hidden;background:#0B1F3A;}
+.slider-brand{position:absolute;top:0;left:0;right:0;z-index:4;padding:34px 46px;}
+.slider-brand strong{display:block;color:#fff;font-size:24px;font-weight:800;line-height:1.2;text-shadow:0 2px 12px rgba(0,0,0,.35);}
+.slider-brand span{display:block;color:rgba(255,255,255,.82);font-size:13px;font-weight:600;letter-spacing:.4px;margin-top:5px;text-shadow:0 1px 8px rgba(0,0,0,.35);}
+.slider-brand .brand-bar{width:34px;height:3px;background:linear-gradient(90deg,#4C86F5,transparent);border-radius:3px;margin-bottom:12px;}
 .slider-track{position:absolute;inset:0;}
 .slider-slide{position:absolute;inset:0;background-size:cover;background-position:center;opacity:0;transition:opacity 1.1s ease;display:flex;align-items:flex-end;}
 .slider-slide.active{opacity:1;}
@@ -33,9 +37,6 @@
 /* Right login panel */
 .login-panel{flex:1;display:flex;align-items:center;justify-content:center;padding:24px;}
 .login-card{width:100%;max-width:440px;margin:0 auto;}
-.login-brand{display:flex;align-items:center;justify-content:flex-start;gap:12px;margin-bottom:30px;text-align:left;}
-.login-brand strong{display:block;font-size:26px;font-weight:800;line-height:1.2;}
-.login-brand span{display:block;color:var(--text-tertiary);font-size:13.5px;font-weight:600;letter-spacing:.4px;}
 .login-card h1{font-size:20px;font-weight:800;margin:0 0 4px;}
 .login-card .sub{font-size:13px;color:var(--text-secondary);font-weight:500;margin:0 0 22px;}
 .login-error{background:var(--danger-bg);color:var(--danger);border:1px solid rgba(220,38,38,.2);
@@ -68,6 +69,11 @@
 <div class="login-shell">
 
   <div class="login-slider" id="loginSlider">
+    <div class="slider-brand">
+      <div class="brand-bar"></div>
+      <strong>OpenGate Camp Connect</strong>
+      <span>Connecting Students &middot; Restoring Faith &middot; Encountering Jesus</span>
+    </div>
     <div class="slider-track">
       <div class="slider-slide active" style="background-image:url('https://images.unsplash.com/photo-1523240795612-9a054b0db644?auto=format&fit=crop&w=1400&q=80')">
         <div class="slide-shade"></div>
@@ -107,13 +113,6 @@
 
   <div class="login-panel">
     <div class="login-card fade-in">
-      <div class="login-brand">
-        <div>
-          <strong>OpenGate Camp Connect</strong>
-          <span>Connecting Students &middot; Restoring Faith &middot; Encountering Jesus</span>
-        </div>
-      </div>
-
       @if($errors->any())
         <div class="login-error">{{ $errors->first() }}</div>
       @endif
