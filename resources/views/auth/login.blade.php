@@ -21,10 +21,10 @@
 .slider-brand span{display:block;color:rgba(255,255,255,.85);font-size:17px;font-weight:600;letter-spacing:.4px;margin-top:8px;text-shadow:0 1px 8px rgba(0,0,0,.35);}
 .slider-brand .brand-bar{width:44px;height:4px;background:linear-gradient(90deg,#4C86F5,transparent);border-radius:3px;margin-bottom:14px;}
 .slider-track{position:absolute;inset:0;}
-.slider-slide{position:absolute;inset:0;background-size:cover;background-position:center;opacity:0;transition:opacity 1.1s ease;display:flex;align-items:flex-end;}
+.slider-slide{position:absolute;inset:0;background-size:cover;background-position:center;opacity:0;transition:opacity 1.1s ease;display:flex;align-items:flex-start;}
 .slider-slide.active{opacity:1;}
 .slide-shade{position:absolute;inset:0;background:linear-gradient(180deg, rgba(6,16,36,.25) 0%, rgba(6,16,36,.35) 45%, rgba(6,16,36,.85) 100%);}
-.slide-caption{position:relative;z-index:2;padding:44px 46px;max-width:100%;}
+.slide-caption{position:relative;z-index:2;padding:172px 46px 44px;max-width:100%;}
 .slide-caption .slide-tag{display:inline-flex;align-items:center;gap:8px;color:rgba(255,255,255,.85);font-size:11px;font-weight:700;letter-spacing:1.5px;text-transform:uppercase;margin-bottom:12px;}
 .slide-caption .slide-tag:before{content:'';width:26px;height:2px;background:linear-gradient(90deg, #4C86F5, transparent);border-radius:2px;}
 .slide-caption h2{color:#fff;font-size:26px;font-weight:800;line-height:1.2;margin:0 0 8px;}
