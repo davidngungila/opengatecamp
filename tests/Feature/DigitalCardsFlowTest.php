@@ -4,6 +4,7 @@ namespace Tests\Feature;
 
 use App\Models\Account;
 use App\Models\DigitalCard;
+use App\Models\DigitalCardRecipient;
 use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Str;
@@ -124,6 +125,34 @@ class DigitalCardsFlowTest extends TestCase
         $card->refresh();
         $this->assertEquals(0, $card->contributions_count);
         $this->assertEquals(0, $card->total_contributions);
+    }
+
+    public function test_recipient_token_prefills_details(): void
+    {
+        $card = DigitalCard::create([
+            'card_no' => DigitalCard::nextCardNo(),
+            'title' => 'Personalized Card',
+            'message' => 'For you.',
+            'card_type' => 'thank_you',
+            'background_color' => '#1a237e',
+            'accent_color' => '#ffd700',
+            'hash' => Str::random(32),
+            'status' => 'active',
+            'is_published' => 1,
+        ]);
+
+        $recipient = DigitalCardRecipient::create([
+            'digital_card_id' => $card->id,
+            'name' => 'Neema Mwakyusa',
+            'phone' => '+255712345678',
+            'token' => Str::random(32),
+        ]);
+
+        $this->get("/card/{$card->hash}?r={$recipient->token}")
+            ->assertOk()
+            ->assertSee('Shukurani Neema Mwakyusa')
+            ->assertSee('value="Neema Mwakyusa"', false)
+            ->assertSee('value="+255712345678"', false);
     }
 
     public function test_admin_flow(): void

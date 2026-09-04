@@ -40,6 +40,11 @@ class DigitalCard extends Model
         return $this->hasMany(DigitalCardContribution::class);
     }
 
+    public function recipients()
+    {
+        return $this->hasMany(DigitalCardRecipient::class);
+    }
+
     public static function types(): array
     {
         return [

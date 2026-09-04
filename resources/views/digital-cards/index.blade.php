@@ -203,8 +203,8 @@
       <div class="drawer-body">
         <div class="form-grid">
           <div class="field full"><label>Card Link</label><input type="text" id="smsCardUrl" readonly style="background:var(--blue-light);color:var(--blue-accent);font-weight:700"></div>
-          <div class="field full"><label>Phone Numbers</label><textarea name="phones" id="smsPhones" placeholder="+255 7XX XXX XXX, +255 6XX XXX XXX, +255 ..."></textarea>
-            <div class="text-muted" style="font-size:11px;margin-top:6px">Separate numbers with commas, spaces or new lines. Card link is appended automatically.</div>
+          <div class="field full"><label>Recipients — Name &amp; Phone</label><textarea name="phones" id="smsPhones" placeholder='John Doe, +255 7XX XXX XXX&#10;Jane Smith, +255 6XX XXX XXX&#10;+255 7XX XXX XXX'></textarea>
+            <div class="text-muted" style="font-size:11px;margin-top:6px">One per line: <b>Name, Phone</b> (or a phone number alone). Each person gets a personalized link — their name and phone are pre-filled when they open the card.</div>
           </div>
         </div>
       </div>
@@ -269,10 +269,14 @@
     });
   });
 
-  var smsCb = document.getElementById('smsCardCb');
-  document.getElementById('smsPhones') && document.getElementById('smsPhones').addEventListener('change', function(){
-    this.value = this.value.replace(/[,;\s]+/g, '\n');
-  });
+  var smsPhones = document.getElementById('smsPhones');
+  if (smsPhones) {
+    smsPhones.addEventListener('change', function(){
+      this.value = this.value.split('\n').map(function(line){
+        return line.replace(/,\s*$/, '').trim();
+      }).join('\n');
+    });
+  }
 })();
 </script>
 @endpush

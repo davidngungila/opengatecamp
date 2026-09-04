@@ -5,6 +5,7 @@ namespace App\Http\Controllers;
 use App\Models\AuditLog;
 use App\Models\DigitalCard;
 use App\Models\DigitalCardContribution;
+use App\Models\DigitalCardRecipient;
 use App\Models\Event;
 use App\Models\Message;
 use App\Models\Pledge;
@@ -137,17 +138,9 @@ class DigitalCardController extends Controller
             'phones' => 'required|string',
         ]);
 
-        $raw = $data['phones'];
-        $decoded = json_decode($raw, true);
+        $recipients = $this->parseRecipients($data['phones']);
 
-        if (is_array($decoded)) {
-            $phones = array_values(array_filter(array_map('trim', $decoded)));
-        } else {
-            $phones = preg_split('/[\s,;]+/', $raw) ?: [];
-            $phones = array_values(array_filter(array_map('trim', $phones)));
-        }
-
-        if (empty($phones)) {
+        if (empty($recipients)) {
             return back()->with('error', 'No valid phone numbers provided.');
         }
 
@@ -156,40 +149,103 @@ class DigitalCardController extends Controller
             return back()->with('error', 'SMS API token not configured.');
         }
 
-        $link = $card->public_url;
-        $msg = $card->sms_text ?: "You are invited! View your digital card and contribute: {$link}";
+        $template = $card->sms_text ?: 'You are invited! View your digital card and contribute: {link}';
+        $success = 0;
+        $fail = 0;
 
-        $result = $sms->sendBulk($phones, $msg);
+        foreach ($recipients as $recipient) {
+            $token = Str::random(32);
+            $link = route('cards.show', $card->hash).'?r='.$token;
 
-        $recipients = implode(', ', array_slice($phones, 0, 5));
-        if (count($phones) > 5) {
-            $recipients .= '... (+'.(count($phones) - 5).' more)';
+            $msg = str_replace(
+                ['{link}', '{name}'],
+                [$link, $recipient['name'] ?? ''],
+                $template
+            );
+
+            if (($recipient['name'] ?? '') !== '' && ! str_contains($template, '{name}')) {
+                $msg = 'Shukurani '.$recipient['name'].', '.$msg;
+            }
+
+            $result = $sms->send($recipient['phone'], $msg);
+
+            if ($result['success']) {
+                $success++;
+            } else {
+                $fail++;
+            }
+
+            DigitalCardRecipient::create([
+                'digital_card_id' => $card->id,
+                'name' => $recipient['name'] ?? null,
+                'phone' => $recipient['phone'],
+                'token' => $token,
+                'sent_at' => $result['success'] ? now() : null,
+            ]);
+        }
+
+        $recipientsList = implode(', ', array_slice(array_column($recipients, 'phone'), 0, 5));
+        if (count($recipients) > 5) {
+            $recipientsList .= '... (+'.(count($recipients) - 5).' more)';
         }
 
         Message::create([
             'channel' => 'sms',
-            'recipients' => $recipients,
-            'phone' => $phones[0] ?? '',
+            'recipients' => $recipientsList,
+            'phone' => $recipients[0]['phone'] ?? '',
             'subject' => "Digital card SMS — {$card->card_no}",
-            'message' => $msg,
-            'status' => $result['success_count'] > 0 ? 'sent' : 'failed',
+            'message' => $template,
+            'status' => $success > 0 ? 'sent' : 'failed',
             'api_message_id' => null,
-            'api_response' => $result,
+            'api_response' => ['success_count' => $success, 'fail_count' => $fail],
             'created_by' => auth()->user()?->name,
         ]);
 
         AuditLog::record(
             'Sent digital card SMS',
             'Digital Cards',
-            "{$card->card_no} — {$result['success_count']} sent, {$result['fail_count']} failed"
+            "{$card->card_no} — {$success} sent, {$fail} failed"
         );
 
-        $notice = "{$result['success_count']} SMS sent successfully.";
-        if ($result['fail_count'] > 0) {
-            $notice .= " {$result['fail_count']} failed.";
+        $notice = "{$success} SMS sent successfully.";
+        if ($fail > 0) {
+            $notice .= " {$fail} failed.";
         }
 
-        return back()->with($result['success_count'] > 0 ? 'success' : 'error', $notice);
+        return back()->with($success > 0 ? 'success' : 'error', $notice);
+    }
+
+    private function parseRecipients(string $raw): array
+    {
+        $recipients = [];
+
+        foreach (preg_split('/\r?\n/', $raw) ?: [] as $line) {
+            $line = trim($line);
+            if ($line === '') {
+                continue;
+            }
+
+            $parts = array_map('trim', explode(',', $line, 2));
+            $isPhone = fn ($str) => (bool) preg_match('/^[+\d][\d\s\-()]*$/', $str);
+
+            if (isset($parts[1]) && $parts[1] !== '' && ! $isPhone($parts[0])) {
+                $name = $parts[0] !== '' ? $parts[0] : null;
+                $phone = $parts[1];
+            } else {
+                $name = null;
+                $phone = $parts[0];
+            }
+
+            $phone = preg_replace('/[^+\d]/', '', $phone) ?? '';
+
+            if ($phone === '') {
+                continue;
+            }
+
+            $recipients[] = ['name' => $name, 'phone' => $phone];
+        }
+
+        return $recipients;
     }
 
     public function downloadPdf(DigitalCard $card)
@@ -214,19 +270,36 @@ class DigitalCardController extends Controller
         $mpdf->Output("DigitalCard-{$card->card_no}.pdf", 'D');
     }
 
-    public function preview(DigitalCard $card)
+    public function preview(Request $request, DigitalCard $card)
     {
-        return view('digital-cards.public', ['card' => $card, 'preview' => true]);
+        $recipient = $this->recipientFromRequest($request, $card->id);
+
+        return view('digital-cards.public', ['card' => $card, 'preview' => true, 'recipient' => $recipient]);
     }
 
-    public function show(string $hash)
+    public function show(Request $request, string $hash)
     {
         $card = DigitalCard::where('hash', $hash)
             ->whereIn('status', ['active', 'closed'])
             ->withCount(['contributions' => fn ($q) => $q->where('status', 'confirmed')])
             ->firstOrFail();
 
-        return view('digital-cards.public', compact('card'));
+        $recipient = $this->recipientFromRequest($request, $card->id);
+
+        return view('digital-cards.public', compact('card', 'recipient'));
+    }
+
+    private function recipientFromRequest(Request $request, int $cardId): ?DigitalCardRecipient
+    {
+        $token = trim((string) $request->query('r'));
+
+        if ($token === '') {
+            return null;
+        }
+
+        return DigitalCardRecipient::where('token', $token)
+            ->where('digital_card_id', $cardId)
+            ->first();
     }
 
     public function contribute(Request $request, string $hash)

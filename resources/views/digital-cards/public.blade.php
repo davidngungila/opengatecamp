@@ -95,6 +95,14 @@
     padding-right:max(16px, env(safe-area-inset-right, 0px));
   }
   .content-inner{max-width:620px;margin:0 auto;}
+  .greet{
+    display:flex;align-items:center;gap:10px;
+    background:linear-gradient(90deg, rgba(var(--accent-rgb),.14), rgba(var(--accent-rgb),.05));
+    border:1px solid rgba(var(--accent-rgb),.35);
+    color:#0f172a;border-radius:14px;padding:13px 18px;margin-bottom:24px;
+    font-weight:800;font-size:14.5px;
+  }
+  .greet svg{width:18px;height:18px;color:var(--card-accent);flex:none;}
   .event-box{
     background:#ffffff;
     border:1px solid #e5e9f0;
@@ -317,6 +325,13 @@
   <main class="content" id="cardBody">
     <div class="content-inner">
 
+      @if(!empty($recipient?->name))
+      <div class="greet">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 11.5a8.38 8.38 0 01-.9 3.8 8.5 8.5 0 01-7.6 4.7 8.38 8.38 0 01-3.8-.9L3 21l1.9-5.7a8.38 8.38 0 01-.9-3.8 8.5 8.5 0 014.7-7.6 8.38 8.38 0 013.8-.9h.5a8.48 8.48 0 018 8v.5z"/></svg>
+        <span>Shukurani {{ $recipient->name }}! This card has been prepared for you.</span>
+      </div>
+      @endif
+
       @if($card->event)
       <div class="event-box">
         <div class="evt-name">{{ $card->event->title }}</div>
@@ -388,8 +403,8 @@
               <input type="number" step="100" min="100" name="amount" id="amountInput" placeholder="0" required>
             </div>
             <div class="grid-2">
-              <div class="field"><label>Your Name <span style="opacity:.55">(optional)</span></label><input type="text" name="contributor_name" id="nameInput" placeholder="Optional" value="{{ old('contributor_name') }}"></div>
-              <div class="field"><label>Phone</label><input type="text" name="contributor_phone" placeholder="+255 7XX XXX XXX" value="{{ old('contributor_phone') }}"></div>
+              <div class="field"><label>Your Name <span style="opacity:.55">(optional)</span></label><input type="text" name="contributor_name" id="nameInput" placeholder="Optional" value="{{ old('contributor_name', $recipient->name ?? '') }}"></div>
+              <div class="field"><label>Phone</label><input type="text" name="contributor_phone" placeholder="+255 7XX XXX XXX" value="{{ old('contributor_phone', $recipient->phone ?? '') }}"></div>
             </div>
             <div class="field"><label>Email</label><input type="email" name="contributor_email" placeholder="Optional" value="{{ old('contributor_email') }}"></div>
 

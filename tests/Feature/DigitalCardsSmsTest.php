@@ -13,13 +13,13 @@ class DigitalCardsSmsTest extends TestCase
 {
     use RefreshDatabase;
 
-    public function test_send_sms_parses_newline_and_comma_phones(): void
+    public function test_send_sms_parses_name_and_phone_recipients(): void
     {
         $this->seed(['DatabaseSeeder']);
 
         $fake = $this->createMock(SmsService::class);
         $fake->method('isConfigured')->willReturn(true);
-        $fake->method('sendBulk')->willReturn(['success_count' => 2, 'fail_count' => 0, 'results' => []]);
+        $fake->method('send')->willReturn(['success' => true, 'status' => 'sent', 'api_message_id' => null, 'raw' => []]);
         $this->app->instance(SmsService::class, $fake);
 
         $user = User::factory()->create();
@@ -34,12 +34,16 @@ class DigitalCardsSmsTest extends TestCase
         ]);
 
         $resp = $this->actingAs($user)->post("/digital-cards/{$card->id}/send-sms", [
-            'phones' => "0712345678, +255712345679\n0723456780; 0734567890",
+            'phones' => "John Doe, +255712345678\nJane Smith, 0712345678, extra\n+255712000111",
         ]);
 
         $resp->assertRedirect();
         $resp->assertSessionHas('success');
 
+        $this->assertDatabaseHas('digital_card_recipients', ['name' => 'John Doe', 'phone' => '+255712345678']);
+        $this->assertDatabaseHas('digital_card_recipients', ['name' => 'Jane Smith', 'phone' => '0712345678']);
+        $this->assertDatabaseHas('digital_card_recipients', ['name' => null, 'phone' => '+255712000111']);
+        $this->assertDatabaseCount('digital_card_recipients', 3);
         $this->assertDatabaseHas('messages', [
             'channel' => 'sms',
             'subject' => "Digital card SMS — {$card->card_no}",
