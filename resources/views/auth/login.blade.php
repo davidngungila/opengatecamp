@@ -33,7 +33,7 @@
 /* Right login panel */
 .login-panel{flex:1;display:flex;align-items:center;justify-content:center;padding:24px;}
 .login-card{width:100%;max-width:440px;margin:0 auto;}
-.login-brand{display:flex;align-items:center;justify-content:center;gap:12px;margin-bottom:30px;text-align:center;}
+.login-brand{display:flex;align-items:center;justify-content:flex-start;gap:12px;margin-bottom:30px;text-align:left;}
 .login-brand strong{display:block;font-size:26px;font-weight:800;line-height:1.2;}
 .login-brand span{display:block;color:var(--text-tertiary);font-size:13.5px;font-weight:600;letter-spacing:.4px;}
 .login-card h1{font-size:20px;font-weight:800;margin:0 0 4px;}
