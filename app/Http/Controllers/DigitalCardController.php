@@ -53,19 +53,19 @@ class DigitalCardController extends Controller
         ));
     }
 
-    public function details(DigitalCard $card)
+    public function details(Request $request, DigitalCard $card)
     {
         $card->loadMissing(['event', 'contributions', 'recipients']);
 
         $contributions = $card->contributions->sortByDesc('created_at')->values();
         $confirmedTotal = $card->contributions->where('status', 'confirmed')->sum('amount');
+        $recipients = $card->recipients->sortByDesc('created_at')->values();
 
-        return view('digital-cards.details', [
-            'card' => $card,
-            'contributions' => $contributions,
-            'recipients' => $card->recipients->sortByDesc('created_at')->values(),
-            'confirmedTotal' => $confirmedTotal,
-        ]);
+        if ((string) $request->query('drawer') === '1') {
+            return view('digital-cards.details-drawer', compact('card', 'contributions', 'confirmedTotal', 'recipients'));
+        }
+
+        return view('digital-cards.details', compact('card', 'contributions', 'confirmedTotal', 'recipients'));
     }
 
     public function store(Request $request)

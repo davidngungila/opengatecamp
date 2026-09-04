@@ -210,6 +210,14 @@ class DigitalCardsFlowTest extends TestCase
             ->assertSee('SMS Recipients')
             ->assertSee($card->public_url);
 
+        // Details drawer fragment loads for the right-side drawer
+        $this->actingAs($user)
+            ->get("/digital-cards/{$card->id}?drawer=1")
+            ->assertOk()
+            ->assertSee('cardDetailDrawer')
+            ->assertSee('SMS Recipients')
+            ->assertSee('Pakua PDF');
+
         // Delete
         $this->actingAs($user)
             ->delete("/digital-cards/{$card->id}")

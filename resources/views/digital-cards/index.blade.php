@@ -88,7 +88,7 @@
                   <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><circle cx="12" cy="5" r=".6"/><circle cx="12" cy="12" r=".6"/><circle cx="12" cy="19" r=".6"/></svg>
                 </button>
                 <div class="action-menu" id="am-card-{{ $card->id }}">
-                  <a href="{{ route('cards.details', $card) }}">View Details</a>
+                  <button type="button" data-card-details data-id="{{ $card->id }}">View Details</button>
                   <a href="{{ route('cards.preview', $card) }}" target="_blank">Preview</a>
                   @if(!$isCommittee)
                   <button type="button" data-edit-card data-id="{{ $card->id }}" data-title="{{ $card->title }}" data-message="{{ $card->message }}" data-type="{{ $card->card_type }}" data-bg="{{ $card->background_color }}" data-accent="{{ $card->accent_color }}" data-event="{{ $card->event_id }}" data-target="{{ $card->target_amount }}" data-note="{{ $card->contributor_note }}" data-cta="{{ $card->cta_text }}" data-sms="{{ $card->sms_text }}">Edit</button>
@@ -121,6 +121,8 @@
     </div>
   </div>
 </div>
+
+  <div id="cardDetailHolder"></div>
 
 @if(!$isCommittee)
 <div class="drawer-overlay" id="cardNewDrawer">
@@ -283,7 +285,23 @@
     tr.style.cursor = 'pointer';
     tr.addEventListener('click', function(e){
       if (e.target.closest('.action-menu-wrap') || e.target.closest('button') || e.target.closest('a')) return;
-      window.location.href = tr.dataset.cardUrl;
+      openCardDetails(tr.dataset.cardUrl);
+    });
+  });
+
+  function openCardDetails(url){
+    var holder = document.getElementById('cardDetailHolder');
+    if(!holder) return;
+    fetch(url + (url.indexOf('?') > -1 ? '&' : '?') + 'drawer=1', { headers: { 'X-Requested-With': 'XMLHttpRequest' } })
+      .then(function(r){ return r.text(); })
+      .then(function(html){ holder.innerHTML = html; openDrawerById('cardDetailDrawer'); })
+      .catch(function(){});
+  }
+
+  document.querySelectorAll('[data-card-details]').forEach(function(btn){
+    btn.addEventListener('click', function(e){
+      e.stopPropagation();
+      openCardDetails("{{ url('/digital-cards') }}/" + btn.dataset.id);
     });
   });
 })();
