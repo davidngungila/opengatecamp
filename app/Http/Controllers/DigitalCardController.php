@@ -272,11 +272,11 @@ class DigitalCardController extends Controller
 
         $mpdf = new Mpdf([
             'mode' => 'utf-8',
-            'format' => 'A4',
-            'margin_left' => 15,
-            'margin_right' => 15,
-            'margin_top' => 15,
-            'margin_bottom' => 15,
+            'format' => [80, 350],
+            'margin_left' => 4,
+            'margin_right' => 4,
+            'margin_top' => 3,
+            'margin_bottom' => 3,
             'tempDir' => storage_path('app/private/mpdf'),
         ]);
 

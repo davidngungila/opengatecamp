@@ -8,50 +8,50 @@
   @font-face { font-family: Manrope; src: url("{{ storage_path('fonts/Manrope-ExtraBold.ttf') }}"); font-weight: 800; font-style: normal; }
   body{font-family:Manrope,Arial,sans-serif;color:#000;font-size:10px;line-height:1.5;margin:0;padding:0;}
   .center{text-align:center;}
-  .org{font-size:13px;font-weight:800;text-transform:uppercase;letter-spacing:1px;}
-  .org-sub{font-size:8px;letter-spacing:2px;font-weight:bold;}
-  .org-line{font-size:8px;letter-spacing:1px;font-weight:bold;}
-  .org-tag{font-size:10px;font-weight:800;letter-spacing:2px;margin-bottom:2px;}
+  .org{font-size:12px;font-weight:800;text-transform:uppercase;letter-spacing:1px;}
+  .org-sub{font-size:7.5px;letter-spacing:1.5px;font-weight:bold;}
+  .org-line{font-size:7.5px;letter-spacing:1px;font-weight:bold;}
+  .org-tag{font-size:9px;font-weight:800;letter-spacing:2px;margin-bottom:2px;}
   .title{
-    font-size:14px;font-weight:800;text-align:center;letter-spacing:3px;margin:8px 0;
+    font-size:12px;font-weight:800;text-align:center;letter-spacing:2px;margin:6px 0;
     border-top:1px dashed #000;border-bottom:1px dashed #000;
-    padding:5px 0;text-transform:uppercase;
+    padding:4px 0;text-transform:uppercase;
   }
-  table.head{width:100%;border-collapse:collapse;font-size:10px;}
-  table.head td{padding:2px 0;}
+  table.head{width:100%;border-collapse:collapse;font-size:9.5px;}
+  table.head td{padding:1.5px 0;}
   table.head td.lbl{color:#444;}
   table.head td.r{text-align:right;font-weight:bold;white-space:nowrap;}
-  .ruled{border-top:1px dashed #000;border-bottom:1px dashed #000;padding:2px 0;margin:6px 0;}
+  .ruled{border-top:1px dashed #000;border-bottom:1px dashed #000;padding:2px 0;margin:5px 0;}
   .cardav{
     background:{{ $card->background_color }};
-    border:3px solid {{ $card->accent_color }};
-    border-radius:12px;color:#fff;padding:20px 22px;text-align:center;
+    border:2px solid {{ $card->accent_color }};
+    border-radius:8px;color:#fff;padding:14px 14px;text-align:center;
   }
   .type-tag{
-    display:inline-block;font-size:8.5px;font-weight:800;letter-spacing:2px;text-transform:uppercase;
-    color:#fff;border:1px solid {{ $card->accent_color }};border-radius:999px;padding:2px 10px;margin-bottom:8px;
+    display:inline-block;font-size:7.5px;font-weight:800;letter-spacing:1.5px;text-transform:uppercase;
+    color:#fff;border:1px solid {{ $card->accent_color }};border-radius:999px;padding:2px 8px;margin-bottom:6px;
   }
-  .card-title{font-size:20px;font-weight:800;letter-spacing:.5px;line-height:1.25;}
-  .card-ornament{width:50px;height:2px;background:{{ $card->accent_color }};margin:8px auto;}
-  .card-message{font-size:10.5px;color:rgba(255,255,255,.92);text-align:left;margin-top:10px;white-space:pre-line;}
-  .det{width:100%;border-collapse:collapse;font-size:10px;margin-top:4px;}
-  .det td{padding:4px 0;border-bottom:1px dotted #ddd;}
+  .card-title{font-size:16px;font-weight:800;letter-spacing:.4px;line-height:1.25;}
+  .card-ornament{width:40px;height:2px;background:{{ $card->accent_color }};margin:7px auto;}
+  .card-message{font-size:9.5px;color:rgba(255,255,255,.92);text-align:left;margin-top:8px;white-space:pre-line;}
+  .det{width:100%;border-collapse:collapse;font-size:9.5px;margin-top:3px;}
+  .det td{padding:3px 0;border-bottom:1px dotted #ddd;}
   .det td.lbl{width:40%;color:#444;font-weight:600;}
   .det td.val{font-weight:bold;}
-  .amt{text-align:center;font-size:12px;font-weight:800;margin:8px 0;background:#000;color:#fff;padding:5px 0;letter-spacing:1px;}
-  .progress-note{font-size:9px;color:#444;text-align:center;margin-top:-2px;}
-  .qr{text-align:center;margin:8px 0 4px;}
-  .qr img{width:100px;height:100px;}
-  .barcode{text-align:center;font-size:9px;letter-spacing:2px;font-weight:bold;margin-top:3px;}
-  .qr-cap{text-align:center;font-size:9px;font-weight:bold;margin-bottom:2px;}
-  .form-card{border:1px dashed #000;border-radius:8px;padding:12px;page-break-inside:avoid;}
-  .form-note{font-size:9px;color:#444;margin-bottom:8px;}
+  .amt{text-align:center;font-size:10.5px;font-weight:800;margin:7px 0;background:#000;color:#fff;padding:4px 0;letter-spacing:1px;}
+  .progress-note{font-size:8.5px;color:#444;text-align:center;margin-top:-2px;}
+  .qr{text-align:center;margin:7px 0 3px;}
+  .qr img{width:80px;height:80px;}
+  .barcode{text-align:center;font-size:8px;letter-spacing:2px;font-weight:bold;margin-top:2px;}
+  .qr-cap{text-align:center;font-size:8.5px;font-weight:bold;margin-bottom:2px;}
+  .form-card{border:1px dashed #000;border-radius:6px;padding:9px;page-break-inside:avoid;}
+  .form-note{font-size:8.5px;color:#444;margin-bottom:7px;}
   table.form{width:100%;border-collapse:collapse;}
-  table.form td{padding:6px 2px;vertical-align:middle;}
-  table.form td.lbl{width:32%;font-size:9.5px;font-weight:bold;color:#333;}
-  .dotline{border-bottom:1px dotted #444;height:13px;}
-  .block-row td{font-size:8.5px;color:#777;padding-top:2px;}
-  .foot{margin-top:8px;text-align:center;font-size:8px;line-height:1.4;border-top:1px dashed #000;padding-top:5px;}
+  table.form td{padding:5px 2px;vertical-align:middle;}
+  table.form td.lbl{width:34%;font-size:8.5px;font-weight:bold;color:#333;}
+  .dotline{border-bottom:1px dotted #444;height:12px;}
+  .block-row td{font-size:7.5px;color:#777;padding-top:2px;}
+  .foot{margin-top:7px;text-align:center;font-size:7.5px;line-height:1.4;border-top:1px dashed #000;padding-top:4px;}
 </style>
 </head>
 <body>
