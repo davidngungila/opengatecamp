@@ -1,6 +1,6 @@
 @extends('layouts.app')
 
-@section('title', 'Digital Cards — Open Gate Camp Mission')
+@section('title', 'Digital Cards — OpenGate Camp Connect')
 @section('crumb', 'Giving / Digital Cards')
 @section('page_title', 'Digital Cards')
 

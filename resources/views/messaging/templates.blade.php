@@ -1,5 +1,5 @@
-﻿@extends('layouts.app')
-@section('title', 'Templates — Open Gate Camp Mission')
+@extends('layouts.app')
+@section('title', 'Templates — OpenGate Camp Connect')
 @section('crumb', 'Communication / Messaging / Templates')
 @section('page_title', 'Message Templates')
 
@@ -12,7 +12,7 @@
   <div class="msg-templates">
     @php
     $tpls = [
-      ['Welcome Message', 'Hi {name}, welcome to Open Gate Camp Mission! We are glad to have you.', 'welcome'],
+      ['Welcome Message', 'Hi {name}, welcome to OpenGate Camp Connect! We are glad to have you.', 'welcome'],
       ['Event Reminder', 'Reminder: {event} takes place on {date} at {venue}.', 'event'],
       ['Pledge Reminder', 'Dear {name}, your pledge balance for {campaign} is {balance}.', 'pledge'],
       ['Birthday Wish', 'Happy birthday {name}! May God bless you abundantly.', 'birthday'],

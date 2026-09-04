@@ -1,6 +1,6 @@
-﻿@extends('layouts.app')
+@extends('layouts.app')
 
-@section('title', 'Journal Entries — Open Gate Camp Mission')
+@section('title', 'Journal Entries — OpenGate Camp Connect')
 @section('crumb', 'Finance / Financial Accounting / Journal Entries')
 @section('page_title', 'Journal Entries')
 

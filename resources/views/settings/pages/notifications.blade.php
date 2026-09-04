@@ -1,6 +1,6 @@
 @extends('layouts.app')
 
-@section('title', 'Notifications — Settings — Open Gate Camp Mission')
+@section('title', 'Notifications — Settings — OpenGate Camp Connect')
 @section('crumb', 'System / Settings / Notifications')
 @section('page_title', 'Notifications')
 

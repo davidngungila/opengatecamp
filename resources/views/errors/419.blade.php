@@ -1,6 +1,6 @@
 @extends('layouts.app')
 
-@section('title', 'Session Expired — Open Gate Camp Mission')
+@section('title', 'Session Expired — OpenGate Camp Connect')
 @section('crumb', 'Error / 419')
 @section('page_title', 'Session Expired')
 

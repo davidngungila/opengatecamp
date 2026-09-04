@@ -1,6 +1,6 @@
 @extends('layouts.app')
 
-@section('title', 'Account Settings — Open Gate Camp Mission')
+@section('title', 'Account Settings — OpenGate Camp Connect')
 @section('crumb', 'Account / Settings')
 @section('page_title', 'Account Settings')
 
@@ -53,7 +53,7 @@
           <h2 style="font-size:14.5px;margin:0">Recent Activity</h2>
           <a class="link-btn" href="{{ route('account.audit-logs') }}">View all logs</a>
         </div>
-        <div class="mini-row"><div class="m-ico" style="background:var(--blue-light);color:var(--blue-accent)"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg></div><div class="m-body"><p>Joined Open Gate Camp Mission</p><span>{{ $user->created_at?->diffForHumans() }}</span></div></div>
+        <div class="mini-row"><div class="m-ico" style="background:var(--blue-light);color:var(--blue-accent)"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg></div><div class="m-body"><p>Joined OpenGate Camp Connect</p><span>{{ $user->created_at?->diffForHumans() }}</span></div></div>
         @forelse($lastEntries as $log)
         <div class="mini-row"><div class="m-ico" style="background:var(--success-bg);color:var(--success)"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 11.08V12a10 10 0 11-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/></svg></div><div class="m-body"><p>{{ $log->action }} @if($log->module)<span style="color:var(--text-tertiary)">· {{ $log->module }}</span>@endif</p><span>{{ $log->created_at?->diffForHumans() }}</span></div></div>
         @empty

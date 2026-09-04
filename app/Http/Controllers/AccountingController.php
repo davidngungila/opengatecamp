@@ -679,7 +679,7 @@ class AccountingController extends Controller
         $reference = $entry->reference ?: 'JE-'.$entry->entry_date->format('Ymd');
         $receiptNo = str_replace('JE-', 'RCP-', (string) $entry->entry_no);
 
-        $org = Setting::get('org.name', 'Open Gate Camp Mission');
+        $org = Setting::get('org.name', 'OpenGate Camp Connect');
 
         // Resolve who paid (registering attendee / pledge / manual receipt party).
         $payer = $this->resolvePayer($entry);

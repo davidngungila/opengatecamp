@@ -1,5 +1,5 @@
-﻿@extends('layouts.app')
-@section('title', 'Documents — Open Gate Camp Mission')
+@extends('layouts.app')
+@section('title', 'Documents — OpenGate Camp Connect')
 @section('crumb', 'Management / Documents')
 @section('page_title', 'Document Center')
 

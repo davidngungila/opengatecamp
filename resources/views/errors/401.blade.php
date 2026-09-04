@@ -1,6 +1,6 @@
 @extends('layouts.app')
 
-@section('title', '401 Unauthorized — Open Gate Camp Mission')
+@section('title', '401 Unauthorized — OpenGate Camp Connect')
 @section('crumb', 'Error / 401')
 @section('page_title', 'Unauthorized')
 

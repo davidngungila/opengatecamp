@@ -1,6 +1,6 @@
-﻿@extends('layouts.app')
+@extends('layouts.app')
 
-@section('title', 'Trial Balance — Open Gate Camp Mission')
+@section('title', 'Trial Balance — OpenGate Camp Connect')
 @section('crumb', 'Finance / Financial Accounting / Trial Balance')
 @section('page_title', 'Trial Balance')
 

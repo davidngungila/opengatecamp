@@ -1,6 +1,6 @@
 @extends('layouts.app')
 
-@section('title', 'Server Error — Open Gate Camp Mission')
+@section('title', 'Server Error — OpenGate Camp Connect')
 @section('crumb', 'Error / 500')
 @section('page_title', 'Server Error')
 

@@ -1,6 +1,6 @@
 @extends('layouts.app')
 
-@section('title', 'Security — Settings — Open Gate Camp Mission')
+@section('title', 'Security — Settings — OpenGate Camp Connect')
 @section('crumb', 'System / Settings / Security')
 @section('page_title', 'Security')
 

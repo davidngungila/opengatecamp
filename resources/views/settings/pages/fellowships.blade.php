@@ -1,6 +1,6 @@
 @extends('layouts.app')
 
-@section('title', 'University Fellowships — Settings — Open Gate Camp Mission')
+@section('title', 'University Fellowships — Settings — OpenGate Camp Connect')
 @section('crumb', 'System / Settings / University Fellowships')
 @section('page_title', 'University Fellowships')
 

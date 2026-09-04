@@ -1,5 +1,5 @@
 @extends('layouts.app')
-@section('title', 'Message History — Open Gate Camp Mission')
+@section('title', 'Message History — OpenGate Camp Connect')
 @section('crumb', 'Communication / Messaging / History')
 @section('page_title', 'Message History')
 

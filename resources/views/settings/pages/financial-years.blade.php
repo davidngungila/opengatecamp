@@ -1,6 +1,6 @@
 @extends('layouts.app')
 
-@section('title', 'Financial Years — Settings — Open Gate Camp Mission')
+@section('title', 'Financial Years — Settings — OpenGate Camp Connect')
 @section('crumb', 'System / Settings / Financial Years')
 @section('page_title', 'Financial Years')
 

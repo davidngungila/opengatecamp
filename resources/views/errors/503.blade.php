@@ -1,6 +1,6 @@
 @extends('layouts.app')
 
-@section('title', 'Maintenance — Open Gate Camp Mission')
+@section('title', 'Maintenance — OpenGate Camp Connect')
 @section('crumb', 'Error / 503')
 @section('page_title', 'Maintenance')
 

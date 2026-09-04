@@ -63,7 +63,7 @@ class DatabaseSeeder extends Seeder
             ['name' => 'Mary Massawe', 'password' => Hash::make('password'), 'role_id' => Role::where('name', 'Committee Member')->value('id'), 'status' => 'Suspended']
         );
 
-        Setting::put('church.name', 'Open Gate Camp Mission');
+        Setting::put('church.name', 'OpenGate Camp Connect');
         Setting::put('event.name', 'Open Gate Camp Season 3');
         Setting::put('church.phone', '+255 713 000 123');
         Setting::put('church.email', 'info@opengatecamp.org');

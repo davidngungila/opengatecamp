@@ -16,9 +16,9 @@
                 <path d="M12 6v12M9 9h6" stroke="#0B1F3A" stroke-width="1.6" stroke-linecap="round"/>
             </svg>
         </div>
-        <div class="brand-text">
-            <strong>Open Gate</strong>
-            <span>EVENT &amp; MISSION MGMT</span>
+<div class="brand-text">
+            <strong>OpenGate Camp Connect</strong>
+            <span style="white-space:nowrap;font-size:10px;letter-spacing:.2px">CONNECT &middot; RESTORE &middot; ENCOUNTER</span>
         </div>
     </div>
 

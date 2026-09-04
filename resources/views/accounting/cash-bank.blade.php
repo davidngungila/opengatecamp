@@ -1,6 +1,6 @@
-﻿@extends('layouts.app')
+@extends('layouts.app')
 
-@section('title', 'Cash & Bank — Open Gate Camp Mission')
+@section('title', 'Cash & Bank — OpenGate Camp Connect')
 @section('crumb', 'Finance / Financial Accounting / Cash & Bank')
 @section('page_title', 'Cash & Bank Management')
 

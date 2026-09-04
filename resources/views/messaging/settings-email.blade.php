@@ -1,5 +1,5 @@
 @extends('layouts.app')
-@section('title', 'Email Settings — Open Gate Camp Mission')
+@section('title', 'Email Settings — OpenGate Camp Connect')
 @section('crumb', 'Communication / Messaging / Email Settings')
 @section('page_title', 'Email Settings')
 
@@ -142,7 +142,7 @@
           </div>
           <div class="field full">
             <label>From Name</label>
-            <input name="from_name" id="epFromName" placeholder="Open Gate Camp Mission">
+            <input name="from_name" id="epFromName" placeholder="OpenGate Camp Connect">
           </div>
           <div class="field full" id="epPrimaryWrap">
             <label style="display:flex;align-items:center;gap:8px;cursor:pointer">

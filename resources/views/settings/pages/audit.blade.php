@@ -1,6 +1,6 @@
 @extends('layouts.app')
 
-@section('title', 'Audit Logs — Settings — Open Gate Camp Mission')
+@section('title', 'Audit Logs — Settings — OpenGate Camp Connect')
 @section('crumb', 'System / Settings / Audit Logs')
 @section('page_title', 'Audit Logs')
 

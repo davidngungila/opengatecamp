@@ -57,9 +57,9 @@
 
   <div class="logo">
     @if($web ?? false)
-    <img src="{{ asset('logo.png') }}" alt="Open Gate Camp Mission">
+    <img src="{{ asset('logo.png') }}" alt="OpenGate Camp Connect">
     @elseif(file_exists(public_path('logo.png')))
-    <img src="{{ public_path('logo.png') }}" alt="Open Gate Camp Mission">
+    <img src="{{ public_path('logo.png') }}" alt="OpenGate Camp Connect">
     @endif
   </div>
 
@@ -121,7 +121,7 @@
 
   <div class="foot">
     Generated electronically — valid without a signature.<br>
-    {{ $card->card_no }}@if($card->title) · {{ $card->title }}@endif · Open Gate Camp Mission
+    {{ $card->card_no }}@if($card->title) · {{ $card->title }}@endif · OpenGate Camp Connect
   </div>
 
   </div>

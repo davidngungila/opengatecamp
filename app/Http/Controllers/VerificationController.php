@@ -81,7 +81,7 @@ class VerificationController extends Controller
             'entry' => $entry,
             'amount' => $amount,
             'payer' => $payer,
-            'org' => Setting::get('org.name', 'Open Gate Camp Mission'),
+            'org' => Setting::get('org.name', 'OpenGate Camp Connect'),
         ]);
     }
 
@@ -110,7 +110,7 @@ class VerificationController extends Controller
             'ref' => $ticketNo,
             'confirmed' => $confirmed,
             'attendee' => $attendee,
-            'org' => Setting::get('org.name', 'Open Gate Camp Mission'),
+            'org' => Setting::get('org.name', 'OpenGate Camp Connect'),
         ]);
     }
 

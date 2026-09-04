@@ -159,7 +159,7 @@ class CheckInController extends Controller
 
         try {
             $sms = new SmsService();
-            $msg = "Welcome {$attendee->name} to {$attendee->event?->title}! You have been admitted. Enjoy the camp! — Open Gate Camp Mission";
+            $msg = "Welcome {$attendee->name} to {$attendee->event?->title}! You have been admitted. Enjoy the camp! — OpenGate Camp Connect";
             $result = $sms->send($attendee->phone, $msg);
 
             Message::create([

@@ -1,6 +1,6 @@
 @extends('layouts.app')
 
-@section('title', 'Too Many Requests — Open Gate Camp Mission')
+@section('title', 'Too Many Requests — OpenGate Camp Connect')
 @section('crumb', 'Error / 429')
 @section('page_title', 'Too Many Requests')
 

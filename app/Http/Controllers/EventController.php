@@ -213,7 +213,7 @@ class EventController extends Controller
         if ($sendSms && ! empty($attendee->phone)) {
             $sms = new SmsService();
             if ($sms->isConfigured()) {
-                $msg = "Hello {$attendee->name},\nYou are registered for \"{$event->title}\" at {$event->venue}. We look forward to seeing you! — Open Gate Camp Mission";
+                $msg = "Hello {$attendee->name},\nYou are registered for \"{$event->title}\" at {$event->venue}. We look forward to seeing you! — OpenGate Camp Connect";
                 $result = $sms->send($attendee->phone, $msg);
                 Message::create([
                     'channel'          => 'sms',
@@ -295,7 +295,7 @@ class EventController extends Controller
                         : '';
                     $msg = "Hello {$attendee->name},\nWe have received your payment of TZS ".number_format($amount)
                         ." for \"{$attendee->event?->title}\". Thank you for your support and generosity!".$remaining
-                        ." — Open Gate Camp Mission";
+                        ." — OpenGate Camp Connect";
 
                     $result = $sms->send($attendee->phone, $msg);
                     Message::create([
@@ -466,7 +466,7 @@ class EventController extends Controller
         $qrData = route('verify', ['code' => $payload], true);
         $qr = app(\App\Services\QrCodeService::class)->pngDataUri($qrData, 3);
 
-        $org = \App\Models\Setting::get('church.name', 'Open Gate Camp Mission');
+        $org = \App\Models\Setting::get('church.name', 'OpenGate Camp Connect');
 
         $html = view('accounting.ticket', [
             'attendee' => $attendee,
@@ -500,7 +500,7 @@ class EventController extends Controller
         }
 
         $sms = new SmsService();
-        $msg = "Hello {$attendee->name}, your ticket for {$attendee->event?->title} is ready.\nTicket: {$attendee->getTicketNo()}\nComing from: {$attendee->getRegionLabel()}\nPresent this ticket at the gate. — Open Gate Camp Mission";
+        $msg = "Hello {$attendee->name}, your ticket for {$attendee->event?->title} is ready.\nTicket: {$attendee->getTicketNo()}\nComing from: {$attendee->getRegionLabel()}\nPresent this ticket at the gate. — OpenGate Camp Connect";
         $result = $sms->send($attendee->phone, $msg);
 
         $attendee->update([

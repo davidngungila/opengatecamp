@@ -4,7 +4,7 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <meta name="robots" content="noindex, nofollow">
-<title>{{ $card->title }} — Open Gate Camp Mission</title>
+<title>{{ $card->title }} — OpenGate Camp Connect</title>
 <meta name="description" content="{{ Str::limit($card->message, 160) }}">
 <meta property="og:title" content="{{ $card->title }}">
 <meta property="og:description" content="{{ Str::limit($card->message, 200) }}">
@@ -311,7 +311,7 @@
       <div class="brand-mark">
         <div class="logo">
           @if(file_exists(public_path('logo.png')))
-          <img src="{{ asset('logo.png') }}" alt="Open Gate Camp Mission">
+          <img src="{{ asset('logo.png') }}" alt="OpenGate Camp Connect">
           @else
           <svg viewBox="0 0 24 24" fill="none">
             <path d="M12 2L4 6v6c0 5 3.4 8.6 8 10 4.6-1.4 8-5 8-10V6l-8-4z" fill="{{ $card->card_type === 'birthday' ? '#ffffff' : $card->accent_color }}"/>
@@ -469,7 +469,7 @@
   </main>
 
   <footer class="footer-org">
-    <strong>Open Gate Camp Mission</strong>
+    <strong>OpenGate Camp Connect</strong>
     <span>UMOJA WA VYUO · KARISMATIKI KATOLIKI TANZANIA · JIMBO LA MOSHI NA ARUSHA</span>
   </footer>
 

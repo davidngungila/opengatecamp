@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Verification — {{ $org ?? 'Open Gate Camp Mission' }}</title>
+<title>Verification — {{ $org ?? 'OpenGate Camp Connect' }}</title>
 <style>
   * { box-sizing: border-box; margin: 0; padding: 0; }
   body {
@@ -63,7 +63,7 @@
 </head>
 <body>
 @php
-    $org = $org ?? 'Open Gate Camp Mission';
+    $org = $org ?? 'OpenGate Camp Connect';
     $valid = !empty($confirmed);
     $statusText = $valid ? 'VERIFIED &amp; CONFIRMED' : ($errors->any() ? 'NOT FOUND' : 'NOT CONFIRMED');
     $headClass = $errors->any() ? 'neutral' : ($valid ? 'valid' : 'invalid');
@@ -128,7 +128,7 @@
   <div class="card-foot">
     <strong>Verification result:</strong>
     <span class="{{ $valid ? 'chk' : 'xchk' }}">{{ $valid ? 'Valid — confirmed information matches our records.' : 'Invalid — this document could not be confirmed.' }}</span>
-    <div class="verified-at">Open Gate Camp Mission &middot; Automatic verification system</div>
+    <div class="verified-at">OpenGate Camp Connect &middot; Automatic verification system</div>
   </div>
   @endif
 </div>

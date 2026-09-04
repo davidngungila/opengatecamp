@@ -120,14 +120,14 @@ class PledgeController extends Controller
         if ($type === 'remind') {
             $msg = empty($remaining) || $pledge->status === 'fulfilled'
                 ? "Asante {$pledge->name}! Umekamilisha ahadi yako ya TZS ".number_format($pledge->amount)
-                    ." kwa \"{$event}\". Mungu akubariki, na asante kwa moyo wako wa kutoa. — Open Gate Camp Mission"
+                    ." kwa \"{$event}\". Mungu akubariki, na asante kwa moyo wako wa kutoa. — OpenGate Camp Connect"
                 : "Reminder {$pledge->name}: ahadi yako ya TZS ".number_format($pledge->amount)
                     ." kwa \"{$event}\" ina salio la TZS ".number_format($remaining).'.'
                     .($pledge->due_date ? ' Tarehe ya mwisho '.$pledge->due_date->format('d/m/Y').'.' : '')
-                    .' Tunakuomba ukamilishe ahadi yako. Asante! — Open Gate Camp Mission';
+                    .' Tunakuomba ukamilishe ahadi yako. Asante! — OpenGate Camp Connect';
         } else {
             $msg = "Shukrani {$pledge->name}, tumepokea ahadi yako ya TZS ".number_format($pledge->amount)
-                ." kwa \"{$event}\". Tunakushukuru kwa moyo wako wa kutoa! Mungu akubariki. — Open Gate Camp Mission";
+                ." kwa \"{$event}\". Tunakushukuru kwa moyo wako wa kutoa! Mungu akubariki. — OpenGate Camp Connect";
         }
 
         $result = $sms->send($pledge->phone, $msg);
@@ -205,13 +205,13 @@ class PledgeController extends Controller
             $sms = new SmsService();
 
             if ($sms->isConfigured()) {
-                $event = $pledge->event?->title ?? 'Open Gate Camp Mission';
+                $event = $pledge->event?->title ?? 'OpenGate Camp Connect';
                 $remaining = $pledge->getRemainingAttribute();
 
                 $msg = "Asante {$pledge->name}, tumepokea mchango wako wa TSH ".number_format($payment->amount)
                     ." kuongezea ahadi yako. Kwaajili ya \"{$event}\"."
                     .($remaining > 0 ? ' Salio lako ni TSH '.number_format($remaining).'.' : ' Ahadi yako imekamilika. Asante sana!')
-                    .' Mungu akubariki. — Open Gate Camp Mission';
+                    .' Mungu akubariki. — OpenGate Camp Connect';
 
                 $result = $sms->send($pledge->phone, $msg);
 

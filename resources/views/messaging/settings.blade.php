@@ -1,5 +1,5 @@
-﻿@extends('layouts.app')
-@section('title', 'Settings — Open Gate Camp Mission')
+@extends('layouts.app')
+@section('title', 'Settings — OpenGate Camp Connect')
 @section('crumb', 'Communication / Messaging / Settings')
 @section('page_title', 'Messaging Settings')
 
@@ -171,7 +171,7 @@
           </div>
           <div class="field full">
             <label>Message</label>
-            <textarea name="message" rows="4" required placeholder="Test message" style="width:100%;padding:12px;border:1px solid var(--border,#e5e7eb);border-radius:10px;background:#fff;color:var(--text-primary);font-size:14px;resize:vertical">Test SMS from Open Gate Camp Mission Management System</textarea>
+            <textarea name="message" rows="4" required placeholder="Test message" style="width:100%;padding:12px;border:1px solid var(--border,#e5e7eb);border-radius:10px;background:#fff;color:var(--text-primary);font-size:14px;resize:vertical">Test SMS from OpenGate Camp Connect</textarea>
           </div>
         </div>
       </div>

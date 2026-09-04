@@ -1,6 +1,6 @@
-﻿@extends('layouts.app')
+@extends('layouts.app')
 
-@section('title', 'Users & Roles — Open Gate Camp Mission')
+@section('title', 'Users & Roles — OpenGate Camp Connect')
 @section('crumb', 'System / Users & Roles')
 @section('page_title', 'Users & Roles')
 

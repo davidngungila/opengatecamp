@@ -1,6 +1,6 @@
 @extends('layouts.app')
 
-@section('title', '404 Not Found — Open Gate Camp Mission')
+@section('title', '404 Not Found — OpenGate Camp Connect')
 @section('crumb', 'Error / 404')
 @section('page_title', 'Not Found')
 

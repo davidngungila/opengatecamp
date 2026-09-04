@@ -1,6 +1,6 @@
-﻿@extends('layouts.app')
+@extends('layouts.app')
 
-@section('title', 'Income Statement — Open Gate Camp Mission')
+@section('title', 'Income Statement — OpenGate Camp Connect')
 @section('crumb', 'Finance / Financial Accounting / Income Statement')
 @section('page_title', 'Income Statement')
 

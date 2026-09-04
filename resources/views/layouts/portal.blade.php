@@ -1,9 +1,9 @@
-﻿<!DOCTYPE html>
+<!DOCTYPE html>
 <html lang="en">
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>@yield('title', 'Member Portal — Open Gate Camp Mission')</title>
+<title>@yield('title', 'Member Portal — OpenGate Camp Connect')</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;600;700;800&display=swap" rel="stylesheet">
 @include('partials.styles-core')
@@ -78,7 +78,7 @@
       <svg width="18" height="18" viewBox="0 0 24 24" fill="none"><path d="M12 2L4 6v6c0 5 3.4 8.6 8 10 4.6-1.4 8-5 8-10V6l-8-4z" fill="white" fill-opacity=".95"/><path d="M12 6v12M9 9h6" stroke="#0B1F3A" stroke-width="1.6" stroke-linecap="round"/></svg>
     </div>
     <div>
-      <strong>Open Gate Camp Mission</strong>
+      <strong>OpenGate Camp Connect</strong>
       <span>MEMBER PORTAL</span>
     </div>
   </div>

@@ -1,6 +1,6 @@
-﻿@extends('layouts.app')
+@extends('layouts.app')
 
-@section('title', 'Camp Calendar — Open Gate Camp Mission')
+@section('title', 'Camp Calendar — OpenGate Camp Connect')
 @section('crumb', 'Events / Calendar')
 @section('page_title', $monthDate->format('F Y'))
 
