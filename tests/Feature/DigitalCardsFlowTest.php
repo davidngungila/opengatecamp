@@ -9,6 +9,8 @@ use App\Models\DigitalCardRecipient;
 use App\Models\Event;
 use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Illuminate\Http\UploadedFile;
+use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Str;
 use Tests\TestCase;
 
@@ -135,6 +137,43 @@ class DigitalCardsFlowTest extends TestCase
             ->assertRedirect();
 
         $this->assertDatabaseHas('digital_cards', ['id' => $card->id, 'title' => '', 'message' => '']);
+    }
+
+    public function test_admin_can_upload_and_remove_background_image(): void
+    {
+        Storage::fake('public');
+
+        $user = User::factory()->create();
+        $card = $this->makeCard();
+
+        $this->actingAs($user)
+            ->put("/digital-cards/{$card->id}", [
+                'title' => 'With Image',
+                'message' => '',
+                'card_type' => 'fundraising',
+                'image_path' => UploadedFile::fake()->image('bg.jpg', 640, 800),
+            ])
+            ->assertRedirect();
+
+        $card->refresh();
+        $this->assertNotNull($card->image_path);
+        $this->assertStringStartsWith('digital-cards/', $card->image_path);
+        Storage::disk('public')->assertExists($card->image_path);
+
+        $storedPath = $card->image_path;
+
+        $this->actingAs($user)
+            ->put("/digital-cards/{$card->id}", [
+                'title' => 'With Image',
+                'message' => '',
+                'card_type' => 'fundraising',
+                'remove_image' => '1',
+            ])
+            ->assertRedirect();
+
+        $card->refresh();
+        $this->assertNull($card->image_path);
+        Storage::disk('public')->assertMissing($storedPath);
     }
 
     public function test_public_card_flow(): void

@@ -2,57 +2,58 @@
   @font-face { font-family: Manrope; src: url("{{ ($web ?? false) ? asset('fonts/Manrope-Regular.ttf') : storage_path('fonts/Manrope-Regular.ttf') }}"); font-weight: normal; font-style: normal; }
   @font-face { font-family: Manrope; src: url("{{ ($web ?? false) ? asset('fonts/Manrope-Bold.ttf') : storage_path('fonts/Manrope-Bold.ttf') }}"); font-weight: bold; font-style: normal; }
   @font-face { font-family: Manrope; src: url("{{ ($web ?? false) ? asset('fonts/Manrope-ExtraBold.ttf') : storage_path('fonts/Manrope-ExtraBold.ttf') }}"); font-weight: 800; font-style: normal; }
-  .pdf-page{font-family:Manrope,Arial,sans-serif;color:#000;font-size:10px;line-height:1.5;width:100%;}
+  @php
+    $bgUrl = null;
+    if ($card->image_path) {
+        if ($web ?? false) {
+            $bgUrl = asset('storage/'.$card->image_path);
+        } else {
+            $bgUrl = file_exists(storage_path('app/public/'.$card->image_path))
+                ? str_replace('\\', '/', storage_path('app/public/'.$card->image_path))
+                : null;
+        }
+    }
+  @endphp
+  .pdf-page{font-family:Manrope,Arial,sans-serif;color:#000;width:1080px;height:1350px;position:relative;line-height:1.32;background-color:{{ $card->background_color }};@if($bgUrl) background-image:url("{{ $bgUrl }}");background-size:cover;background-position:center;@endif}
   .pdf-page *{box-sizing:border-box;margin:0;padding:0;}
-  .pdf-page .logo{text-align:center;margin-bottom:5px;}
-  .pdf-page .logo img{width:30mm;height:30mm;}
+  .pdf-page .scrim{position:absolute;top:0;left:0;width:1080px;height:1350px;background:rgba(8,12,20,.45);}
+  .pdf-page .sheet{padding:0 44px;position:relative;overflow:hidden;}
+  .pdf-page .logo{text-align:center;padding-top:22px;margin-bottom:8px;}
+  .pdf-page .logo img{width:110px;height:110px;}
   .pdf-page .center{text-align:center;}
-  .pdf-page .org{font-size:14px;font-weight:800;text-transform:uppercase;letter-spacing:1px;}
-  .pdf-page .org-sub{font-size:9px;letter-spacing:1.5px;font-weight:800;}
-  .pdf-page .org-line{font-size:9px;letter-spacing:1px;font-weight:800;}
-  .pdf-page .org-tag{font-size:11px;font-weight:800;letter-spacing:2px;margin-bottom:2px;}
-  .pdf-page .title{
-    font-size:12px;font-weight:800;text-align:center;letter-spacing:2px;margin:6px 0;
-    border-top:1px dashed #000;border-bottom:1px dashed #000;
-    padding:4px 0;text-transform:uppercase;
-  }
-  .pdf-page table.head{width:100%;border-collapse:collapse;font-size:9.5px;}
-  .pdf-page table.head td{padding:1.5px 0;}
+  .pdf-page .org{font-size:36px;font-weight:800;text-transform:uppercase;letter-spacing:3px;margin-top:12px;}
+  .pdf-page .org-sub{font-size:22px;letter-spacing:4px;font-weight:800;margin-top:2px;}
+  .pdf-page .org-line{font-size:22px;letter-spacing:2px;font-weight:800;margin-top:2px;}
+  .pdf-page .org-tag{font-size:25px;font-weight:800;letter-spacing:5px;margin-top:2px;}
+  .pdf-page .title{font-size:30px;font-weight:800;text-align:center;letter-spacing:6px;border-top:2px dashed #000;border-bottom:2px dashed #000;padding:8px 0;margin:12px 0;text-transform:uppercase;}
+  .pdf-page table.head{width:100%;border-collapse:collapse;font-size:21px;}
+  .pdf-page table.head td{padding:2px 6px;}
   .pdf-page table.head td.lbl{color:#444;}
   .pdf-page table.head td.r{text-align:right;font-weight:bold;white-space:nowrap;}
-  .pdf-page table.det{width:100%;border-collapse:collapse;font-size:9.5px;margin-top:3px;}
-  .pdf-page table.det td{padding:3px 0;border-bottom:1px dotted #ddd;}
-  .pdf-page table.det td.lbl{width:40%;color:#444;font-weight:600;}
-  .pdf-page table.det td.val{font-weight:bold;}
+  .pdf-page .ruled{border-top:2px dashed #000;margin:8px 0;}
+  .pdf-page .cardav{background:{{ $card->background_color }};border:3px solid {{ $card->accent_color }};border-radius:18px;color:#fff;padding:22px 34px;text-align:center;margin-top:8px;}
+  .pdf-page .type-tag{display:inline-block;font-size:18px;font-weight:800;letter-spacing:4px;text-transform:uppercase;color:#fff;border:2px solid {{ $card->accent_color }};border-radius:999px;padding:4px 16px;margin-bottom:6px;}
+  .pdf-page .card-title{font-size:46px;font-weight:800;letter-spacing:.6px;line-height:1.2;}
+  .pdf-page .card-subtitle{font-size:22px;font-weight:600;color:{{ $card->accent_color }};margin-top:2px;}
+  .pdf-page .card-ornament{width:110px;height:3px;background:{{ $card->accent_color }};margin:8px auto;}
+  .pdf-page .card-message{font-size:21px;color:rgba(255,255,255,.94);text-align:left;margin-top:8px;white-space:pre-line;}
+  .pdf-page .amt{text-align:center;font-size:24px;font-weight:800;margin:10px 0 2px;background:#000;color:#fff;padding:6px 0;letter-spacing:2px;border-radius:8px;}
+  .pdf-page .progress-note{font-size:19px;color:#444;text-align:center;}
+  .pdf-page .qr{text-align:center;margin:10px 0 0;}
+  .pdf-page .qr img{width:110px;height:110px;}
+  .pdf-page .barcode{text-align:center;font-size:18px;letter-spacing:5px;font-weight:bold;margin-top:2px;}
+  .pdf-page .qr-cap{text-align:center;font-size:19px;font-weight:bold;margin-bottom:2px;}
+  .pdf-page .form-card{border:2px dashed #000;border-radius:14px;padding:14px 26px;page-break-inside:avoid;margin-top:10px;}
+  .pdf-page .form-note{font-size:18px;color:#444;margin-bottom:10px;}
+  .pdf-page .dotline{border-bottom:2px dotted #444;height:25px;}
   .pdf-page table.form{width:100%;border-collapse:collapse;}
-  .pdf-page table.form td{padding:5px 2px;vertical-align:middle;}
-  .pdf-page table.form td.lbl{width:34%;font-size:8.5px;font-weight:bold;color:#333;}
-  .pdf-page .ruled{border-top:1px dashed #000;border-bottom:1px dashed #000;padding:2px 0;margin:5px 0;}
-  .pdf-page .cardav{
-    background:{{ $card->background_color }};
-    border:2px solid {{ $card->accent_color }};
-    border-radius:8px;color:#fff;padding:14px 14px;text-align:center;
-  }
-  .pdf-page .type-tag{
-    display:inline-block;font-size:7.5px;font-weight:800;letter-spacing:1.5px;text-transform:uppercase;
-    color:#fff;border:1px solid {{ $card->accent_color }};border-radius:999px;padding:2px 8px;margin-bottom:6px;
-  }
-  .pdf-page .card-title{font-size:16px;font-weight:800;letter-spacing:.4px;line-height:1.25;}
-  .pdf-page .card-ornament{width:40px;height:2px;background:{{ $card->accent_color }};margin:7px auto;}
-  .pdf-page .card-message{font-size:9.5px;color:rgba(255,255,255,.92);text-align:left;margin-top:8px;white-space:pre-line;}
-  .pdf-page .amt{text-align:center;font-size:10.5px;font-weight:800;margin:7px 0;background:#000;color:#fff;padding:4px 0;letter-spacing:1px;}
-  .pdf-page .progress-note{font-size:8.5px;color:#444;text-align:center;margin-top:-2px;}
-  .pdf-page .qr{text-align:center;margin:7px 0 3px;}
-  .pdf-page .qr img{width:80px;height:80px;}
-  .pdf-page .barcode{text-align:center;font-size:8px;letter-spacing:2px;font-weight:bold;margin-top:2px;}
-  .pdf-page .qr-cap{text-align:center;font-size:8.5px;font-weight:bold;margin-bottom:2px;}
-  .pdf-page .form-card{border:1px dashed #000;border-radius:6px;padding:9px;page-break-inside:avoid;}
-  .pdf-page .form-note{font-size:8.5px;color:#444;margin-bottom:7px;}
-  .pdf-page .dotline{border-bottom:1px dotted #444;height:12px;}
-  .pdf-page .block-row td{font-size:7.5px;color:#777;padding-top:2px;}
-  .pdf-page .foot{margin-top:7px;text-align:center;font-size:7.5px;line-height:1.4;border-top:1px dashed #000;padding-top:4px;}
+  .pdf-page table.form td{padding:4px 4px;vertical-align:middle;}
+  .pdf-page table.form td.lbl{width:36%;font-size:20px;font-weight:bold;color:#333;}
+  .pdf-page .foot{margin-top:10px;text-align:center;font-size:18px;line-height:1.4;border-top:2px dashed #000;padding-top:6px;}
 </style>
 <div class="pdf-page">
+  @if($bgUrl)<div class="scrim"></div>@endif
+  <div class="sheet">
 
   <div class="logo">
     @if($web ?? false)
@@ -72,7 +73,6 @@
   <table class="head" cellpadding="0" cellspacing="0">
     <tr><td class="lbl">Card No</td><td class="r"><b>{{ $card->card_no }}</b></td></tr>
     <tr><td class="lbl">Type</td><td class="r">{{ $card->getTypeLabel() }}</td></tr>
-    <tr><td class="lbl">Status</td><td class="r">{{ strtoupper($card->getStatusLabel()) }}</td></tr>
     <tr><td class="lbl">Issued</td><td class="r">{{ $card->created_at ? $card->created_at->format('d M Y') : now()->format('d M Y') }}</td></tr>
     <tr><td class="lbl">Card Link</td><td class="r" style="white-space:normal;font-weight:normal">{{ $card->public_url }}</td></tr>
   </table>
@@ -83,34 +83,20 @@
     <div class="type-tag">{{ $card->getTypeLabel() }}</div>
     @if($card->title)
     <div class="card-title">{{ $card->title }}</div>
-    <div class="card-ornament"></div>
     @endif
+    @if($card->event)
+    <div class="card-subtitle">{{ $card->event->title }}@if($card->event->start_date) · {{ $card->event->start_date->format('d M Y') }}@endif</div>
+    @endif
+    <div class="card-ornament"></div>
     @if($card->message)
     <div class="card-message">{{ $card->message }}</div>
     @endif
   </div>
 
-  @if($card->event)
-  <table class="det">
-    <tr><td class="lbl">Event</td><td class="val">{{ $card->event->title }}</td></tr>
-    @if($card->event->start_date)
-    <tr><td class="lbl">Date</td><td class="val">{{ $card->event->start_date->format('l, d F Y') }}</td></tr>
-    @endif
-    @if($card->event->start_time)
-    <tr><td class="lbl">Time</td><td class="val">{{ $card->event->start_time }}</td></tr>
-    @endif
-    @if($card->event->venue)
-    <tr><td class="lbl">Venue</td><td class="val">{{ $card->event->venue }}</td></tr>
-    @endif
-  </table>
-  @endif
-
   @if($card->target_amount > 0)
   <div class="amt">TZS {{ number_format($card->total_contributions, 0) }} RAISED OF TZS {{ number_format($card->target_amount, 0) }}</div>
   <div class="progress-note">{{ number_format($card->progress_percent, 1) }}% of campaign goal reached</div>
   @endif
-
-  <div class="ruled"></div>
 
   <div class="qr">
     <div class="qr-cap">Scan to view this card and contribute online</div>
@@ -120,8 +106,6 @@
     <div class="barcode">*{{ $card->card_no }}*</div>
   </div>
 
-  <div class="ruled"></div>
-
   <div class="form-card">
     <div class="form-note">
       Please complete the details below and return this form with your contribution, or give online at <b>{{ $card->public_url }}</b>
@@ -129,17 +113,16 @@
     <table class="form">
       <tr><td class="lbl">Full Name</td><td class="dotline"></td></tr>
       <tr><td class="lbl">Phone Number</td><td class="dotline"></td></tr>
-      <tr><td class="lbl">Email</td><td class="dotline"></td></tr>
       <tr><td class="lbl">Amount ({{ $card->currency }})</td><td class="dotline"></td></tr>
       <tr><td class="lbl">Payment Method</td><td class="dotline"></td></tr>
       <tr><td class="lbl">Reference / Txn No</td><td class="dotline"></td></tr>
-      <tr><td class="lbl">Note / Message</td><td class="dotline"></td></tr>
-      <tr class="block-row"><td></td><td>Cash &nbsp;·&nbsp; Bank Transfer &nbsp;·&nbsp; Mobile Money (M-Pesa, Tigo Pesa, Airtel Money)</td></tr>
     </table>
   </div>
 
   <div class="foot">
     Generated electronically — valid without a signature.<br>
     {{ $card->card_no }}@if($card->title) · {{ $card->title }}@endif · Open Gate Camp Mission
+  </div>
+
   </div>
 </div>

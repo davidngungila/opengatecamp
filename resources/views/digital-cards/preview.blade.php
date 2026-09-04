@@ -39,7 +39,7 @@
   #pvWrap{position:relative;}
   .ticket-sheet{
     background:#fff;color:#000;
-    width:80mm;min-height:350mm;
+    width:1080px;height:1350px;
     box-shadow:0 24px 70px rgba(0,0,0,.55);
     overflow:hidden;
   }
@@ -47,7 +47,7 @@
     .pv-bar,.pv-check{display:none;}
     .pv-stage{display:block;height:auto;overflow:visible;padding:0;background:#fff;}
     #pvWrap{width:auto!important;height:auto!important;}
-    .ticket-sheet{width:80mm;box-shadow:none;transform:none!important;}
+    .ticket-sheet{width:1080px;box-shadow:none;transform:none!important;}
   }
 </style>
 </head>
@@ -56,7 +56,7 @@
 <header class="pv-bar">
   <div>
     <div class="id">{{ $card->card_no }}@if($card->title) · {{ $card->title }}@endif</div>
-    <div class="sub">Digital card preview — ticket size 80 × 350 mm</div>
+    <div class="sub">Digital card preview — 1080 × 1350 px</div>
   </div>
   <div class="pv-actions">
     <label class="pv-check"><input type="checkbox" id="pvActual"> Actual size</label>

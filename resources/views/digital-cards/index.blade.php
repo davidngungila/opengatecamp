@@ -240,7 +240,7 @@
       <div><h3>Create Digital Card</h3><p>Design a professional card to share via SMS</p></div>
       <button type="button" class="modal-close" data-drawer-close><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><path d="M18 6L6 18M6 6l12 12"/></svg></button>
     </div>
-    <form method="POST" action="{{ route('cards.store') }}">
+    <form method="POST" action="{{ route('cards.store') }}" enctype="multipart/form-data">
       @csrf
       <div class="drawer-body">
         <div class="form-grid">
@@ -256,6 +256,7 @@
           <div class="field"><label>Target Amount (TZS)</label><input type="number" step="0.01" min="0" name="target_amount" value="{{ old('target_amount') }}" placeholder="e.g. 500000"></div>
           <div class="field"><label>Background Color</label><input type="color" name="background_color" id="newCardBg" value="{{ old('background_color', '#1a237e') }}"></div>
           <div class="field"><label>Accent Color</label><input type="color" name="accent_color" id="newCardAccent" value="{{ old('accent_color', '#ffd700') }}"></div>
+          <div class="field full"><label>Background Image (optional — replaces the color on the card)</label><input type="file" name="image_path" accept="image/*"></div>
           <div class="field full"><label>Contributor Note</label><input name="contributor_note" placeholder='e.g. "Your support helps us reach more students"' value="{{ old('contributor_note') }}"></div>
           <div class="field"><label>Button Text</label><input name="cta_text" placeholder="Contribute Now" value="{{ old('cta_text', 'Contribute Now') }}"></div>
           <div class="field full"><label>SMS Text (if blank, a default link message is used)</label><textarea name="sms_text" placeholder="View your special digital card: {link}">{{ old('sms_text') }}</textarea></div>
@@ -275,7 +276,7 @@
       <div><h3>Edit Digital Card</h3><p>Update card design and content</p></div>
       <button type="button" class="modal-close" data-drawer-close><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><path d="M18 6L6 18M6 6l12 12"/></svg></button>
     </div>
-    <form method="POST" action="" id="editCardForm">
+    <form method="POST" action="" id="editCardForm" enctype="multipart/form-data">
       @csrf @method('PUT')
       <div class="drawer-body">
         <div class="form-grid">
@@ -291,6 +292,9 @@
           <div class="field"><label>Target Amount (TZS)</label><input type="number" step="0.01" min="0" name="target_amount" id="editCardTarget"></div>
           <div class="field"><label>Background Color</label><input type="color" name="background_color" id="editCardBg"></div>
           <div class="field"><label>Accent Color</label><input type="color" name="accent_color" id="editCardAccent"></div>
+          <div class="field full"><label>Background Image (optional — replaces the color on the card)</label><input type="file" name="image_path" accept="image/*" id="editCardImage">
+            <div style="display:flex;align-items:center;gap:8px;margin-top:8px"><input type="checkbox" name="remove_image" value="1" id="editCardRemoveImage"><label for="editCardRemoveImage" style="margin:0;font-size:12px;color:var(--text-secondary)">Remove current image</label></div>
+          </div>
           <div class="field full"><label>Contributor Note</label><input name="contributor_note" id="editCardNote"></div>
           <div class="field"><label>Button Text</label><input name="cta_text" id="editCardCta"></div>
           <div class="field full"><label>SMS Text (if blank, a default link message is used)</label><textarea name="sms_text" id="editCardSms"></textarea></div>

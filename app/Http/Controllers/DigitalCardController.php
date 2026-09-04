@@ -14,6 +14,7 @@ use App\Services\QrCodeService;
 use App\Services\SmsService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Str;
 use Mpdf\Mpdf;
 
@@ -133,6 +134,7 @@ class DigitalCardController extends Controller
             'contributor_note' => 'nullable|string|max:500',
             'cta_text' => 'nullable|string|max:100',
             'sms_text' => 'nullable|string',
+            'image_path' => 'nullable|image|mimes:jpeg,png,webp,gif|max:5120',
         ]);
 
         $data['card_no'] = DigitalCard::nextCardNo();
@@ -146,6 +148,11 @@ class DigitalCardController extends Controller
         $data['background_color'] = $data['background_color'] ?? '#1a237e';
         $data['accent_color'] = $data['accent_color'] ?? '#ffd700';
         $data['cta_text'] = $data['cta_text'] ?? 'Contribute Now';
+
+        if ($request->hasFile('image_path')) {
+            $data['image_path'] = $request->file('image_path')->store('digital-cards', 'public');
+            unset($data['remove_image']);
+        }
 
         $card = DigitalCard::create($data);
         AuditLog::record('Created digital card', 'Digital Cards', "{$card->card_no} — {$card->title}");
@@ -166,10 +173,24 @@ class DigitalCardController extends Controller
             'contributor_note' => 'nullable|string|max:500',
             'cta_text' => 'nullable|string|max:100',
             'sms_text' => 'nullable|string',
+            'image_path' => 'nullable|image|mimes:jpeg,png,webp,gif|max:5120',
+            'remove_image' => 'nullable',
         ]);
 
         $data['title'] = (string) ($data['title'] ?? '');
         $data['message'] = (string) ($data['message'] ?? '');
+
+        if ($request->hasFile('image_path')) {
+            if ($card->image_path) {
+                Storage::disk('public')->delete($card->image_path);
+            }
+            $data['image_path'] = $request->file('image_path')->store('digital-cards', 'public');
+        } elseif ($request->input('remove_image') && $card->image_path) {
+            Storage::disk('public')->delete($card->image_path);
+            $data['image_path'] = null;
+        }
+
+        unset($data['remove_image']);
 
         $card->update($data);
         AuditLog::record('Updated digital card', 'Digital Cards', "{$card->card_no} — {$card->title}");
@@ -342,11 +363,12 @@ class DigitalCardController extends Controller
 
         $mpdf = new Mpdf([
             'mode' => 'utf-8',
-            'format' => [80, 350],
-            'margin_left' => 4,
-            'margin_right' => 4,
-            'margin_top' => 3,
-            'margin_bottom' => 3,
+            'format' => [91.44, 114.3],
+            'margin_left' => 0,
+            'margin_right' => 0,
+            'margin_top' => 0,
+            'margin_bottom' => 0,
+            'dpi' => 300,
             'tempDir' => storage_path('app/private/mpdf'),
         ]);
 
