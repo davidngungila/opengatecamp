@@ -118,6 +118,9 @@
     transition:width 1s cubic-bezier(.2,.8,.2,1);
     width:{{ $card->progress_percent }}%;
   }
+  .cta-grid{
+    display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-top:26px;
+  }
   .cta-btn{
     width:100%;cursor:pointer;
     background:var(--card-accent);color:#0a0f1e;
@@ -125,9 +128,13 @@
     font-family:inherit;font-size:16px;font-weight:800;letter-spacing:.5px;
     padding:18px 24px;border-radius:16px;
     box-shadow:0 14px 34px rgba(var(--accent-rgb),.28);
-    transition:transform .18s ease, box-shadow .18s ease, filter .18s ease;
-    margin-top:26px;
+    transition:transform .18s ease, box-shadow .18s ease, filter .18s ease, background .18s ease;
   }
+  .cta-btn.alt{
+    background:#ffffff;border:2px solid var(--card-accent);color:#0f172a;
+    box-shadow:0 14px 34px rgba(15,23,42,.10);
+  }
+  .cta-btn.alt:hover{filter:none;background:rgba(var(--accent-rgb),.08);}
   .cta-btn:hover{transform:translateY(-2px);box-shadow:0 18px 42px rgba(var(--accent-rgb),.38);filter:brightness(1.04);}
   .cta-btn:active{transform:translateY(0);}
   .contributor-note{
@@ -347,7 +354,10 @@
       </div>
 
       <div id="contributeSection">
-        <button type="button" class="cta-btn" id="ctaBtn">{{ $card->cta_text }}</button>
+        <div class="cta-grid">
+          <button type="button" class="cta-btn" id="ctaBtn">Changia Sasa</button>
+          <button type="button" class="cta-btn alt" id="pledgeBtn">Weka Ahadi Leo</button>
+        </div>
         @if($card->contributor_note)
         <div class="contributor-note">{{ $card->contributor_note }}</div>
         @endif
@@ -361,8 +371,8 @@
             <input type="hidden" name="mode" id="modeInput" value="contribute">
 
             <div class="mode-toggle" id="modeToggle">
-              <button type="button" class="mode-btn sel" data-mode="contribute">Contribute Now</button>
-              <button type="button" class="mode-btn" data-mode="pledge">Pledge to Give</button>
+              <button type="button" class="mode-btn sel" data-mode="contribute">Changia Sasa</button>
+              <button type="button" class="mode-btn" data-mode="pledge">Weka Ahadi</button>
             </div>
 
             <div class="amount-preset" id="amountPreset">
@@ -413,7 +423,7 @@
 
             <div class="field"><label>Note</label><textarea name="note" rows="2" placeholder="Optional blessing / message">{{ old('note') }}</textarea></div>
             <div class="submit-row">
-              <input type="submit" id="submitBtn" value="Contribute Now">
+              <input type="submit" id="submitBtn" value="Tuma Changia">
               <button type="button" class="cancel" id="cancelBtn">Cancel</button>
             </div>
           </form>
@@ -438,6 +448,7 @@
   var errorBox = document.getElementById('errorBox');
   var cardBody = document.getElementById('cardBody');
   var againBtn = document.getElementById('contributeAgainBtn');
+  var pledgeBtn = document.getElementById('pledgeBtn');
   var modeToggle = document.getElementById('modeToggle');
   var modeInput = document.getElementById('modeInput');
   var panelContribute = document.getElementById('panelContribute');
@@ -458,7 +469,7 @@
     modeInput.value = mode;
     panelContribute.classList.toggle('show', mode === 'contribute');
     panelPledge.classList.toggle('show', mode === 'pledge');
-    submitBtn.value = mode === 'pledge' ? 'Confirm Pledge' : 'Contribute Now';
+    submitBtn.value = mode === 'pledge' ? 'Thibitisha Ahadi' : 'Tuma Changia';
   }
 
   if(modeToggle) modeToggle.addEventListener('click', function(e){
@@ -474,7 +485,8 @@
     syncPaySel();
   }
 
-  if(ctaBtn) ctaBtn.addEventListener('click', showForm);
+  if(ctaBtn) ctaBtn.addEventListener('click', function(){ showForm(); setMode('contribute'); });
+  if(pledgeBtn) pledgeBtn.addEventListener('click', function(){ showForm(); setMode('pledge'); });
   if(cancelBtn) cancelBtn.addEventListener('click', function(){
     formWrap.classList.remove('show');
     ctaBtn.style.display = '';

@@ -42,8 +42,8 @@ class DigitalCardsFlowTest extends TestCase
         $this->get("/card/{$card->hash}")
             ->assertOk()
             ->assertSee($card->title)
-            ->assertSee('Contribute Now')
-            ->assertSee('Pledge to Give')
+            ->assertSee('Changia Sasa')
+            ->assertSee('Weka Ahadi Leo')
             ->assertSee('Mobile Money')
             ->assertSee('Bank Transfer');
 
