@@ -17,104 +17,99 @@
     --bg-rgb: {{ hexdec(substr($card->background_color, 1, 2)) . ',' . hexdec(substr($card->background_color, 3, 2)) . ',' . hexdec(substr($card->background_color, 5, 2)) }};
   }
   *{box-sizing:border-box;margin:0;padding:0;}
-  html,body{height:100%;}
+  html,body{min-height:100%;}
   body{
     font-family:'Manrope',-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;
-    background:
-      radial-gradient(1100px 520px at 85% -10%, rgba(var(--accent-rgb),.10), transparent 60%),
-      radial-gradient(800px 460px at 8% 110%, rgba(var(--accent-rgb),.07), transparent 55%),
-      linear-gradient(180deg, #ffffff, #f6f8fc);
-    background-attachment: fixed;
+    background:linear-gradient(180deg, #ffffff, #f4f7fb);
     color:#1f2937;
-    min-height:100%;
     -webkit-font-smoothing:antialiased;
-    display:flex;flex-direction:column;align-items:center;
-    padding:32px 16px 48px;
     overflow-x:hidden;
-    padding-top:max(32px, env(safe-area-inset-top, 0px));
-    padding-bottom:max(48px, calc(env(safe-area-inset-bottom, 0px) + 16px));
+    display:flex;flex-direction:column;
+  }
+  .hero{
+    position:relative;
+    width:100%;
+    background-color:var(--card-bg);
+    background:
+      radial-gradient(1100px 520px at 85% -20%, rgba(var(--accent-rgb),.4), transparent 60%),
+      radial-gradient(780px 460px at 8% 120%, rgba(var(--accent-rgb),.22), transparent 55%),
+      linear-gradient(160deg, var(--card-bg), #0a0f1a);
+    color:#fff;
+    text-align:center;
+    overflow:hidden;
+    padding:56px 16px 64px;
+    padding-top:max(48px, calc(env(safe-area-inset-top, 0px) + 16px));
     padding-left:max(16px, env(safe-area-inset-left, 0px));
     padding-right:max(16px, env(safe-area-inset-right, 0px));
   }
+  .hero::after{
+    content:'';position:absolute;top:-120px;left:-120px;pointer-events:none;
+    width:360px;height:360px;border-radius:50%;
+    background:radial-gradient(circle, rgba(var(--accent-rgb),.28), transparent 70%);
+  }
+  .hero::before{
+    content:'';position:absolute;bottom:-160px;right:-160px;pointer-events:none;
+    width:420px;height:420px;border-radius:50%;
+    background:radial-gradient(circle, rgba(255,255,255,.08), transparent 70%);
+  }
+  .hero-inner{position:relative;z-index:1;max-width:680px;margin:0 auto;}
   .brand-mark{
-    display:flex;align-items:center;gap:10px;margin-bottom:28px;
+    display:flex;align-items:center;justify-content:center;gap:10px;margin-bottom:42px;
   }
   .brand-mark .logo{
-    width:46px;height:46px;border-radius:14px;background:#ffffff;
-    border:1px solid #e5e7eb;
+    width:48px;height:48px;border-radius:14px;background:rgba(255,255,255,.12);
+    border:1px solid rgba(255,255,255,.22);
     display:flex;align-items:center;justify-content:center;
-    box-shadow:0 8px 24px rgba(15,23,42,.08);
+    box-shadow:0 10px 28px rgba(0,0,0,.22);
   }
-  .brand-mark .logo svg{width:26px;height:26px;}
-  .brand-mark .org-name{font-weight:800;font-size:15px;letter-spacing:.5px;text-transform:uppercase;line-height:1.2;color:#0f172a;}
-  .brand-mark .org-sub{font-size:10px;letter-spacing:2.5px;color:#64748b;text-transform:uppercase;}
-  .card{
-    width:100%;max-width:min(520px,100%);
-    background:#ffffff;
-    border:1px solid #e9edf3;
-    border-radius:26px;
-    box-shadow:0 30px 70px rgba(15,23,42,.12), 0 2px 8px rgba(15,23,42,.05);
-    position:relative;
-    overflow:hidden;
-    animation:cardIn .7s cubic-bezier(.2,.8,.2,1);
-  }
-  .banner{
-    background-color:var(--card-bg);
-    background:
-      radial-gradient(560px 280px at 90% -10%, rgba(var(--accent-rgb),.38), transparent 60%),
-      linear-gradient(160deg, var(--card-bg), #0a0f1a);
-    color:#fff;
-    padding:40px 32px 30px;
-    text-align:center;
-    position:relative;
-    overflow:hidden;
-  }
-  .banner::after{
-    content:'';position:absolute;top:-70px;left:-70px;pointer-events:none;
-    width:220px;height:220px;border-radius:50%;
-    background:radial-gradient(circle, rgba(var(--accent-rgb),.22), transparent 70%);
-  }
-  @keyframes cardIn{from{opacity:0;transform:translateY(24px) scale(.98);}to{opacity:1;transform:none;}}
+  .brand-mark .logo svg{width:27px;height:27px;}
+  .brand-mark .org-name{font-weight:800;font-size:16px;letter-spacing:.5px;text-transform:uppercase;line-height:1.2;color:#fff;}
+  .brand-mark .org-sub{font-size:10px;letter-spacing:2.5px;color:rgba(255,255,255,.72);text-transform:uppercase;}
   .type-badge{
     display:inline-flex;align-items:center;gap:6px;
     font-size:11px;font-weight:800;letter-spacing:2px;text-transform:uppercase;
     color:#0a0f1e;background:var(--card-accent);
-    border-radius:999px;padding:7px 14px;margin-bottom:20px;
-    box-shadow:0 6px 18px rgba(0,0,0,.22);
-    position:relative;z-index:1;
+    border-radius:999px;padding:8px 16px;margin-bottom:22px;
+    box-shadow:0 8px 22px rgba(0,0,0,.25);
   }
   .type-badge .dot{width:6px;height:6px;border-radius:50%;background:#0a0f1e;}
   h1.title{
-    font-size:clamp(26px,5vw,34px);font-weight:800;line-height:1.2;letter-spacing:-.5px;
-    margin-bottom:12px;
-    text-shadow:0 2px 18px rgba(0,0,0,.35);
-    position:relative;z-index:1;
+    font-size:clamp(30px,7vw,48px);font-weight:800;line-height:1.15;letter-spacing:-.5px;
+    margin-bottom:14px;
+    text-shadow:0 3px 24px rgba(0,0,0,.35);
   }
-  .ornament{
-    display:flex;align-items:center;gap:12px;margin:6px 0 0;
-    position:relative;z-index:1;
-  }
-  .ornament .line{height:1px;flex:1;background:linear-gradient(90deg,transparent,rgba(255,255,255,.65),transparent);opacity:.9;}
-  .ornament .diamond{width:8px;height:8px;transform:rotate(45deg);background:#fff;opacity:.95;border-radius:1px;}
-  .card-body{padding:28px 32px 32px;}
+  .ornament{display:flex;align-items:center;justify-content:center;gap:14px;margin:10px auto 18px;max-width:320px;}
+  .ornament .line{height:1px;flex:1;background:linear-gradient(90deg,transparent,rgba(255,255,255,.7),transparent);opacity:.9;}
+  .ornament .diamond{width:9px;height:9px;transform:rotate(45deg);background:#fff;opacity:.95;border-radius:1px;}
   .message{
-    font-size:15px;line-height:1.75;color:#334155;
-    margin-bottom:24px;white-space:pre-line;
+    font-size:16px;line-height:1.8;color:rgba(255,255,255,.94);
+    max-width:600px;margin:0 auto;white-space:pre-line;
   }
+  .content{
+    flex:1;
+    background:
+      radial-gradient(900px 420px at 90% 0%, rgba(var(--accent-rgb),.06), transparent 60%),
+      linear-gradient(180deg, #ffffff, #f4f7fb);
+    padding:44px 16px 56px;
+    padding-left:max(16px, env(safe-area-inset-left, 0px));
+    padding-right:max(16px, env(safe-area-inset-right, 0px));
+  }
+  .content-inner{max-width:620px;margin:0 auto;}
   .event-box{
-    background:#f8fafc;
+    background:#ffffff;
     border:1px solid #e5e9f0;
-    border-radius:14px;padding:14px 18px;margin-bottom:22px;
+    border-radius:16px;padding:16px 20px;margin-bottom:26px;
+    box-shadow:0 8px 26px rgba(15,23,42,.06);
   }
-  .event-box .evt-name{font-weight:800;font-size:14px;color:#0f172a;margin-bottom:4px;}
-  .event-box .evt-meta{font-size:12.5px;color:#5b6472;display:flex;flex-wrap:wrap;gap:10px;}
+  .event-box .evt-name{font-weight:800;font-size:15px;color:#0f172a;margin-bottom:4px;}
+  .event-box .evt-meta{font-size:12.5px;color:#5b6472;display:flex;flex-wrap:wrap;gap:12px;}
   .event-box .evt-meta svg{width:13px;height:13px;vertical-align:-2px;margin-right:3px;}
-  .progress-wrap{margin:24px 0;}
-  .progress-head{display:flex;justify-content:space-between;align-items:baseline;margin-bottom:8px;}
-  .progress-head .collected{font-size:20px;font-weight:800;color:#111827;}
-  .progress-head .target{font-size:12.5px;color:#6b7280;}
+  .progress-wrap{margin:28px 0;}
+  .progress-head{display:flex;justify-content:space-between;align-items:baseline;margin-bottom:9px;}
+  .progress-head .collected{font-size:22px;font-weight:800;color:#111827;}
+  .progress-head .target{font-size:13px;color:#6b7280;}
   .progress-track{
-    height:10px;border-radius:999px;background:#e8edf4;overflow:hidden;
+    height:11px;border-radius:999px;background:#e8edf4;overflow:hidden;
     border:1px solid #dfe5ee;
   }
   .progress-fill{
@@ -127,48 +122,58 @@
     width:100%;cursor:pointer;
     background:var(--card-accent);color:#0a0f1e;
     border:1.5px solid rgba(10,15,30,.16);
-    font-family:inherit;font-size:15px;font-weight:800;letter-spacing:.5px;
-    padding:16px 24px;border-radius:14px;
-    box-shadow:0 12px 30px rgba(15,23,42,.14);
+    font-family:inherit;font-size:16px;font-weight:800;letter-spacing:.5px;
+    padding:18px 24px;border-radius:16px;
+    box-shadow:0 14px 34px rgba(var(--accent-rgb),.28);
     transition:transform .18s ease, box-shadow .18s ease, filter .18s ease;
-    margin-top:24px;
+    margin-top:26px;
   }
-  .cta-btn:hover{transform:translateY(-2px);box-shadow:0 16px 38px rgba(15,23,42,.2);filter:brightness(1.04);}
+  .cta-btn:hover{transform:translateY(-2px);box-shadow:0 18px 42px rgba(var(--accent-rgb),.38);filter:brightness(1.04);}
   .cta-btn:active{transform:translateY(0);}
   .contributor-note{
-    font-size:12.5px;color:#6b7280;text-align:center;margin-top:14px;line-height:1.5;
+    font-size:13px;color:#6b7280;text-align:center;margin-top:16px;line-height:1.5;
   }
-  .divider{height:1px;background:#e9edf3;margin:28px 0;}
-  .footer-org{text-align:center;margin-top:28px;}
-  .footer-org strong{font-size:13px;letter-spacing:1.5px;text-transform:uppercase;color:#111827;}
-  .footer-org span{display:block;font-size:11px;color:#6b7280;margin-top:3px;letter-spacing:.5px;}
+  .footer-org{
+    width:100%;
+    background:#0f172a;
+    color:#cbd5e1;
+    text-align:center;
+    padding:30px 16px 38px;
+    padding-bottom:max(28px, calc(env(safe-area-inset-bottom, 0px) + 16px));
+    padding-left:max(16px, env(safe-area-inset-left, 0px));
+    padding-right:max(16px, env(safe-area-inset-right, 0px));
+  }
+  .footer-org strong{font-size:13px;letter-spacing:2px;text-transform:uppercase;color:#ffffff;}
+  .footer-org span{display:block;font-size:11px;color:#94a3b8;margin-top:5px;letter-spacing:.5px;}
 
   /* Contribution form */
   .form-wrap{
     display:none;
-    background:#f8fafc;border:1px solid #e5e9f0;
-    border-radius:16px;padding:22px;margin-top:20px;
+    background:#ffffff;border:1px solid #e5e9f0;
+    border-radius:20px;padding:26px;margin-top:22px;
+    box-shadow:0 18px 46px rgba(15,23,42,.08);
   }
   .form-wrap.show{display:block;animation:cardIn .45s cubic-bezier(.2,.8,.2,1);}
-  .form-wrap h3{font-size:16px;font-weight:800;color:#0f172a;margin-bottom:4px;}
-  .form-wrap .hint{font-size:12px;color:#6b7280;margin-bottom:14px;}
-  .amount-preset{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-bottom:12px;}
+  @keyframes cardIn{from{opacity:0;transform:translateY(18px) scale(.99);}to{opacity:1;transform:none;}}
+  .form-wrap h3{font-size:18px;font-weight:800;color:#0f172a;margin-bottom:4px;}
+  .form-wrap .hint{font-size:12.5px;color:#6b7280;margin-bottom:16px;}
+  .amount-preset{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-bottom:14px;}
   .amount-preset button{
-    background:#ffffff;border:1px solid #d7dee9;
+    background:#f8fafc;border:1px solid #d7dee9;
     color:#334155;font-family:inherit;font-weight:700;font-size:13px;
-    padding:11px 6px;border-radius:10px;cursor:pointer;transition:all .15s ease;
+    padding:12px 6px;border-radius:11px;cursor:pointer;transition:all .15s ease;
   }
   .amount-preset button:hover{background:rgba(var(--accent-rgb),.08);border-color:var(--card-accent);}
   .amount-preset button.sel{background:var(--card-accent);color:#0a0f1e;border-color:var(--card-accent);}
   .mode-toggle{
     display:grid;grid-template-columns:1fr 1fr;gap:6px;
     background:#eef2f7;border:1px solid #e5e9f0;
-    border-radius:12px;padding:5px;margin-bottom:14px;
+    border-radius:12px;padding:5px;margin-bottom:16px;
   }
   .mode-btn{
     background:transparent;border:none;cursor:pointer;
-    font-family:inherit;font-size:13px;font-weight:800;letter-spacing:.3px;
-    color:#64748b;padding:10px 8px;border-radius:9px;transition:all .15s ease;
+    font-family:inherit;font-size:13.5px;font-weight:800;letter-spacing:.3px;
+    color:#64748b;padding:11px 8px;border-radius:9px;transition:all .15s ease;
   }
   .mode-btn.sel{
     background:#ffffff;color:#0f172a;
@@ -176,15 +181,15 @@
   }
   .mode-panel{display:none;}
   .mode-panel.show{display:block;animation:cardIn .3s ease;}
-  .pay-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;}
+  .pay-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;}
   .pay-opt{
     position:relative;display:flex;flex-direction:column;align-items:center;gap:6px;
-    background:#ffffff;border:1.5px solid #dfe5ee;border-radius:12px;
-    padding:14px 8px 12px;cursor:pointer;text-align:center;transition:all .15s ease;
+    background:#f8fafc;border:1.5px solid #dfe5ee;border-radius:14px;
+    padding:16px 8px 13px;cursor:pointer;text-align:center;transition:all .15s ease;
   }
-  .pay-opt svg{width:22px;height:22px;color:#64748b;}
-  .pay-opt b{font-size:12px;color:#1f2937;font-weight:800;}
-  .pay-opt span{font-size:9.5px;color:#94a3b8;line-height:1.3;}
+  .pay-opt svg{width:24px;height:24px;color:#64748b;}
+  .pay-opt b{font-size:12.5px;color:#1f2937;font-weight:800;}
+  .pay-opt span{font-size:10px;color:#94a3b8;line-height:1.3;}
   .pay-opt input{position:absolute;opacity:0;pointer-events:none;}
   .pay-opt.sel{
     border-color:var(--card-accent);background:rgba(var(--accent-rgb),.08);
@@ -192,106 +197,86 @@
   }
   .pay-opt.sel svg{color:var(--card-accent);}
   .pledge-hint{
-    font-size:11.5px;color:#5b6472;background:#f8fafc;border:1px dashed #d7dee9;
-    border-radius:10px;padding:10px 12px;margin-top:-2px;line-height:1.5;
+    font-size:12px;color:#5b6472;background:#f8fafc;border:1px dashed #d7dee9;
+    border-radius:11px;padding:11px 13px;margin-bottom:14px;line-height:1.55;
   }
-  .field{margin-bottom:12px;}
-  .field label{display:block;font-size:11.5px;font-weight:800;letter-spacing:1px;text-transform:uppercase;color:#475569;margin-bottom:6px;}
+  .field{margin-bottom:14px;}
+  .field label{display:block;font-size:11.5px;font-weight:800;letter-spacing:1px;text-transform:uppercase;color:#475569;margin-bottom:7px;}
   .field input,.field select,.field textarea{
-    width:100%;background:#ffffff;
+    width:100%;background:#f8fafc;
     border:1px solid #d1d9e6;
-    border-radius:10px;padding:12px 14px;color:#111827;
+    border-radius:11px;padding:13px 15px;color:#111827;
     font-family:inherit;font-size:14px;outline:none;transition:border-color .15s ease, box-shadow .15s ease;
   }
-  .field input:focus,.field select:focus,.field textarea:focus{border-color:var(--card-accent);box-shadow:0 0 0 3px rgba(var(--accent-rgb),.15);}
+  .field input:focus,.field select:focus,.field textarea:focus{border-color:var(--card-accent);box-shadow:0 0 0 3px rgba(var(--accent-rgb),.15);background:#ffffff;}
   .field input::placeholder,.field textarea::placeholder{color:#9aa3b2;}
-  .grid-2{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:12px;}
-  .grid-2 .field{margin-bottom:0;}
+  .grid-2{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:0;}
+  .grid-2 .field{margin-bottom:14px;}
   .submit-row{display:grid;grid-template-columns:1fr auto;gap:10px;margin-top:6px;}
   .submit-row input[type=submit]{
     background:var(--card-accent);color:#0a0f1e;border:1.5px solid rgba(10,15,30,.16);
-    font-family:inherit;font-weight:800;font-size:14px;
-    padding:13px 20px;border-radius:12px;cursor:pointer;transition:filter .15s ease;
+    font-family:inherit;font-weight:800;font-size:14.5px;
+    padding:14px 22px;border-radius:12px;cursor:pointer;transition:filter .15s ease;
   }
   .submit-row input[type=submit]:hover{filter:brightness(1.05);}
   .submit-row .cancel{
     background:#ffffff;border:1px solid #d7dee9;color:#475569;
-    font-family:inherit;font-weight:700;font-size:13px;padding:13px 18px;border-radius:12px;cursor:pointer;
+    font-family:inherit;font-weight:700;font-size:13px;padding:14px 18px;border-radius:12px;cursor:pointer;
   }
   .anon-row{display:flex;align-items:center;gap:8px;font-size:12px;color:#6b7280;margin-bottom:12px;}
   .anon-row input{width:16px;height:16px;accent-color:var(--card-accent);}
 
   /* Thank-you state */
   .thanks{
-    display:none;text-align:center;padding:30px 10px 10px;
+    display:none;text-align:center;padding:40px 10px 20px;
   }
   .thanks.show{display:block;animation:cardIn .5s cubic-bezier(.2,.8,.2,1);}
   .thanks .check{
-    width:70px;height:70px;border-radius:50%;margin:0 auto 18px;
+    width:76px;height:76px;border-radius:50%;margin:0 auto 20px;
     background:rgba(var(--accent-rgb),.14);border:2px solid var(--card-accent);
     display:flex;align-items:center;justify-content:center;
-    box-shadow:0 0 40px rgba(var(--accent-rgb),.3);
+    box-shadow:0 0 44px rgba(var(--accent-rgb),.3);
   }
-  .thanks .check svg{width:34px;height:34px;stroke:var(--card-accent);}
-  .thanks h3{font-size:22px;font-weight:800;color:#0f172a;margin-bottom:8px;}
-  .thanks p{font-size:14px;color:#556070;line-height:1.6;}
-  .thanks .again{margin-top:22px;}
+  .thanks .check svg{width:36px;height:36px;stroke:var(--card-accent);}
+  .thanks h3{font-size:24px;font-weight:800;color:#0f172a;margin-bottom:10px;}
+  .thanks p{font-size:15px;color:#556070;line-height:1.65;}
+  .thanks .again{margin-top:24px;}
   .error-box{
     display:none;background:#fef2f2;border:1px solid #fecaca;
-    color:#b91c1c;border-radius:10px;padding:11px 14px;font-size:13px;margin-bottom:12px;
+    color:#b91c1c;border-radius:11px;padding:12px 14px;font-size:13px;margin-bottom:14px;
   }
   .error-box.show{display:block;}
-  .qr-line{display:flex;align-items:center;justify-content:center;gap:10px;margin-top:26px;color:#6b7280;}
-  .qr-line svg{width:15px;height:15px;}
 
   @media (max-width:760px){
     .field input,.field select,.field textarea{font-size:16px;}
   }
-  @media (min-width:768px){
-    body{padding:48px 24px 64px;}
-    .card{max-width:min(560px,100%);}
-    .brand-mark{margin-bottom:36px;}
-    .brand-mark .logo{width:52px;height:52px;border-radius:16px;}
-    .brand-mark .logo svg{width:30px;height:30px;}
-    .brand-mark .org-name{font-size:17px;}
-    .brand-mark .org-sub{font-size:11px;}
-    .banner{padding:48px 44px 34px;}
-    .card-body{padding:32px 40px 38px;}
-    h1.title{font-size:clamp(30px,4vw,40px);}
-    .message{font-size:16px;}
-    .amount-preset button{padding:13px 8px;font-size:14px;}
-    .pay-opt{padding:16px 10px 14px;}
-    .pay-opt svg{width:26px;height:26px;}
-    .footer-org{margin-top:40px;}
-  }
   @media (max-width:520px){
-    body{padding:20px 12px 40px;}
-    .card{border-radius:20px;}
-    .banner{padding:32px 22px 26px;}
-    .card-body{padding:22px 20px 26px;}
+    .hero{padding:40px 14px 44px;}
+    .brand-mark{margin-bottom:32px;}
+    h1.title{font-size:clamp(26px,8vw,34px);}
+    .content{padding:34px 14px 44px;}
+    .form-wrap{padding:20px 16px;}
     .grid-2{grid-template-columns:1fr;}
-    .amount-preset{grid-template-columns:repeat(3,1fr);}
+    .amount-preset{gap:7px;}
+    .pay-grid{gap:8px;}
   }
   @media (max-width:360px){
-    body{padding-left:10px;padding-right:10px;padding-bottom:32px;}
-    .card{border-radius:16px;}
-    .banner{padding:26px 16px 20px;}
-    .card-body{padding:18px 16px 22px;}
-    .type-badge{font-size:10px;letter-spacing:1.5px;padding:6px 11px;}
+    .hero{padding-top:28px;}
+    .brand-mark .logo{width:42px;height:42px;}
+    .type-badge{font-size:10px;letter-spacing:1.5px;padding:7px 12px;}
     .amount-preset{gap:6px;}
-    .amount-preset button{font-size:12px;padding:10px 4px;}
+    .amount-preset button{font-size:12px;padding:11px 4px;}
     .pay-grid{gap:6px;}
     .pay-opt{padding:12px 4px 10px;}
     .pay-opt b{font-size:11px;}
     .pay-opt span{font-size:9px;}
-    .form-wrap{padding:16px 14px;}
+    .form-wrap{padding:16px 13px;}
     .submit-row{grid-template-columns:1fr;}
     .submit-row .cancel{text-align:center;}
     .footer-org span{font-size:10px;}
   }
   @media (max-height:500px){
-    body{padding-top:16px;padding-bottom:24px;}
-    .banner{padding:22px 22px 18px;}
+    .hero{padding-top:20px;padding-bottom:28px;}
   }
   .cta-btn:focus-visible,.mode-btn:focus-visible,.amount-preset button:focus-visible,.submit-row input[type=submit]:focus-visible,.cancel:focus-visible{outline:2px solid var(--card-accent);outline-offset:2px;}
   @media (prefers-reduced-motion:reduce){
@@ -301,27 +286,30 @@
 </head>
 <body>
 
-  <div class="brand-mark">
-    <div class="logo">
-      <svg viewBox="0 0 24 24" fill="none">
-        <path d="M12 2L4 6v6c0 5 3.4 8.6 8 10 4.6-1.4 8-5 8-10V6l-8-4z" fill="{{ $card->card_type === 'birthday' ? '#e11d48' : $card->accent_color }}"/>
-        <path d="M12 6v12M9 9h6" stroke="#0a0f1e" stroke-width="1.6" stroke-linecap="round"/>
-      </svg>
-    </div>
-    <div>
-      <div class="org-name">Open Gate</div>
-      <div class="org-sub">Camp Mission</div>
-    </div>
-  </div>
-
-  <div class="card" id="cardBody">
-    <div class="banner">
+  <header class="hero">
+    <div class="hero-inner">
+      <div class="brand-mark">
+        <div class="logo">
+          <svg viewBox="0 0 24 24" fill="none">
+            <path d="M12 2L4 6v6c0 5 3.4 8.6 8 10 4.6-1.4 8-5 8-10V6l-8-4z" fill="{{ $card->card_type === 'birthday' ? '#ffffff' : $card->accent_color }}"/>
+            <path d="M12 6v12M9 9h6" stroke="{{ $card->card_type === 'birthday' ? '#e11d48' : '#0a0f1e' }}" stroke-width="1.6" stroke-linecap="round"/>
+          </svg>
+        </div>
+        <div>
+          <div class="org-name">Open Gate</div>
+          <div class="org-sub">Camp Mission</div>
+        </div>
+      </div>
       <span class="type-badge"><span class="dot"></span>{{ $card->getTypeLabel() }}</span>
       <h1 class="title">{{ $card->title }}</h1>
       <div class="ornament"><span class="line"></span><span class="diamond"></span><span class="line"></span></div>
+      <div class="message">{{ $card->message }}</div>
     </div>
+  </header>
 
-    <div class="card-body">
+  <main class="content" id="cardBody">
+    <div class="content-inner">
+
       @if($card->event)
       <div class="event-box">
         <div class="evt-name">{{ $card->event->title }}</div>
@@ -339,8 +327,6 @@
       </div>
       @endif
 
-      <div class="message">{{ $card->message }}</div>
-
       @if($card->target_amount > 0)
       <div class="progress-wrap">
         <div class="progress-head">
@@ -351,7 +337,7 @@
       </div>
       @endif
 
-      <div class="thanks @if(session('contribution_success')) show @endif" id="thanksBox">
+      <div class="thanks @if(session('contribution_success') || session('pledge_success')) show @endif" id="thanksBox">
         <div class="check">
           <svg viewBox="0 0 24 24" fill="none" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6L9 17l-5-5"/></svg>
         </div>
@@ -392,7 +378,7 @@
               <input type="number" step="100" min="100" name="amount" id="amountInput" placeholder="0" required>
             </div>
             <div class="grid-2">
-              <div class="field"><label>Your Name <span id="nameReq" style="opacity:.55">(optional)</span></label><input type="text" name="contributor_name" id="nameInput" placeholder="Optional" value="{{ old('contributor_name') }}"></div>
+              <div class="field"><label>Your Name <span style="opacity:.55">(optional)</span></label><input type="text" name="contributor_name" id="nameInput" placeholder="Optional" value="{{ old('contributor_name') }}"></div>
               <div class="field"><label>Phone</label><input type="text" name="contributor_phone" placeholder="+255 7XX XXX XXX" value="{{ old('contributor_phone') }}"></div>
             </div>
             <div class="field"><label>Email</label><input type="email" name="contributor_email" placeholder="Optional" value="{{ old('contributor_email') }}"></div>
@@ -403,12 +389,12 @@
                   <label class="pay-opt">
                     <input type="radio" name="method" value="mobile" {{ old('method')==='mobile' ? 'checked' : '' }}>
                     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="7" y="2" width="10" height="20" rx="2.5"/><path d="M11 18h2"/></svg>
-                    <b>Mobile Money</b><span>M-Pesa, Tigo Pesa, Airtel</span>
+                    <b>Mobile Money</b><span>M-Pesa, Tigo, Airtel</span>
                   </label>
                   <label class="pay-opt">
                     <input type="radio" name="method" value="cash" {{ old('method')==='cash' ? 'checked' : '' }}>
                     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="6" width="20" height="12" rx="2"/><circle cx="12" cy="12" r="2.5"/><path d="M6 12h.01M18 12h.01"/></svg>
-                    <b>Cash</b><span>In person / at the venue</span>
+                    <b>Cash</b><span>In person / at venue</span>
                   </label>
                   <label class="pay-opt">
                     <input type="radio" name="method" value="bank" {{ old('method')==='bank' ? 'checked' : '' }}>
@@ -433,13 +419,14 @@
           </form>
         </div>
       </div>
-    </div>
-  </div>
 
-  <div class="footer-org">
+    </div>
+  </main>
+
+  <footer class="footer-org">
     <strong>Open Gate Camp Mission</strong>
     <span>UMOJA WA VYUO · KARISMATIKI KATOLIKI TANZANIA · JIMBO LA MOSHI NA ARUSHA</span>
-  </div>
+  </footer>
 
 <script>
 (function(){
