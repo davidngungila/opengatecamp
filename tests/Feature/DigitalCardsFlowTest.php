@@ -22,6 +22,30 @@ class DigitalCardsFlowTest extends TestCase
         Account::create(['code' => '4020', 'name' => 'Donation Income', 'type' => 'income']);
     }
 
+    public function test_update_card_saves_blank_title_and_message_as_empty_strings(): void
+    {
+        $user = User::factory()->create();
+        $card = DigitalCard::create([
+            'card_no' => DigitalCard::nextCardNo(),
+            'title' => 'Temp Title',
+            'message' => 'Temp message',
+            'card_type' => 'general',
+            'hash' => Str::random(32),
+            'status' => 'draft',
+            'is_published' => 0,
+        ]);
+
+        $this->actingAs($user)
+            ->put("/digital-cards/{$card->id}", [
+                'title' => '',
+                'message' => '',
+                'card_type' => 'general',
+            ])
+            ->assertRedirect();
+
+        $this->assertDatabaseHas('digital_cards', ['id' => $card->id, 'title' => '', 'message' => '']);
+    }
+
     public function test_public_card_flow(): void
     {
         $this->seedAccounts();

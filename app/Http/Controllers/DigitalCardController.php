@@ -116,6 +116,9 @@ class DigitalCardController extends Controller
             'sms_text' => 'nullable|string',
         ]);
 
+        $data['title'] = (string) ($data['title'] ?? '');
+        $data['message'] = (string) ($data['message'] ?? '');
+
         $card->update($data);
         AuditLog::record('Updated digital card', 'Digital Cards', "{$card->card_no} — {$card->title}");
 
