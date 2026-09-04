@@ -34,7 +34,6 @@
 .login-icon{position:absolute;right:12px;top:50%;transform:translateY(-50%);width:36px;height:36px;
   border-radius:8px;display:flex;align-items:center;justify-content:center;font-size:16px;
   pointer-events:none;transition:all .2s ease;}
-.login-icon.email-icon{background:var(--info-bg);color:var(--info);}
 .login-icon.phone-icon{background:var(--success-bg);color:var(--success);}
 .field-relative{position:relative;}
 .field-relative input{padding-right:52px;}
@@ -58,12 +57,12 @@
     <form method="POST" action="{{ route('login.attempt') }}">
       @csrf
       <div class="field">
-        <label>Email or Phone Number</label>
+        <label>Phone Number</label>
         <div class="field-relative">
-          <input type="text" name="login" id="loginInput" value="{{ old('login') }}" placeholder="you@opengatecamp.org or +255 7XX XXX XXX" required autofocus oninput="detectLoginType(this)">
+          <input type="text" name="login" id="loginInput" value="{{ old('login') }}" placeholder="+255 7XX XXX XXX" required autofocus oninput="detectLoginType(this)">
           <div class="login-icon" id="loginIcon"></div>
         </div>
-        <span class="login-hint" id="loginHint">Enter your email address or phone number</span>
+        <span class="login-hint" id="loginHint">Enter your phone number</span>
       </div>
       <div class="field" style="margin-top:14px">
         <label>Password</label>
@@ -92,25 +91,20 @@ function detectLoginType(el) {
   if (!v) {
     icon.className = 'login-icon';
     icon.innerHTML = '';
-    hint.textContent = 'Enter your email address or phone number';
+    hint.textContent = 'Enter your phone number';
     return;
   }
 
-  var isEmail = v.indexOf('@') !== -1;
   var isPhone = /^[0-9+]/.test(v);
 
-  if (isEmail) {
-    icon.className = 'login-icon email-icon';
-    icon.innerHTML = '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 6h16a1 1 0 011 1v10a1 1 0 01-1 1H4a1 1 0 01-1-1V7a1 1 0 011-1z"/><polyline points="3 7 12 13 21 7"/></svg>';
-    hint.textContent = 'Signing in with email';
-  } else if (isPhone) {
+  if (isPhone) {
     icon.className = 'login-icon phone-icon';
     icon.innerHTML = '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 16.9v3a2 2 0 01-2.2 2 19.8 19.8 0 01-8.6-3.1 19.5 19.5 0 01-6-6A19.8 19.8 0 012.1 4.2 2 2 0 014.1 2h3a2 2 0 012 1.7c.1 1 .4 2 .7 2.9a2 2 0 01-.5 2.1L8 10a16 16 0 006 6l1.3-1.3a2 2 0 012.1-.5c.9.3 1.9.6 2.9.7a2 2 0 011.7 2z"/></svg>';
-    hint.textContent = 'Signing in with phone — default password: password';
+    hint.textContent = 'Signing in with phone';
   } else {
     icon.className = 'login-icon';
     icon.innerHTML = '';
-    hint.textContent = 'Enter your email address or phone number';
+    hint.textContent = 'Enter your phone number';
   }
 }
 </script>
