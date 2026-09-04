@@ -7,10 +7,10 @@
   .pdf-page .logo{text-align:center;margin-bottom:5px;}
   .pdf-page .logo img{width:30mm;height:30mm;}
   .pdf-page .center{text-align:center;}
-  .pdf-page .org{font-size:12px;font-weight:800;text-transform:uppercase;letter-spacing:1px;}
-  .pdf-page .org-sub{font-size:7.5px;letter-spacing:1.5px;font-weight:bold;}
-  .pdf-page .org-line{font-size:7.5px;letter-spacing:1px;font-weight:bold;}
-  .pdf-page .org-tag{font-size:9px;font-weight:800;letter-spacing:2px;margin-bottom:2px;}
+  .pdf-page .org{font-size:14px;font-weight:800;text-transform:uppercase;letter-spacing:1px;}
+  .pdf-page .org-sub{font-size:9px;letter-spacing:1.5px;font-weight:800;}
+  .pdf-page .org-line{font-size:9px;letter-spacing:1px;font-weight:800;}
+  .pdf-page .org-tag{font-size:11px;font-weight:800;letter-spacing:2px;margin-bottom:2px;}
   .pdf-page .title{
     font-size:12px;font-weight:800;text-align:center;letter-spacing:2px;margin:6px 0;
     border-top:1px dashed #000;border-bottom:1px dashed #000;

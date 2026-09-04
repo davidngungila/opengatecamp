@@ -164,7 +164,7 @@
     padding-right:max(16px, env(safe-area-inset-right, 0px));
   }
   .footer-org strong{font-size:13px;letter-spacing:2px;text-transform:uppercase;color:#ffffff;}
-  .footer-org span{display:block;font-size:11px;color:#94a3b8;margin-top:5px;letter-spacing:.5px;}
+  .footer-org span{display:block;font-size:13px;font-weight:bold;color:#cbd5e1;margin-top:5px;letter-spacing:.5px;}
 
   /* Contribution form */
   .form-wrap{
@@ -293,7 +293,7 @@
     .form-wrap{padding:16px 13px;}
     .submit-row{grid-template-columns:1fr;}
     .submit-row .cancel{text-align:center;}
-    .footer-org span{font-size:10px;}
+    .footer-org span{font-size:11px;font-weight:bold;}
   }
   @media (max-height:500px){
     .hero{padding-top:20px;padding-bottom:28px;}

@@ -11,10 +11,10 @@
   .center{text-align:center;}
   .logo{text-align:center;margin-bottom:5px;}
   .logo img{width:34mm;height:34mm;}
-  .org{font-size:13px;font-weight:800;text-transform:uppercase;letter-spacing:1px;text-align:center;}
-  .org-sub{font-size:8px;letter-spacing:2px;text-align:center;font-weight:bold;}
-  .org-line{font-size:8px;letter-spacing:1px;text-align:center;font-weight:bold;}
-  .org-tag{font-size:10px;font-weight:800;letter-spacing:2px;text-align:center;margin-bottom:2px;}
+  .org{font-size:15px;font-weight:800;text-transform:uppercase;letter-spacing:1px;text-align:center;}
+  .org-sub{font-size:9.5px;letter-spacing:2px;text-align:center;font-weight:800;}
+  .org-line{font-size:9.5px;letter-spacing:1px;text-align:center;font-weight:800;}
+  .org-tag{font-size:11.5px;font-weight:800;letter-spacing:2px;text-align:center;margin-bottom:2px;}
   .event{font-size:11px;font-weight:bold;text-align:center;margin-top:3px;}
   .title{font-size:14px;font-weight:800;text-align:center;letter-spacing:3px;margin:6px 0;border-top:1px dashed #000;border-bottom:1px dashed #000;padding:4px 0;text-transform:uppercase;}
   .det{width:100%;font-size:10px;border-collapse:collapse;margin-top:4px;}

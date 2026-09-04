@@ -14,10 +14,10 @@
     padding: 0;
   }
   .center { text-align: center; }
-  .org { font-size: 13px; font-weight: 800; text-transform: uppercase; letter-spacing: 1px; }
-  .org-sub { font-size: 8px; letter-spacing: 2px; font-weight: bold; }
-  .org-line { font-size: 8px; letter-spacing: 1px; font-weight: bold; }
-  .org-tag { font-size: 10px; font-weight: 800; letter-spacing: 2px; margin-bottom: 2px; }
+  .org { font-size: 15px; font-weight: 800; text-transform: uppercase; letter-spacing: 1px; }
+  .org-sub { font-size: 9.5px; letter-spacing: 2px; font-weight: 800; }
+  .org-line { font-size: 9.5px; letter-spacing: 1px; font-weight: 800; }
+  .org-tag { font-size: 11.5px; font-weight: 800; letter-spacing: 2px; margin-bottom: 2px; }
   .logo { text-align: center; margin-bottom: 4px; }
   .logo img { width: 34mm; height: 34mm; }
   .title { font-size: 13px; font-weight: 800; text-align: center; letter-spacing: 3px; margin: 6px 0 2px; text-transform: uppercase; }
