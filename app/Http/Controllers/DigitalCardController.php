@@ -7,6 +7,7 @@ use App\Models\DigitalCard;
 use App\Models\DigitalCardContribution;
 use App\Models\Event;
 use App\Models\Message;
+use App\Models\Pledge;
 use App\Services\AccountingPostingService;
 use App\Services\QrCodeService;
 use App\Services\SmsService;
@@ -234,15 +235,57 @@ class DigitalCardController extends Controller
             ->where('status', 'active')
             ->firstOrFail();
 
-        $data = $request->validate([
+        $mode = $request->input('mode', 'contribute');
+
+        $baseRules = [
+            'mode' => 'nullable|in:contribute,pledge',
             'contributor_name' => 'nullable|string|max:255',
             'contributor_phone' => 'nullable|string|max:20',
             'contributor_email' => 'nullable|email|max:255',
             'amount' => 'required|numeric|min:100',
+            'note' => 'nullable|string|max:500',
+        ];
+
+        if ($mode === 'pledge') {
+            $data = $request->validate(array_merge($baseRules, [
+                'contributor_name' => 'required|string|max:255',
+                'due_date' => 'nullable|date|after_or_equal:today',
+            ]));
+
+            $pledge = DB::transaction(function () use ($data, $card) {
+                return Pledge::create([
+                    'event_id' => $card->event_id,
+                    'pledge_no' => Pledge::nextPledgeNo(),
+                    'name' => $data['contributor_name'],
+                    'email' => $data['contributor_email'] ?? null,
+                    'phone' => $data['contributor_phone'] ?? null,
+                    'amount' => (float) $data['amount'],
+                    'paid_amount' => 0,
+                    'status' => 'pending',
+                    'frequency' => 'one_time',
+                    'notes' => "Digital card pledge — {$card->card_no} ({$card->title})"
+                        .($data['note'] ? "\n".$data['note'] : ''),
+                    'pledge_date' => now()->toDateString(),
+                    'due_date' => $data['due_date'] ?? null,
+                    'created_by' => $card->card_no,
+                ]);
+            });
+
+            AuditLog::record(
+                'Digital card pledge received',
+                'Digital Cards',
+                "{$card->card_no} — {$pledge->pledge_no} — TZS ".number_format($pledge->amount)." from {$pledge->name}"
+            );
+
+            return redirect()->route('cards.show', $card->hash)
+                ->with('pledge_success', true)
+                ->with('pledge_amount', number_format($pledge->amount));
+        }
+
+        $data = $request->validate(array_merge($baseRules, [
             'method' => 'required|in:cash,bank,mobile',
             'reference_no' => 'nullable|string|max:100',
-            'note' => 'nullable|string|max:500',
-        ]);
+        ]));
 
         DB::transaction(function () use ($data, $card) {
             $posting = app(AccountingPostingService::class);

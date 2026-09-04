@@ -42,7 +42,10 @@ class DigitalCardsFlowTest extends TestCase
         $this->get("/card/{$card->hash}")
             ->assertOk()
             ->assertSee($card->title)
-            ->assertSee('Contribute Now');
+            ->assertSee('Contribute Now')
+            ->assertSee('Pledge to Give')
+            ->assertSee('Mobile Money')
+            ->assertSee('Bank Transfer');
 
         $this->post("/card/{$card->hash}/contribute", [
             'contributor_name' => 'Jane Doe',
@@ -82,6 +85,45 @@ class DigitalCardsFlowTest extends TestCase
             'amount' => 1000,
             'method' => 'cash',
         ])->assertStatus(404);
+    }
+
+    public function test_public_card_pledge_flow(): void
+    {
+        $card = DigitalCard::create([
+            'card_no' => DigitalCard::nextCardNo(),
+            'title' => 'Pledge Card',
+            'message' => 'Make a pledge.',
+            'card_type' => 'fundraising',
+            'background_color' => '#1a237e',
+            'accent_color' => '#ffd700',
+            'target_amount' => 500000,
+            'cta_text' => 'Contribute Now',
+            'hash' => Str::random(32),
+            'status' => 'active',
+            'is_published' => 1,
+        ]);
+
+        $this->post("/card/{$card->hash}/contribute", [
+            'mode' => 'pledge',
+            'contributor_name' => 'Peter Pledge',
+            'contributor_phone' => '+255700000000',
+            'amount' => 50000,
+            'due_date' => now()->addMonth()->toDateString(),
+            'note' => 'will pay after harvest',
+        ])->assertRedirect("/card/{$card->hash}");
+
+        $this->assertDatabaseHas('pledges', [
+            'name' => 'Peter Pledge',
+            'phone' => '+255700000000',
+            'amount' => 50000,
+            'paid_amount' => 0,
+            'status' => 'pending',
+            'frequency' => 'one_time',
+        ]);
+
+        $card->refresh();
+        $this->assertEquals(0, $card->contributions_count);
+        $this->assertEquals(0, $card->total_contributions);
     }
 
     public function test_admin_flow(): void
