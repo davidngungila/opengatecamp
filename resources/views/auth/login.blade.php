@@ -75,7 +75,7 @@
       <span>Connecting Students &middot; Restoring Faith &middot; Encountering Jesus</span>
     </div>
     <div class="slider-track">
-      <div class="slider-slide active" style="background-image:url('https://images.unsplash.com/photo-1523240795612-9a054b0db644?auto=format&fit=crop&w=2400&q=85')">
+      <div class="slider-slide active" style="background-image:url('https://res.cloudinary.com/dpyppzvzj/image/upload/v1775477696/0104_65_z85w9h.jpg')">
         <div class="slide-shade"></div>
         <div class="slide-caption">
           <span class="slide-tag">Connecting Students</span>
@@ -83,7 +83,7 @@
           <p>Bringing students together around God's Word, on campus and beyond.</p>
         </div>
       </div>
-      <div class="slider-slide" style="background-image:url('https://images.unsplash.com/photo-1441974231531-c6227db76b6e?auto=format&fit=crop&w=2400&q=85')">
+      <div class="slider-slide" style="background-image:url('https://res.cloudinary.com/dpyppzvzj/image/upload/v1775477708/0104_84_tapexp.jpg')">
         <div class="slide-shade"></div>
         <div class="slide-caption">
           <span class="slide-tag">Restoring Faith</span>
@@ -91,7 +91,7 @@
           <p>Worship, testimonies and quiet moments that restore hope and purpose.</p>
         </div>
       </div>
-      <div class="slider-slide" style="background-image:url('https://images.unsplash.com/photo-1519681393784-d120267933ba?auto=format&fit=crop&w=2400&q=85')">
+      <div class="slider-slide" style="background-image:url('https://res.cloudinary.com/dpyppzvzj/image/upload/v1775477760/0204_23_jc7eqh.jpg')">
         <div class="slide-shade"></div>
         <div class="slide-caption">
           <span class="slide-tag">Encountering Jesus</span>
@@ -99,7 +99,7 @@
           <p>Every session is an invitation to meet Jesus and be transformed by His grace.</p>
         </div>
       </div>
-      <div class="slider-slide" style="background-image:url('https://images.unsplash.com/photo-1502082553048-f009c37129b9?auto=format&fit=crop&w=2400&q=85')">
+      <div class="slider-slide" style="background-image:url('https://res.cloudinary.com/dpyppzvzj/image/upload/v1775477720/0104_95_qxaupn.jpg')">
         <div class="slide-shade"></div>
         <div class="slide-caption">
           <span class="slide-tag">OpenGate Camp Connect</span>
