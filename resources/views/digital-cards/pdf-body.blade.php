@@ -187,7 +187,7 @@
     }
 
     .donor-title {
-        font-size: 19px;
+        font-size: 24px;
         font-weight: bold;
         color: {{ $dark }};
     }
@@ -198,7 +198,7 @@
         margin-top: 5px;
         padding: 0 18px 5px;
 
-        font-size: 35px;
+        font-size: 42px;
         line-height: 1.1;
 
         font-weight: 900;
@@ -213,12 +213,12 @@
     ========================================================= */
 
     .body {
-        padding: 5px 55px 0;
+        padding: 5px 45px 0;
     }
 
     .paragraph {
-        font-size: 24px;
-        line-height: 1.45;
+        font-size: 27px;
+        line-height: 1.42;
 
         font-weight: 600;
 
