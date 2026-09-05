@@ -276,6 +276,12 @@ class SettingsController extends Controller
             'digital_card_sms_text' => 'nullable|string',
             'digital_card_status' => 'nullable|in:active,closed',
             'digital_card_background_image' => 'nullable|image|mimes:jpeg,png,webp|max:4096',
+            'digital_card_leader_event_name' => 'nullable|string|max:255',
+            'digital_card_leader_secretary_name' => 'nullable|string|max:255',
+            'digital_card_leader_treasurer_name' => 'nullable|string|max:255',
+            'digital_card_leader_event_stamp' => 'nullable|image|mimes:jpeg,png,webp|max:2048',
+            'digital_card_leader_secretary_stamp' => 'nullable|image|mimes:jpeg,png,webp|max:2048',
+            'digital_card_leader_treasurer_stamp' => 'nullable|image|mimes:jpeg,png,webp|max:2048',
         ]);
 
         if ($request->hasFile('digital_card_background_image')) {
@@ -299,6 +305,24 @@ class SettingsController extends Controller
         }
 
         foreach ([
+            'digital_card_leader_event_stamp' => 'digital_card.leader_event_stamp',
+            'digital_card_leader_secretary_stamp' => 'digital_card.leader_secretary_stamp',
+            'digital_card_leader_treasurer_stamp' => 'digital_card.leader_treasurer_stamp',
+        ] as $field => $key) {
+            if ($request->hasFile($field)) {
+                $image = $request->file($field);
+                $path = $image->store('digital-cards', 'public');
+
+                $old = (string) Setting::get($key, '');
+                if ($old !== '' && \Illuminate\Support\Facades\Storage::disk('public')->exists($old) && $old !== $path) {
+                    \Illuminate\Support\Facades\Storage::disk('public')->delete($old);
+                }
+
+                Setting::put($key, $path);
+            }
+        }
+
+        foreach ([
             'digital_card_title' => 'digital_card.title',
             'digital_card_message' => 'digital_card.message',
             'digital_card_target_amount' => 'digital_card.target_amount',
@@ -307,6 +331,9 @@ class SettingsController extends Controller
             'digital_card_cta_text' => 'digital_card.cta_text',
             'digital_card_sms_text' => 'digital_card.sms_text',
             'digital_card_status' => 'digital_card.status',
+            'digital_card_leader_event_name' => 'digital_card.leader_event_name',
+            'digital_card_leader_secretary_name' => 'digital_card.leader_secretary_name',
+            'digital_card_leader_treasurer_name' => 'digital_card.leader_treasurer_name',
         ] as $field => $key) {
             Setting::put($key, $data[$field] ?? null);
         }

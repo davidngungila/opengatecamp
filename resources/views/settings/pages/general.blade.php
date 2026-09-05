@@ -122,6 +122,13 @@
         </div>
         <div class="field full"><label>Card Message</label><textarea name="digital_card_message" rows="3" placeholder="Messages shown on the card the invited person opens">{{ $s('digital_card.message') }}</textarea></div>
         <div class="field full"><label>SMS Template (use {link} and {name} placeholders)</label><textarea name="digital_card_sms_text" rows="3" placeholder="View your special digital card: {link}">{{ $s('digital_card.sms_text') }}</textarea></div>
+        <div class="field full" style="margin-top:4px;padding-top:14px;border-top:1px solid var(--border)"><label style="font-weight:800;font-size:13px">Card Signatures</label></div>
+        <div class="field full"><label>Leader Name (Event Coordinator)</label><input type="text" name="digital_card_leader_event_name" value="{{ $s('digital_card.leader_event_name') }}" placeholder="Mratibu wa Tukio"></div>
+        <div class="field full"><label>Leader Name (Secretary)</label><input type="text" name="digital_card_leader_secretary_name" value="{{ $s('digital_card.leader_secretary_name') }}" placeholder="Katibu"></div>
+        <div class="field full"><label>Leader Name (Treasurer)</label><input type="text" name="digital_card_leader_treasurer_name" value="{{ $s('digital_card.leader_treasurer_name') }}" placeholder="Mweka Hazina"></div>
+        <div class="field"><label>Event Coordinator Stamp</label><input type="file" name="digital_card_leader_event_stamp" accept="image/jpeg,image/png,image/webp"><div style="font-size:12px;color:var(--text-tertiary);margin-top:4px">JPEG, PNG or WebP. Used instead of a signature line.</div></div>
+        <div class="field"><label>Secretary Stamp</label><input type="file" name="digital_card_leader_secretary_stamp" accept="image/jpeg,image/png,image/webp"><div style="font-size:12px;color:var(--text-tertiary);margin-top:4px">JPEG, PNG or WebP. Used instead of a signature line.</div></div>
+        <div class="field"><label>Treasurer Stamp</label><input type="file" name="digital_card_leader_treasurer_stamp" accept="image/jpeg,image/png,image/webp"><div style="font-size:12px;color:var(--text-tertiary);margin-top:4px">JPEG, PNG or WebP. Used instead of a signature line.</div></div>
       </div>
       <div class="flex" style="justify-content:flex-end;margin-top:16px">
         <button type="submit" class="btn btn-accent">Save Digital Card</button>

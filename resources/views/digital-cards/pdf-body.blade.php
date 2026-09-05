@@ -308,6 +308,78 @@
 
 
     /* =========================================================
+       SIGNATURES
+    ========================================================= */
+
+    .signatures {
+        width: 100%;
+        margin-top: 12px;
+
+        table-layout: fixed;
+    }
+
+    .signatures td {
+        width: 33.33%;
+
+        text-align: center;
+
+        vertical-align: bottom;
+    }
+
+    .signatures .sign-line {
+        margin: 0 16px;
+
+        border-bottom: 2px solid {{ $dark }};
+
+        height: 46px;
+    }
+
+    .signatures .sign-stamp {
+        height: 56px;
+
+        margin: 0 auto;
+
+        display: flex;
+        align-items: flex-end;
+        justify-content: center;
+    }
+
+    .signatures .sign-stamp img {
+        max-height: 54px;
+        max-width: 120px;
+
+        object-fit: contain;
+    }
+
+    .signatures .sign-name {
+        margin-top: 4px;
+
+        font-size: 15px;
+        font-weight: 900;
+
+        color: {{ $dark }};
+
+        text-transform: uppercase;
+    }
+
+    .signatures .sign-role {
+        font-size: 13px;
+        font-weight: bold;
+
+        color: {{ $primary }};
+
+        text-transform: uppercase;
+    }
+
+    .signatures .sign-contact {
+        font-size: 11.5px;
+        font-weight: bold;
+
+        color: {{ $dark }};
+    }
+
+
+    /* =========================================================
        MOTTO
     ========================================================= */
 
@@ -508,6 +580,59 @@
             </div>
 
         @endif
+
+
+        {{-- =====================================================
+             SIGNATURES
+        ====================================================== --}}
+        @php
+            $leadEventName = (string) \App\Models\Setting::get('digital_card.leader_event_name', '');
+            $leadEventStamp = (string) \App\Models\Setting::get('digital_card.leader_event_stamp', '');
+            $leadSecName = (string) \App\Models\Setting::get('digital_card.leader_secretary_name', '');
+            $leadSecStamp = (string) \App\Models\Setting::get('digital_card.leader_secretary_stamp', '');
+            $leadTreName = (string) \App\Models\Setting::get('digital_card.leader_treasurer_name', '');
+            $leadTreStamp = (string) \App\Models\Setting::get('digital_card.leader_treasurer_stamp', '');
+        @endphp
+        <table class="signatures">
+
+            <tr>
+
+                <td>
+                    @if($leadEventStamp)
+                    <div class="sign-stamp"><img src="{{ asset('storage/'.$leadEventStamp) }}" alt="Event Coordinator stamp"></div>
+                    @else
+                    <div class="sign-line"></div>
+                    @endif
+                    <div class="sign-name">{{ $leadEventName ?: 'Jina la Mratibu wa Tukio' }}</div>
+                    <div class="sign-role">Mratibu wa Tukio / Event Coordinator</div>
+                    <div class="sign-contact">0756 112 102</div>
+                </td>
+
+                <td>
+                    @if($leadSecStamp)
+                    <div class="sign-stamp"><img src="{{ asset('storage/'.$leadSecStamp) }}" alt="Secretary stamp"></div>
+                    @else
+                    <div class="sign-line"></div>
+                    @endif
+                    <div class="sign-name">{{ $leadSecName ?: 'Jina la Katibu' }}</div>
+                    <div class="sign-role">Katibu / Secretary</div>
+                    <div class="sign-contact">0756 112 102</div>
+                </td>
+
+                <td>
+                    @if($leadTreStamp)
+                    <div class="sign-stamp"><img src="{{ asset('storage/'.$leadTreStamp) }}" alt="Treasurer stamp"></div>
+                    @else
+                    <div class="sign-line"></div>
+                    @endif
+                    <div class="sign-name">{{ $leadTreName ?: 'Jina la Mhasibu' }}</div>
+                    <div class="sign-role">Mweka Hazina / Treasurer</div>
+                    <div class="sign-contact">0756 112 102</div>
+                </td>
+
+            </tr>
+
+        </table>
 
 
         {{-- =====================================================
