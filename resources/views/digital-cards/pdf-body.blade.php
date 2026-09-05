@@ -1,95 +1,643 @@
 <style>
-  @font-face { font-family: Poppins; src: url("{{ ($web ?? false) ? asset('fonts/Poppins-Bold.ttf') : storage_path('fonts/Poppins-Bold.ttf') }}"); font-weight: bold; font-style: normal; }
-  @font-face { font-family: Poppins; src: url("{{ ($web ?? false) ? asset('fonts/Poppins-Black.ttf') : storage_path('fonts/Poppins-Black.ttf') }}"); font-weight: 900; font-style: normal; }
-  @php
-    $bgUrl = null;
-    if ($card->image_path) {
-        if ($web ?? false) {
-            $bgUrl = asset('storage/'.$card->image_path);
-        } else {
-            $bgUrl = file_exists(storage_path('app/public/'.$card->image_path))
-                ? str_replace('\\', '/', storage_path('app/public/'.$card->image_path))
-                : null;
+    @font-face {
+        font-family: Poppins;
+        src: url("{{ ($web ?? false)
+            ? asset('fonts/Poppins-Bold.ttf')
+            : storage_path('fonts/Poppins-Bold.ttf') }}");
+        font-weight: bold;
+    }
+
+    @font-face {
+        font-family: Poppins;
+        src: url("{{ ($web ?? false)
+            ? asset('fonts/Poppins-Black.ttf')
+            : storage_path('fonts/Poppins-Black.ttf') }}");
+        font-weight: 900;
+    }
+
+    @php
+        $bgUrl = null;
+
+        if ($card->image_path) {
+            if ($web ?? false) {
+                $bgUrl = asset('storage/' . $card->image_path);
+            } else {
+                $path = storage_path('app/public/' . $card->image_path);
+
+                $bgUrl = file_exists($path)
+                    ? str_replace('\\', '/', $path)
+                    : null;
+            }
         }
+
+        $bc = $card->background_color ?: '#ffffff';
+
+        if ($bgUrl === null) {
+            $bc = '#ffffff';
+        }
+
+        /*
+        |--------------------------------------------------------------------------
+        | OPEN GATE COLORS
+        |--------------------------------------------------------------------------
+        */
+        $primary = '#0758B8';
+        $primaryDark = '#06448E';
+        $green = '#015425';
+        $dark = '#10233F';
+        $lightBlue = '#EAF4FF';
+        $gold = '#F2C300';
+    @endphp
+
+
+    * {
+        box-sizing: border-box;
+        margin: 0;
+        padding: 0;
     }
-    $bc = (string) ($card->background_color ?: '#ffffff');
-    if ($bgUrl === null) {
-        $bc = '#ffffff';
+
+    .pdf-page {
+        width: 1080px;
+        height: 1350px;
+        position: relative;
+        overflow: hidden;
+
+        font-family: Poppins, Arial, sans-serif;
+        color: {{ $dark }};
+
+        background: {{ $bc }};
+
+        @if($bgUrl)
+            background-image: url("{{ $bgUrl }}");
+            background-size: cover;
+            background-position: center;
+        @endif
     }
-    $navy = '#1a3a6e';
-    $navyDark = '#0f2a52';
-  @endphp
-  .pdf-page{font-family:Poppins,Arial,sans-serif;color:{{ $navy }};width:1080px;height:1350px;position:relative;line-height:1.3;background-color:{{ $bc }};@if($bgUrl) background-image:url("{{ $bgUrl }}");background-size:cover;background-position:center;@endif}
-  .pdf-page *{box-sizing:border-box;margin:0;padding:0;}
-  .pdf-page .scrim{position:absolute;top:0;left:0;width:1080px;height:1350px;background:rgba(255,255,255,.06);}
-  .pdf-page .sheet{padding:0 46px;position:relative;overflow:hidden;}
-  .pdf-page .logo{text-align:center;padding-top:18px;margin-bottom:4px;}
-  .pdf-page .logo img{width:90px;height:90px;}
-  .pdf-page .hline{width:100%;height:3px;background:{{ $card->accent_color }};margin-top:6px;}
-  .pdf-page .org-head{text-align:center;font-weight:900;color:{{ $navy }};letter-spacing:.5px;margin-top:10px;font-size:27px;line-height:1.15;text-transform:uppercase;}
-  .pdf-page .org-jimbo{text-align:center;font-weight:900;color:{{ $navy }};letter-spacing:.5px;margin-top:5px;font-size:24px;line-height:1.15;text-transform:uppercase;}
-  .pdf-page .org-season{text-align:center;font-weight:900;color:{{ $navy }};letter-spacing:1.5px;margin-top:7px;font-size:29px;line-height:1.1;text-transform:uppercase;}
-  .pdf-page .lint{width:90px;height:3px;background:{{ $card->accent_color }};margin:10px auto 0;}
-  .pdf-page .letter-title{font-size:27px;font-weight:900;text-align:center;color:{{ $navy }};margin:12px 0 2px;line-height:1.2;text-transform:uppercase;}
-  .pdf-page .title-line{width:120px;height:2.5px;background:{{ $card->accent_color }};margin:5px auto 10px;}
-  .pdf-page .donor-title{font-size:22px;font-weight:bold;color:{{ $navy }};text-align:center;margin:2px 0;line-height:1.2;}
-  .pdf-page .donor-name{font-size:24px;font-weight:900;color:{{ $navy }};text-align:center;margin:6px 0;line-height:1.2;}
-  .pdf-page .aff-line{font-size:19px;font-weight:bold;color:{{ $navy }};text-align:left;margin:5px 0 0;line-height:1.25;}
-  .pdf-page .body-text{font-size:20px;color:{{ $navy }};font-weight:600;text-align:justify;margin-top:10px;line-height:1.45;}
-  .pdf-page .body-text b{font-weight:900;}
-  .pdf-page .amt-note{font-size:21px;font-weight:900;color:{{ $navy }};text-align:center;margin:10px 0 3px;line-height:1.3;}
-  .pdf-page .qr{text-align:center;margin:8px 0 0;}
-  .pdf-page .qr img{width:96px;height:96px;}
-  .pdf-page .qr-cap{text-align:center;font-size:17px;font-weight:bold;color:{{ $navy }};margin-bottom:3px;}
-  .pdf-page .foot{margin-top:8px;text-align:center;font-size:17px;line-height:1.4;border-top:2px dashed {{ $navy }};padding-top:7px;color:{{ $navy }};font-weight:700;}
+
+    .pdf-page .scrim {
+        position: absolute;
+        inset: 0;
+        width: 1080px;
+        height: 1350px;
+        background: rgba(255,255,255,.90);
+    }
+
+    .content {
+        position: relative;
+        z-index: 2;
+        width: 100%;
+        min-height: 1350px;
+        padding-bottom: 25px;
+    }
+
+    /* =========================================================
+       LOGO
+    ========================================================= */
+
+    .logo-area {
+        text-align: center;
+        padding-top: 24px;
+        padding-bottom: 12px;
+    }
+
+    .logo-area img {
+        width: 105px;
+        height: 105px;
+        object-fit: contain;
+    }
+
+
+    /* =========================================================
+       ORGANIZATION HEADER
+    ========================================================= */
+
+    .organization {
+        text-align: center;
+        padding: 0 45px 15px;
+    }
+
+    .organization .main {
+        font-size: 30px;
+        font-weight: 900;
+        letter-spacing: .8px;
+        color: {{ $dark }};
+        line-height: 1.15;
+        text-transform: uppercase;
+    }
+
+    .organization .sub {
+        margin-top: 6px;
+        font-size: 21px;
+        font-weight: bold;
+        letter-spacing: 1.2px;
+        color: {{ $primary }};
+        text-transform: uppercase;
+    }
+
+
+    /* =========================================================
+       BLUE CAMPAIGN HEADER — TAFES STYLE
+    ========================================================= */
+
+    .campaign-header {
+        width: 100%;
+        background: {{ $primary }};
+        color: #ffffff;
+        text-align: center;
+
+        padding: 20px 30px 22px;
+
+        margin-top: 5px;
+    }
+
+    .campaign-header .small {
+        font-size: 20px;
+        font-weight: bold;
+        letter-spacing: 2px;
+        text-transform: uppercase;
+    }
+
+    .campaign-header .large {
+        margin-top: 5px;
+
+        font-size: 43px;
+        line-height: 1.05;
+        font-weight: 900;
+
+        text-transform: uppercase;
+    }
+
+
+    /* =========================================================
+       DONOR
+    ========================================================= */
+
+    .donor-section {
+        text-align: center;
+        padding: 18px 45px 8px;
+    }
+
+    .donor-title {
+        font-size: 19px;
+        font-weight: bold;
+        color: {{ $dark }};
+    }
+
+    .donor-name {
+        display: inline-block;
+
+        margin-top: 5px;
+        padding: 0 18px 5px;
+
+        font-size: 35px;
+        line-height: 1.1;
+
+        font-weight: 900;
+        color: {{ $primary }};
+
+        border-bottom: 4px solid {{ $primary }};
+    }
+
+
+    /* =========================================================
+       BODY
+    ========================================================= */
+
+    .body {
+        padding: 5px 55px 0;
+    }
+
+    .paragraph {
+        font-size: 20px;
+        line-height: 1.42;
+
+        font-weight: 600;
+
+        text-align: center;
+
+        margin-top: 13px;
+    }
+
+    .paragraph b {
+        font-weight: 900;
+        color: {{ $primary }};
+    }
+
+
+    /* =========================================================
+       CONTRIBUTION BOX
+    ========================================================= */
+
+    .contribution-box {
+        margin: 18px 40px 12px;
+
+        background: {{ $lightBlue }};
+
+        border-left: 8px solid {{ $primary }};
+        border-right: 8px solid {{ $primary }};
+
+        border-radius: 8px;
+
+        text-align: center;
+
+        padding: 13px 20px;
+    }
+
+    .contribution-box .label {
+        font-size: 18px;
+        font-weight: bold;
+        color: {{ $dark }};
+        text-transform: uppercase;
+    }
+
+    .contribution-box .amount {
+        font-size: 38px;
+        font-weight: 900;
+        color: {{ $primary }};
+        line-height: 1.1;
+
+        margin-top: 2px;
+    }
+
+    .contribution-box .target {
+        font-size: 17px;
+        font-weight: bold;
+        color: {{ $dark }};
+        margin-top: 4px;
+    }
+
+
+    /* =========================================================
+       PAYMENT SECTION
+    ========================================================= */
+
+    .payment-title {
+        text-align: center;
+
+        margin-top: 10px;
+        margin-bottom: 8px;
+
+        font-size: 22px;
+        font-weight: 900;
+
+        color: {{ $primary }};
+
+        text-transform: uppercase;
+    }
+
+    .payment {
+        margin: 0 50px;
+
+        display: flex;
+        justify-content: center;
+        gap: 35px;
+    }
+
+    .payment-card {
+        width: 430px;
+
+        border: 2px solid {{ $primary }};
+        border-radius: 10px;
+
+        padding: 10px 15px;
+
+        text-align: center;
+    }
+
+    .payment-card .method {
+        font-size: 17px;
+        font-weight: 900;
+        color: {{ $dark }};
+        text-transform: uppercase;
+    }
+
+    .payment-card .number {
+        margin-top: 2px;
+
+        font-size: 27px;
+        font-weight: 900;
+
+        color: {{ $primary }};
+    }
+
+    .payment-card .name {
+        font-size: 15px;
+        font-weight: bold;
+        color: {{ $dark }};
+    }
+
+
+    /* =========================================================
+       QR
+    ========================================================= */
+
+    .qr-section {
+        text-align: center;
+        margin-top: 10px;
+    }
+
+    .qr-title {
+        font-size: 16px;
+        font-weight: bold;
+        color: {{ $dark }};
+        margin-bottom: 5px;
+    }
+
+    .qr img {
+        width: 105px;
+        height: 105px;
+        object-fit: contain;
+    }
+
+
+    /* =========================================================
+       MOTTO
+    ========================================================= */
+
+    .motto {
+        text-align: center;
+
+        margin: 8px 50px 0;
+
+        font-size: 17px;
+        font-weight: 900;
+
+        color: {{ $primary }};
+
+        font-style: italic;
+    }
+
+
+    /* =========================================================
+       FOOTER
+    ========================================================= */
+
+    .footer {
+        margin-top: 12px;
+
+        background: {{ $primary }};
+
+        color: #ffffff;
+
+        padding: 9px 35px;
+
+        text-align: center;
+    }
+
+    .footer .contact {
+        font-size: 16px;
+        font-weight: bold;
+    }
+
+    .footer .bottom {
+        margin-top: 3px;
+
+        font-size: 14px;
+        font-weight: 600;
+    }
+
 </style>
+
+
 <div class="pdf-page">
-  @if($bgUrl)<div class="scrim"></div>@endif
-  <div class="sheet">
 
-  <div class="logo">
-    @if($web ?? false)
-    <img src="{{ asset('logo.png') }}" alt="OpenGate Camp Connect">
-    @elseif(file_exists(public_path('logo.png')))
-    <img src="{{ public_path('logo.png') }}" alt="OpenGate Camp Connect">
+    @if($bgUrl)
+        <div class="scrim"></div>
     @endif
-  </div>
 
-  <div class="hline"></div>
-  <div class="org-head">UMOJA WA VYUO &mdash; KARISMATIKI KATOLIKI TANZANIA</div>
-  <div class="org-jimbo">JIMBO KUU KATOLIKI LA ARUSHA NA JIMBO LA MOSHI</div>
-  <div class="org-season">OPEN GATE SEASON THREE</div>
-  <div class="lint"></div>
 
-  <div class="letter-title">MCHANGO WA OPEN GATE CAMP SEASON THREE</div>
-  <div class="title-line"></div>
+    <div class="content">
 
-  <div class="donor-title">Ask./Prof./Mch./Mhe./Dkt./Bw. &amp; Bi.</div>
-  <div class="donor-name"><span class="no">[</span>JINA LA MCHANGIAJI<span class="no">]</span></div>
+        {{-- =====================================================
+             LOGO
+        ====================================================== --}}
+        <div class="logo-area">
 
-  <div class="aff-line">Umoja wa Vyuo &ndash; Karismatiki Katoliki Tanzania</div>
-  <div class="aff-line">Jimbo la Moshi na Arusha</div>
+            @if($web ?? false)
 
-  <div class="body-text">
-    Tunayo furaha kukualika kushiriki katika Open Gate Camp Season Three, tukio linalolenga kuwaunganisha, kuwajenga na kuwawezesha vijana wa vyuo katika imani, mahusiano, uongozi na maendeleo ya maisha.
-  </div>
+                <img
+                    src="{{ asset('logo.png') }}"
+                    alt="OpenGate Camp Connect"
+                >
 
-  <div class="body-text">
-    Kwa mwaka huu, Open Gate Camp Season Three inalenga kukusanya jumla ya <b>TZS 20,000,000/=</b> kwa ajili ya kugharamia mahitaji mbalimbali ya Camp, ikiwemo usafiri, chakula, malazi, vifaa, mafunzo na shughuli za huduma. Ukiwa mwanachama, mshirika, rafiki au mdau wa Open Gate, tunaomba mchango wako wa <b>TZS 15,000/=</b> au zaidi ili kwa pamoja tufanikishe jambo hili. Kila mchango una thamani na kila mmoja ana nafasi katika mafanikio ya Camp hii.
-  </div>
+            @elseif(file_exists(public_path('logo.png')))
 
-  <div class="amt-note">TZS 15,000/= au zaidi · Kila mchango una thamani</div>
+                <img
+                    src="{{ public_path('logo.png') }}"
+                    alt="OpenGate Camp Connect"
+                >
 
-  @if($qrData)
-  <div class="qr">
-    <div class="qr-cap">Tuma kwa kuchanganua hii QR / scan to contribute online:</div>
-    <img src="{{ $qrData }}" alt="QR">
-  </div>
-  @endif
+            @endif
 
-  <div class="foot">
-    {{ $card->card_no }}@if($card->title) · {{ $card->title }}@endif · OpenGate Camp Connect · Mchango wako una thamani
-  </div>
+        </div>
 
-  </div>
+
+        {{-- =====================================================
+             ORGANIZATION
+        ====================================================== --}}
+        <div class="organization">
+
+            <div class="main">
+                UMOJA WA VYUO
+            </div>
+
+            <div class="sub">
+                KARISMATIKI KATOLIKI TANZANIA
+            </div>
+
+            <div class="sub">
+                JIMBO KUU KATOLIKI LA ARUSHA NA JIMBO LA MOSHI
+            </div>
+
+        </div>
+
+
+        {{-- =====================================================
+             MAIN BLUE HEADER
+        ====================================================== --}}
+        <div class="campaign-header">
+
+            <div class="small">
+                OPEN GATE CAMP
+            </div>
+
+            <div class="large">
+                SEASON THREE
+            </div>
+
+        </div>
+
+
+        {{-- =====================================================
+             DONOR
+        ====================================================== --}}
+        <div class="donor-section">
+
+            <div class="donor-title">
+                Ask./Prof./Mch./Mhe./Dkt./Bw. &amp; Bi.
+            </div>
+
+            <div class="donor-name">
+                [JINA LA MCHANGIAJI]
+            </div>
+
+        </div>
+
+
+        {{-- =====================================================
+             THREE SHORT PARAGRAPHS
+        ====================================================== --}}
+        <div class="body">
+
+            <div class="paragraph">
+
+                Tunayo furaha kukualika kushiriki katika
+                <b>Open Gate Camp Season Three</b>,
+                tukio linalolenga kuwaunganisha na kuwajenga
+                vijana wa vyuo katika <b>imani, umoja na maendeleo.</b>
+
+            </div>
+
+
+            <div class="paragraph">
+
+                Mwaka huu tunalenga kukusanya
+                <b>TZS 20,000,000/=</b> kwa ajili ya kugharamia
+                mahitaji muhimu ya Camp. Tunaomba mchango wako wa
+                <b>TZS 15,000/= au zaidi</b> ili kwa pamoja tufanikishe
+                huduma hii.
+
+            </div>
+
+
+            <div class="paragraph">
+
+                Mchango wako ni sehemu ya mafanikio ya
+                <b>Open Gate Camp Season Three.</b>
+                Kila kiasi kina thamani na kina mchango katika
+                kuwafikia, kuwaunganisha na kuwajenga vijana.
+
+            </div>
+
+        </div>
+
+
+        {{-- =====================================================
+             CONTRIBUTION
+        ====================================================== --}}
+        <div class="contribution-box">
+
+            <div class="label">
+                Mchango Unaopendekezwa
+            </div>
+
+            <div class="amount">
+                TZS 15,000/=
+            </div>
+
+            <div class="target">
+                Lengo la Camp: TZS 20,000,000/=
+            </div>
+
+        </div>
+
+
+        {{-- =====================================================
+             PAYMENT
+        ====================================================== --}}
+        <div class="payment-title">
+            Changia Kupitia
+        </div>
+
+
+        <div class="payment">
+
+            <div class="payment-card">
+
+                <div class="method">
+                    M-PESA
+                </div>
+
+                <div class="number">
+                    0756 112 102
+                </div>
+
+                <div class="name">
+                    TAFES MoCU
+                </div>
+
+            </div>
+
+
+            <div class="payment-card">
+
+                <div class="method">
+                    NMB ACCOUNT
+                </div>
+
+                <div class="number">
+                    40310079853
+                </div>
+
+                <div class="name">
+                    TAFES MoCU
+                </div>
+
+            </div>
+
+        </div>
+
+
+        {{-- =====================================================
+             QR
+        ====================================================== --}}
+        @if($qrData)
+
+            <div class="qr-section">
+
+                <div class="qr-title">
+                    Scan QR Code kuchangia Online
+                </div>
+
+                <div class="qr">
+                    <img
+                        src="{{ $qrData }}"
+                        alt="Scan to contribute"
+                    >
+                </div>
+
+            </div>
+
+        @endif
+
+
+        {{-- =====================================================
+             MOTTO
+        ====================================================== --}}
+        <div class="motto">
+
+            “Wahubirije Wasipopelekwa?...” — Warumi 10:15
+
+        </div>
+
+
+        {{-- =====================================================
+             FOOTER
+        ====================================================== --}}
+        <div class="footer">
+
+            <div class="contact">
+                OPEN GATE CAMP SEASON THREE
+            </div>
+
+            <div class="bottom">
+                {{ $card->card_no }}
+                · OpenGate Camp Connect
+                · Mchango wako una thamani
+            </div>
+
+        </div>
+
+    </div>
+
 </div>
