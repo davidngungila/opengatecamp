@@ -25,6 +25,26 @@
   </div>
 
   @if($tab === 'users')
+  <div class="glass-card" style="margin-bottom:20px">
+    <form method="POST" action="{{ route('users.welcome-message') }}">
+      @csrf
+      <div style="display:flex;gap:18px;align-items:flex-end;flex-wrap:wrap">
+        <div style="flex:1;min-width:280px">
+          <label style="font-size:13px;font-weight:800;display:block;margin-bottom:6px">Welcome SMS Content</label>
+          <textarea name="welcome_message" rows="3" style="width:100%;min-height:84px" placeholder="Karibu {name}! Login at https://opengatecamp.iccrtz.org/login with your phone number.">{{ $welcomeMessage }}</textarea>
+          <small style="color:var(--text-muted)">Placeholders: <code>{name}</code> and <code>{phone}</code> are replaced with each user's details.</small>
+        </div>
+        <button type="submit" class="btn btn-secondary">Save Content</button>
+      </div>
+    </form>
+    <form method="POST" action="{{ route('users.welcome.bulk') }}" onsubmit="return confirm('Send the welcome SMS to all {{ $users->whereNotNull('phone')->where('phone','!=','')->count() }} users with a phone number?')">
+      @csrf
+      <div style="margin-top:10px;display:flex;justify-content:flex-end">
+        <button type="submit" class="btn btn-accent">Send to All</button>
+      </div>
+    </form>
+  </div>
+
   <div class="table-card">
     <div class="table-scroll">
       <table class="data-table">
@@ -49,6 +69,10 @@
                 </button>
                 <div class="action-menu" id="am-users-{{ $u->id }}">
                   @if(!$isCommittee)
+                  <form method="POST" action="{{ route('users.welcome', $u) }}">
+                    @csrf
+                    <button type="submit">Send Welcome SMS</button>
+                  </form>
                   <button type="button" data-edit-user
                           data-id="{{ $u->id }}" data-name="{{ $u->name }}" data-email="{{ $u->email }}"
                           data-phone="{{ $u->phone }}" data-role="{{ $u->role_id }}" data-status="{{ $u->status }}">Edit Role / Profile</button>

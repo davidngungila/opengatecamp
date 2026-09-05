@@ -85,6 +85,9 @@ Route::middleware(['auth', 'committee.readonly'])->group(function () {
         Route::patch('/users/{user}/password', [UserController::class, 'resetPassword'])->name('users.password');
         Route::get('/api/users/{user}', [UserController::class, 'apiUserDetail'])->name('users.api');
         Route::put('/roles/{role}/permissions', [UserController::class, 'updatePermissions'])->name('roles.permissions');
+        Route::post('/users/welcome-message', [UserController::class, 'saveWelcomeMessage'])->name('users.welcome-message');
+        Route::post('/users/{user}/welcome', [UserController::class, 'sendWelcome'])->name('users.welcome');
+        Route::post('/users/welcome/bulk', [UserController::class, 'sendWelcomeBulk'])->name('users.welcome.bulk');
 
         Route::get('/settings', fn () => redirect()->route('settings.page.general'))->name('settings.index');
 
