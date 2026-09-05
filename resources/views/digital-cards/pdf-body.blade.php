@@ -14,10 +14,15 @@
         }
     }
     $bc = (string) ($card->background_color ?: '#ffffff');
-    $bchex = ltrim($bc, '#');
-    if (strlen($bchex) === 3) { $bchex = $bchex[0].$bchex[0].$bchex[1].$bchex[1].$bchex[2].$bchex[2]; }
-    $brightness = (0.299*hexdec(substr($bchex,0,2)) + 0.587*hexdec(substr($bchex,2,2)) + 0.114*hexdec(substr($bchex,4,2)));
-    $isLight = ($bgUrl !== null) ? false : $brightness > 150;
+    if ($bgUrl === null) {
+        $bc = '#ffffff';
+        $isLight = true;
+    } else {
+        $bchex = ltrim($bc, '#');
+        if (strlen($bchex) === 3) { $bchex = $bchex[0].$bchex[0].$bchex[1].$bchex[1].$bchex[2].$bchex[2]; }
+        $brightness = (0.299*hexdec(substr($bchex,0,2)) + 0.587*hexdec(substr($bchex,2,2)) + 0.114*hexdec(substr($bchex,4,2)));
+        $isLight = $brightness > 150;
+    }
     $textColor = $isLight ? '#0f172a' : '#ffffff';
     $mutedColor = $isLight ? '#475569' : 'rgba(255,255,255,.94)';
   @endphp
