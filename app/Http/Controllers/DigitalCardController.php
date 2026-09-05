@@ -633,17 +633,19 @@ class DigitalCardController extends Controller
         $this->streamPdf($card);
     }
 
-    private function streamPdf(DigitalCard $card, string $dest = 'D', ?string $recipientName = null): void
+    private function streamPdf(DigitalCard $card, string $dest = 'D', ?string $recipientName = null, ?string $recipientToken = null): void
     {
         if (strtolower((string) $card->background_color) === '#1a237e') {
             $card->background_color = '#ffffff';
         }
 
-        $qrData = app(QrCodeService::class)->pngDataUri(
-            "OGCM|CARD|{$card->card_no}|{$card->hash}"
-        );
+        $publicUrl = $recipientToken
+            ? $card->public_url.'?r='.$recipientToken
+            : $card->public_url;
 
-        $html = view('digital-cards.pdf', compact('card', 'qrData', 'recipientName'))->render();
+        $qrData = app(QrCodeService::class)->pngDataUri($publicUrl);
+
+        $html = view('digital-cards.pdf', compact('card', 'qrData', 'recipientName', 'publicUrl'))->render();
 
         $mpdf = new Mpdf([
             'mode' => 'utf-8',
@@ -662,9 +664,7 @@ class DigitalCardController extends Controller
 
     public function preview(DigitalCard $card)
     {
-        $qrData = app(QrCodeService::class)->pngDataUri(
-            "OGCM|CARD|{$card->card_no}|{$card->hash}"
-        );
+        $qrData = app(QrCodeService::class)->pngDataUri($card->public_url);
 
         return view('digital-cards.preview', compact('card', 'qrData'));
     }
@@ -676,6 +676,7 @@ class DigitalCardController extends Controller
             ->firstOrFail();
 
         $recipientName = null;
+        $recipientToken = null;
 
         if ($token = $request->query('r')) {
             $recipient = DigitalCardRecipient::where('digital_card_id', $card->id)
@@ -685,9 +686,13 @@ class DigitalCardController extends Controller
             if ($recipient && $recipient->name) {
                 $recipientName = $recipient->name;
             }
+
+            if ($recipient) {
+                $recipientToken = $recipient->token;
+            }
         }
 
-        $this->streamPdf($card, 'I', $recipientName);
+        $this->streamPdf($card, 'I', $recipientName, $recipientToken);
     }
 
     public function contribute(Request $request, string $hash)

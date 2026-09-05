@@ -281,6 +281,7 @@
         color: {{ $primary }};
         margin-top: 8px;
         line-height: 1.4;
+        text-align: center;
     }
 
 
@@ -544,7 +545,8 @@
                 $noteTreBlock = ($noteTreName ?: '[Jina]').' — '.($noteTrePhone ?: '[Namba ya Simu]');
             @endphp
             <div class="note">
-                Unaweza kuwasilisha mchango wako sasa kupitia Lipa Namba ya Vodacom: 67676666 au kwa namba ya simu 0756 112 102. Kwa mawasiliano zaidi kuhusu namna ya kuwasilisha mchango wako, wasiliana na Katibu {{ $noteSecBlock }} au Mhazini {{ $noteTreBlock }}.
+                Unaweza kuwasilisha mchango wako sasa kupitia Lipa Namba ya Vodacom: 67676666 au kwa namba ya simu 0756 112 102.<br>
+                Kwa mawasiliano zaidi kuhusu namna ya kuwasilisha mchango wako, wasiliana na Katibu {{ $noteSecBlock }} au Mhazini {{ $noteTreBlock }}.
             </div>
 
         </div>

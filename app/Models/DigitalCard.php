@@ -68,9 +68,12 @@ class DigitalCard extends Model
 
     public static function nextCardNo(): string
     {
-        $max = (int) substr((string) (static::query()->max('card_no') ?? 'DC-0000'), -4);
+        do {
+            $suffix = strtoupper(substr(str_shuffle('ABCDEFGHJKMNPQRSTUVWXYZ23456789'), 0, 5));
+            $cardNo = 'DC-'.date('Y').'-'.$suffix;
+        } while (static::where('card_no', $cardNo)->exists());
 
-        return 'DC-'.str_pad((string) ($max + 1), 4, '0', STR_PAD_LEFT);
+        return $cardNo;
     }
 
     public function getTypeLabel(): string
