@@ -30,6 +30,9 @@ Route::get('/card/{hash}', [DigitalCardController::class, 'show'])->name('cards.
 Route::get('/card/{hash}/pdf', [DigitalCardController::class, 'publicPdf'])->name('cards.publicPdf');
 Route::post('/card/{hash}/contribute', [DigitalCardController::class, 'contribute'])->name('cards.contribute');
 
+// Short personalised card link for SMS (redirects to the full card view)
+Route::get('/c/{code}', [DigitalCardController::class, 'lite'])->name('cards.lite');
+
 Route::middleware(['auth', 'committee.readonly'])->group(function () {
 
     Route::get('/', [DashboardController::class, 'index'])->name('dashboard');
@@ -157,6 +160,8 @@ Route::middleware(['auth', 'committee.readonly'])->group(function () {
     Route::post('/digital-cards/{card}/status', [DigitalCardController::class, 'updateStatus'])->name('cards.status');
     Route::post('/digital-cards/{card}/add-contribution', [DigitalCardController::class, 'addContribution'])->name('cards.addContribution');
     Route::post('/digital-cards/{card}/send-sms', [DigitalCardController::class, 'sendSms'])->name('cards.sendSms');
+    Route::post('/digital-cards/{card}/add-list', [DigitalCardController::class, 'addList'])->name('cards.addList');
+    Route::post('/digital-cards/{card}/send-pending', [DigitalCardController::class, 'sendPending'])->name('cards.sendPending');
     Route::post('/digital-cards/recipients/{recipient}/delivery', [DigitalCardController::class, 'checkRecipientDelivery'])->name('cards.recipient.delivery');
     Route::post('/digital-cards/recipients/{recipient}/resend', [DigitalCardController::class, 'resendSms'])->name('cards.recipient.resend');
     Route::delete('/digital-cards/recipients/{recipient}', [DigitalCardController::class, 'destroyRecipient'])->name('cards.recipient.destroy');

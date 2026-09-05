@@ -15,7 +15,10 @@
       {{ $totals['invited'] }} invited · {{ $totals['delivered'] }} delivered · {{ $totals['failed'] }} failed · {{ $totals['pending'] }} pending
     </div></div>
     @if(!$isCommittee)
-    <button type="button" class="btn btn-accent" data-drawer-open="inviteNewDrawer">+ New Invite</button>
+    <div style="display:flex;gap:8px">
+      <button type="button" class="btn btn-secondary" data-drawer-open="inviteNewDrawer">Add List</button>
+      <button type="button" class="btn btn-accent" data-drawer-open="inviteNewDrawer">+ New Invite</button>
+    </div>
     @endif
   </div>
 
@@ -31,6 +34,14 @@
       @foreach($deliveryOptions as $k=>$s)<option value="{{ $k }}" {{ $v('delivery')===$k ? 'selected' : '' }}>{{ $s }}</option>@endforeach
     </select>
     <a class="btn btn-secondary btn-sm" href="{{ route('cards.export', array_filter($filters, fn($f) => $f !== '' && $f !== null)) }}">Export</a>
+    @if(!$isCommittee && $totals['pending'] > 0)
+    <form method="POST" action="{{ route('cards.sendPending', $card) }}">@csrf
+      <button type="submit" class="btn btn-accent btn-sm" data-confirm
+        data-confirm-title="Send {{ $totals['pending'] }} pending invites?"
+        data-confirm-message="SMS will be sent to everyone on the list who has not been invited yet."
+        data-confirm-label="Send SMS">Send SMS to {{ $totals['pending'] }} pending</button>
+    </form>
+    @endif
   </form>
 
   <div class="table-card">
@@ -51,7 +62,7 @@
             data-mid="{{ $r->message_id }}"
             data-sent-at="{{ $r->sent_at?->format('d M Y H:i') }}"
             data-checked-at="{{ $r->delivery_checked_at?->format('d M Y H:i') }}"
-            data-link="{{ route('cards.show', $r->digitalCard?->hash).'?r='.$r->token }}">
+            data-link="{{ $r->short_link }}">
             <td>
               <div class="cell-user">
                 <div class="cell-avatar">{{ collect(explode(' ', $r->name ?? '?'))->map(fn($w) => mb_substr($w,0,1))->take(2)->implode('') }}</div>
@@ -96,7 +107,7 @@
             </td>
           </tr>
           @empty
-          <tr><td colspan="6"><div class="empty-state" style="padding:40px 20px"><h3>No invitations yet</h3><p>Send an SMS invite to bring the first person onboard.</p>@if(!$isCommittee)<button type="button" class="btn btn-accent" data-drawer-open="inviteNewDrawer">+ New Invite</button>@endif</div></td></tr>
+          <tr><td colspan="6"><div class="empty-state" style="padding:40px 20px"><h3>No invitations yet</h3><p>Add a list first, then send SMS invites with each person's short card link.</p>@if(!$isCommittee)<button type="button" class="btn btn-accent" data-drawer-open="inviteNewDrawer">Add List</button>@endif</div></td></tr>
           @endforelse
         </tbody>
       </table>
@@ -112,23 +123,21 @@
 <div class="drawer-overlay" id="inviteNewDrawer">
   <div class="drawer-panel">
     <div class="drawer-head">
-      <div><h3>New Invite</h3><p>Sent by SMS to each person with their own personalised card link</p></div>
+      <div><h3>New Invite / Add List</h3><p>Add people to the list, or send the SMS invite straight away. Each person gets their own short personalised link.</p></div>
       <button type="button" class="modal-close" data-drawer-close><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><path d="M18 6L6 18M6 6l12 12"/></svg></button>
     </div>
-    <form method="POST" action="{{ route('cards.sendSms', $card) }}" id="sendSmsForm">
-      @csrf
-      <div class="drawer-body">
-        <div style="display:flex;align-items:center;justify-content:space-between;gap:8px;margin-bottom:10px">
-          <div class="text-muted" style="font-size:12px">Invite status changes to <b>Invited</b> once the SMS is sent.</div>
-          <button type="button" class="btn btn-secondary btn-sm" onclick="addInviteRow()">+ Add Person</button>
-        </div>
-        <div id="smsInviteRows"></div>
+    <div class="drawer-body">
+      <div style="display:flex;align-items:center;justify-content:space-between;gap:8px;margin-bottom:10px">
+        <div class="text-muted" style="font-size:12px"><b>Save List</b> adds them as pending (SMS later). <b>Invite &amp; Send SMS</b> invites them now.</div>
+        <button type="button" class="btn btn-secondary btn-sm" onclick="addInviteRow()">+ Add Person</button>
       </div>
-      <div class="drawer-foot">
-        <button type="button" class="btn btn-secondary" data-drawer-close>Cancel</button>
-        <button type="submit" class="btn btn-accent">Invite &amp; Send SMS</button>
-      </div>
-    </form>
+      <div id="smsInviteRows"></div>
+    </div>
+    <div class="drawer-foot">
+      <button type="button" class="btn btn-secondary" data-drawer-close>Cancel</button>
+      <button type="button" class="btn btn-secondary" id="addListBtn">Save List</button>
+      <button type="submit" class="btn btn-accent" id="sendSmsBtn">Invite &amp; Send SMS</button>
+    </div>
   </div>
 </div>
 @endif
@@ -209,51 +218,74 @@
   document.addEventListener('DOMContentLoaded', function(){
     resetInviteRows();
 
-    var sendSmsForm = document.getElementById('sendSmsForm');
-    if (sendSmsForm) {
-      sendSmsForm.addEventListener('submit', function(event){
-        event.preventDefault();
-        var invitees = [];
-        document.querySelectorAll('#smsInviteRows .invite-row').forEach(function(row){
-          var name = row.querySelector('.inv-name').value.trim();
-          var phone = row.querySelector('.inv-phone').value.replace(/[^+\d]/g, '');
-          if (phone) invitees.push({ name: name, phone: phone });
-        });
-        if (invitees.length === 0) {
-          toast('Enter at least one person\'s full name and phone number', 'error');
-          return;
+    function collectInvitees(){
+      var invitees = [];
+      document.querySelectorAll('#smsInviteRows .invite-row').forEach(function(row){
+        var name = row.querySelector('.inv-name').value.trim();
+        var phone = row.querySelector('.inv-phone').value.replace(/[^+\d]/g, '');
+        if (phone) invitees.push({ name: name, phone: phone });
+      });
+      return invitees;
+    }
+
+    function submitInvites(action, successLabel, busyLabel){
+      var invitees = collectInvitees();
+      if (invitees.length === 0) {
+        toast('Enter at least one person\'s full name and phone number', 'error');
+        return;
+      }
+
+      var sendBtn = document.getElementById('sendSmsBtn');
+      var listBtn = document.getElementById('addListBtn');
+      sendBtn.disabled = true;
+      sendBtn.textContent = busyLabel;
+      listBtn.disabled = true;
+
+      var formData = new FormData();
+      formData.append('invitees', JSON.stringify(invitees));
+      formData.append('_token', document.querySelector('meta[name="csrf-token"]').content);
+
+      fetch(action, {
+        method: 'POST',
+        headers: { 'X-Requested-With': 'XMLHttpRequest', 'Accept': 'application/json' },
+        body: formData
+      })
+      .then(function(r){ return r.json(); })
+      .then(function(j){
+        sendBtn.disabled = false;
+        listBtn.disabled = false;
+        sendBtn.textContent = 'Invite & Send SMS';
+        listBtn.textContent = 'Save List';
+        resetInviteRows();
+        if (j && j.ok) { toast(j.message || successLabel, 'success'); }
+        else { toast((j && j.message) || 'Action could not be completed', 'error'); }
+        if (j && j.recipients && j.recipients.length) {
+          j.recipients.forEach(addInviteRowToTable);
+          updateFooterCount(j.recipients.length);
         }
+      })
+      .catch(function(){
+        sendBtn.disabled = false;
+        listBtn.disabled = false;
+        sendBtn.textContent = 'Invite & Send SMS';
+        listBtn.textContent = 'Save List';
+        toast('Could not complete the action. Please try again.', 'error');
+      });
+    }
 
-        var btn = sendSmsForm.querySelector('button[type="submit"]');
-        btn.disabled = true;
-        btn.textContent = 'Sending...';
+    var sendSmsBtn = document.getElementById('sendSmsBtn');
+    if (sendSmsBtn) {
+      sendSmsBtn.addEventListener('click', function(event){
+        event.preventDefault();
+        submitInvites('{{ route('cards.sendSms', $card) }}', 'Invitations sent', 'Sending...');
+      });
+    }
 
-        var formData = new FormData();
-        formData.append('invitees', JSON.stringify(invitees));
-        formData.append('_token', document.querySelector('meta[name="csrf-token"]').content);
-
-        fetch(sendSmsForm.action, {
-          method: 'POST',
-          headers: { 'X-Requested-With': 'XMLHttpRequest', 'Accept': 'application/json' },
-          body: formData
-        })
-        .then(function(r){ return r.json(); })
-        .then(function(j){
-          btn.disabled = false;
-          btn.textContent = 'Invite & Send SMS';
-          resetInviteRows();
-          if (j && j.ok) { toast(j.message || 'Invitations sent', 'success'); }
-          else { toast((j && j.message) || 'Invitations could not be sent', 'error'); }
-          if (j && j.recipients && j.recipients.length) {
-            j.recipients.forEach(addInviteRowToTable);
-            updateFooterCount(j.recipients.length);
-          }
-        })
-        .catch(function(){
-          btn.disabled = false;
-          btn.textContent = 'Invite & Send SMS';
-          toast('Could not send invitations. Please try again.', 'error');
-        });
+    var addListBtn = document.getElementById('addListBtn');
+    if (addListBtn) {
+      addListBtn.addEventListener('click', function(event){
+        event.preventDefault();
+        submitInvites('{{ route('cards.addList', $card) }}', 'List saved', 'Saving...');
       });
     }
 

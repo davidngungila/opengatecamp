@@ -313,20 +313,14 @@ class DigitalCardController extends Controller
         $createdRecipients = [];
 
         foreach ($invitees as $invitee) {
-            $token = Str::random(32);
-            $link = route('cards.show', $card->hash).'?r='.$token;
+            $recipient = DigitalCardRecipient::create([
+                'digital_card_id' => $card->id,
+                'name' => ($invitee['name'] ?? '') !== '' ? $invitee['name'] : null,
+                'phone' => $invitee['phone'],
+                'status' => 'pending',
+            ]);
 
-            $msg = str_replace(
-                ['{link}', '{name}'],
-                [$link, $invitee['name'] ?? ''],
-                $template
-            );
-
-            if (($invitee['name'] ?? '') !== '' && ! str_contains($template, '{name}')) {
-                $msg = 'Shukurani '.$invitee['name'].', '.$msg;
-            }
-
-            $result = $sms->send($invitee['phone'], $msg);
+            $result = $this->sendRecipientSms($recipient, $template);
 
             if ($result['success']) {
                 $success++;
@@ -334,15 +328,6 @@ class DigitalCardController extends Controller
                 $fail++;
             }
 
-            $recipient = DigitalCardRecipient::create([
-                'digital_card_id' => $card->id,
-                'name' => ($invitee['name'] ?? '') !== '' ? $invitee['name'] : null,
-                'phone' => $invitee['phone'],
-                'token' => $token,
-                'sent_at' => $result['success'] ? now() : null,
-                'status' => $result['success'] ? 'invited' : 'failed',
-                'message_id' => $result['api_message_id'] ?? null,
-            ]);
             $createdRecipients[] = $recipient;
 
             if (! empty($result['api_message_id'])) {
@@ -389,25 +374,189 @@ class DigitalCardController extends Controller
                 'success_count' => $success,
                 'fail_count' => $fail,
                 'message' => $notice,
-                'recipients' => collect($createdRecipients)->map(fn (DigitalCardRecipient $r) => [
-                    'id' => $r->id,
-                    'name' => $r->name,
-                    'phone' => $r->phone,
-                    'status' => $r->status,
-                    'status_label' => ucfirst((string) $r->status),
-                    'status_color' => $r->getInviteStatusColor(),
-                    'message_id' => $r->message_id,
-                    'delivery_label' => $r->delivery_status ? ucfirst(str_replace('_', ' ', $r->delivery_status)) : ($r->message_id ? 'Unchecked' : '—'),
-                    'delivery_color' => $r->getDeliveryStatusColor(),
-                    'checked_at' => $r->delivery_checked_at?->format('d M Y H:i'),
-                    'sent_at' => $r->sent_at?->format('d M Y H:i') ?: 'Not sent',
-                    'link' => route('cards.show', $r->digitalCard?->hash).'?r='.$r->token,
-                    'token' => $r->token,
-                ])->values()->all(),
+                'recipients' => collect($createdRecipients)->map(fn ($r) => $this->recipientJson($r))->values()->all(),
             ]);
         }
 
         return back()->with($success > 0 ? 'success' : 'error', $notice);
+    }
+
+    private function sendRecipientSms(DigitalCardRecipient $recipient, string $template): array
+    {
+        $sms = app(SmsService::class);
+
+        $msg = str_replace(
+            ['{link}', '{name}'],
+            [$recipient->short_link, $recipient->name ?? ''],
+            $template
+        );
+
+        if ($recipient->name && ! str_contains($template, '{name}')) {
+            $msg = 'Shukurani '.$recipient->name.', '.$msg;
+        }
+
+        $result = $sms->send($recipient->phone, $msg);
+
+        $recipient->update([
+            'sent_at' => $result['success'] ? now() : null,
+            'status' => $result['success'] ? 'invited' : 'failed',
+            'message_id' => $result['api_message_id'] ?? null,
+            'delivery_status' => null,
+            'delivery_checked_at' => null,
+        ]);
+
+        return $result;
+    }
+
+    private function recipientJson(DigitalCardRecipient $r): array
+    {
+        return [
+            'id' => $r->id,
+            'name' => $r->name,
+            'phone' => $r->phone,
+            'status' => $r->status,
+            'status_label' => ucfirst((string) $r->status),
+            'status_color' => $r->getInviteStatusColor(),
+            'message_id' => $r->message_id,
+            'delivery_label' => $r->delivery_status ? ucfirst(str_replace('_', ' ', $r->delivery_status)) : ($r->message_id ? 'Unchecked' : '—'),
+            'delivery_color' => $r->getDeliveryStatusColor(),
+            'checked_at' => $r->delivery_checked_at?->format('d M Y H:i'),
+            'sent_at' => $r->sent_at?->format('d M Y H:i') ?: 'Not sent',
+            'link' => $r->short_link,
+            'token' => $r->token,
+        ];
+    }
+
+    public function addList(Request $request, DigitalCard $card)
+    {
+        $data = $request->validate([
+            'invitees' => 'nullable|string',
+            'phones' => 'nullable|string',
+        ]);
+
+        $invitees = $this->normalizeInvitees($data);
+
+        if (empty($invitees)) {
+            return back()->with('error', 'No valid names and phone numbers provided. Fill in Full Name and Phone for each person.');
+        }
+
+        $createdRecipients = [];
+
+        foreach ($invitees as $invitee) {
+            $createdRecipients[] = DigitalCardRecipient::create([
+                'digital_card_id' => $card->id,
+                'name' => ($invitee['name'] ?? '') !== '' ? $invitee['name'] : null,
+                'phone' => $invitee['phone'],
+                'status' => 'pending',
+            ]);
+        }
+
+        AuditLog::record(
+            'Added digital card invite list',
+            'Digital Cards',
+            "{$card->card_no} — ".count($createdRecipients).' person(s) added to list'
+        );
+
+        $notice = count($createdRecipients).' person(s) added to the list. Send SMS to invite them.';
+
+        if ($request->ajax() || $request->wantsJson()) {
+            return response()->json([
+                'ok' => true,
+                'message' => $notice,
+                'recipients' => collect($createdRecipients)->map(fn ($r) => $this->recipientJson($r))->values()->all(),
+            ]);
+        }
+
+        return back()->with('success', $notice);
+    }
+
+    public function sendPending(Request $request, DigitalCard $card)
+    {
+        $pending = $card->recipients()
+            ->where(fn ($w) => $w->whereNull('status')->orWhere('status', 'pending'))
+            ->get();
+
+        if ($pending->isEmpty()) {
+            if ($request->ajax() || $request->wantsJson()) {
+                return response()->json(['ok' => false, 'message' => 'No pending invitations to send.']);
+            }
+
+            return back()->with('error', 'No pending invitations to send.');
+        }
+
+        $sms = app(SmsService::class);
+        if (! $sms->isConfigured()) {
+            return back()->with('error', 'SMS API token not configured.');
+        }
+
+        $template = $card->sms_text ?: 'You are invited! View your digital card and contribute: {link}';
+        $success = 0;
+        $fail = 0;
+        $messageIds = [];
+
+        foreach ($pending as $recipient) {
+            $result = $this->sendRecipientSms($recipient, $template);
+
+            if ($result['success']) {
+                $success++;
+            } else {
+                $fail++;
+            }
+
+            if (! empty($result['api_message_id'])) {
+                $messageIds[] = $result['api_message_id'];
+            }
+        }
+
+        Message::create([
+            'channel' => 'sms',
+            'recipients' => $pending->pluck('phone')->take(5)->implode(', '),
+            'phone' => $pending->first()->phone,
+            'subject' => "Digital card SMS — {$card->card_no}",
+            'message' => $template,
+            'status' => $success > 0 ? 'sent' : 'failed',
+            'api_message_id' => $messageIds[0] ?? null,
+            'api_response' => [
+                'success_count' => $success,
+                'fail_count' => $fail,
+                'recipient_ids' => $pending->pluck('id')->all(),
+                'message_ids' => $messageIds,
+            ],
+            'created_by' => auth()->user()?->name,
+        ]);
+
+        AuditLog::record(
+            'Sent SMS invites to pending list',
+            'Digital Cards',
+            "{$card->card_no} — {$success} sent, {$fail} failed"
+        );
+
+        $notice = "{$success} pending invitation(s) sent by SMS.";
+        if ($fail > 0) {
+            $notice .= " {$fail} failed.";
+        }
+
+        if ($request->ajax() || $request->wantsJson()) {
+            return response()->json([
+                'ok' => $success > 0,
+                'message' => $notice,
+                'recipients' => $pending->map(fn ($r) => $this->recipientJson($r->fresh()))->values()->all(),
+            ]);
+        }
+
+        return back()->with($success > 0 ? 'success' : 'error', $notice);
+    }
+
+    public function lite(string $code)
+    {
+        $recipient = DigitalCardRecipient::where('short_code', $code)->firstOrFail();
+        $card = $recipient->digitalCard;
+
+        if (! $card) {
+            abort(404);
+        }
+
+        return redirect(route('cards.show', $card->hash).'?r='.$recipient->token);
     }
 
     private function normalizeInvitees(array $data): array
@@ -493,7 +642,7 @@ class DigitalCardController extends Controller
         }
 
         $template = $card->sms_text ?: 'You are invited! View your digital card and contribute: {link}';
-        $link = route('cards.show', $card->hash).'?r='.$recipient->token;
+        $link = $recipient->short_link;
 
         $msg = str_replace(['{link}', '{name}'], [$link, $recipient->name ?? ''], $template);
         if (($recipient->name ?? '') !== '' && ! str_contains($template, '{name}')) {
@@ -572,7 +721,7 @@ class DigitalCardController extends Controller
                 $recipient->delivery_status ?: '',
                 $recipient->sent_at?->format('d M Y H:i') ?: '',
                 $recipient->delivery_checked_at?->format('d M Y H:i') ?: '',
-                route('cards.show', $recipient->digitalCard?->hash).'?r='.$recipient->token,
+                $recipient->short_link,
             ]);
         }
 

@@ -154,7 +154,7 @@
               <div style="font-size:10.5px;color:var(--text-tertiary);margin-top:3px">{{ $r->delivery_checked_at->format('d M Y H:i') }}</div>
               @endif
             </td>
-            <td><a href="{{ route('cards.show', $card->hash).'?r='.$r->token }}" target="_blank" class="link-mono">{{ substr($r->token, 0, 12) }}…</a></td>
+            <td><a href="{{ $r->short_link }}" target="_blank" class="link-mono">{{ str_replace(['https://','http://'], '', $r->short_link) }}</a></td>
             <td>{{ $r->sent_at?->format('d M Y H:i') ?: 'Not sent' }}</td>
           </tr>
           @empty
