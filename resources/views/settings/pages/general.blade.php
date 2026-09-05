@@ -79,5 +79,34 @@
       </div>
     </form>
   </div>
+
+  <div class="solid-card" style="margin-top:18px">
+    <h2 style="font-size:14.5px;margin:0 0 4px;display:flex;align-items:center;gap:8px">
+      <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="5" width="20" height="14" rx="2"/><line x1="2" y1="10" x2="22" y2="10"/></svg>
+      Digital Card
+    </h2>
+    <p style="font-size:12.5px;color:var(--text-tertiary);margin:0 0 16px">Content used on the person invitation digital card. These are the "rest of the settings" — the invite form only needs each person's full name and phone number.</p>
+    <form method="POST" action="{{ route('settings.digital-card') }}">
+      @csrf
+      <div class="form-grid">
+        <div class="field"><label>Card Title</label><input name="digital_card_title" value="{{ $s('digital_card.title', $s('event.name', 'Open Gate Camp')) }}" placeholder="Open Gate Camp Giving"></div>
+        <div class="field"><label>Card Status</label>
+          <select name="digital_card_status">
+            <option value="active" @if($s('digital_card.status', 'active') === 'active') selected @endif>Active</option>
+            <option value="closed" @if($s('digital_card.status', 'active') === 'closed') selected @endif>Closed</option>
+          </select>
+        </div>
+        <div class="field"><label>Target Amount (TZS)</label><input type="number" min="0" step="0.01" name="digital_card_target_amount" value="{{ $s('digital_card.target_amount') }}" placeholder="e.g. 500000"></div>
+        <div class="field"><label>Background Color</label><input type="color" name="digital_card_background_color" value="{{ $s('digital_card.background_color', '#1a237e') }}"></div>
+        <div class="field"><label>Accent Color</label><input type="color" name="digital_card_accent_color" value="{{ $s('digital_card.accent_color', '#ffd700') }}"></div>
+        <div class="field"><label>Button Text</label><input name="digital_card_cta_text" value="{{ $s('digital_card.cta_text', 'Contribute Now') }}"></div>
+        <div class="field full"><label>Card Message</label><textarea name="digital_card_message" rows="3" placeholder="Messages shown on the card the invited person opens">{{ $s('digital_card.message') }}</textarea></div>
+        <div class="field full"><label>SMS Template (use {link} and {name} placeholders)</label><textarea name="digital_card_sms_text" rows="3" placeholder="View your special digital card: {link}">{{ $s('digital_card.sms_text') }}</textarea></div>
+      </div>
+      <div class="flex" style="justify-content:flex-end;margin-top:16px">
+        <button type="submit" class="btn btn-accent">Save Digital Card</button>
+      </div>
+    </form>
+  </div>
 </div>
 @endsection

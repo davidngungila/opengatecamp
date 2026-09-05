@@ -264,6 +264,37 @@ class SettingsController extends Controller
         return back()->with('success', 'Event settings saved successfully.');
     }
 
+    public function updateDigitalCard(Request $request)
+    {
+        $data = $request->validate([
+            'digital_card_title' => 'nullable|string|max:255',
+            'digital_card_message' => 'nullable|string|max:2000',
+            'digital_card_target_amount' => 'nullable|numeric|min:0',
+            'digital_card_background_color' => 'nullable|string|max:7',
+            'digital_card_accent_color' => 'nullable|string|max:7',
+            'digital_card_cta_text' => 'nullable|string|max:100',
+            'digital_card_sms_text' => 'nullable|string',
+            'digital_card_status' => 'nullable|in:active,closed',
+        ]);
+
+        foreach ([
+            'digital_card_title' => 'digital_card.title',
+            'digital_card_message' => 'digital_card.message',
+            'digital_card_target_amount' => 'digital_card.target_amount',
+            'digital_card_background_color' => 'digital_card.background_color',
+            'digital_card_accent_color' => 'digital_card.accent_color',
+            'digital_card_cta_text' => 'digital_card.cta_text',
+            'digital_card_sms_text' => 'digital_card.sms_text',
+            'digital_card_status' => 'digital_card.status',
+        ] as $field => $key) {
+            Setting::put($key, $data[$field] ?? null);
+        }
+
+        AuditLog::record('Updated digital card settings', 'Settings — Digital Card');
+
+        return back()->with('success', 'Digital card settings saved successfully.');
+    }
+
     public function updateOrganization(Request $request)
     {
         $data = $request->validate([

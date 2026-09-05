@@ -96,6 +96,7 @@ Route::middleware(['auth', 'committee.readonly'])->group(function () {
         Route::get('/settings/backup/download', [SettingsController::class, 'backup'])->name('settings.backup');
 
         Route::post('/settings/general', [SettingsController::class, 'updateGeneral'])->name('settings.general');
+        Route::post('/settings/digital-card', [SettingsController::class, 'updateDigitalCard'])->name('settings.digital-card');
         Route::post('/settings/organization', [SettingsController::class, 'updateOrganization'])->name('settings.organization');
         Route::post('/settings/notifications', [SettingsController::class, 'updateNotifications'])->name('settings.notifications');
         Route::post('/settings/accounting', [SettingsController::class, 'updateAccounting'])->name('settings.accounting');

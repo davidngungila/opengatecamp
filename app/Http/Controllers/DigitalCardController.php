@@ -22,13 +22,57 @@ class DigitalCardController extends Controller
 {
     public function index()
     {
+        $card = $this->currentCard();
+
+        $recipients = $card->recipients()->latest('created_at')->get();
+        $confirmedTotal = $card->contributions()->where('status', 'confirmed')->sum('amount');
+        $contributionsCount = $card->contributions()->count();
+        $targetAmount = (float) $card->target_amount;
+        $progressPercent = $targetAmount > 0 ? round($confirmedTotal / $targetAmount * 100, 1) : 0;
+
         $currentEventName = (string) Setting::get('event.name', 'Open Gate Camp');
         $currentEventDate = Setting::get('event.start_date');
         $currentEventVenue = (string) Setting::get('event.venue', '');
 
         return view('digital-cards.index', compact(
-            'currentEventName', 'currentEventDate', 'currentEventVenue',
+            'card', 'recipients', 'confirmedTotal', 'contributionsCount',
+            'targetAmount', 'progressPercent', 'currentEventName', 'currentEventDate', 'currentEventVenue',
         ));
+    }
+
+    private function currentCard(): DigitalCard
+    {
+        $eventName = (string) Setting::get('event.name', 'Open Gate Camp');
+
+        $data = [
+            'title' => (string) Setting::get('digital_card.title', $eventName),
+            'message' => (string) Setting::get('digital_card.message', 'Thank you for supporting Open Gate Camp. Contribute using the link below.'),
+            'target_amount' => (float) (Setting::get('digital_card.target_amount') ?: 0),
+            'background_color' => (string) (Setting::get('digital_card.background_color') ?: '#1a237e'),
+            'accent_color' => (string) (Setting::get('digital_card.accent_color') ?: '#ffd700'),
+            'cta_text' => (string) (Setting::get('digital_card.cta_text') ?: 'Contribute Now'),
+            'sms_text' => (string) (Setting::get('digital_card.sms_text') ?: 'You are invited! View your digital card and contribute: {link}'),
+            'status' => (string) (Setting::get('digital_card.status') ?: 'active'),
+            'card_type' => 'camp_invitation',
+            'event_id' => null,
+            'is_published' => (string) (Setting::get('digital_card.status') ?: 'active') === 'active',
+        ];
+
+        $card = DigitalCard::latest('id')->first();
+
+        if (! $card) {
+            $data['card_no'] = DigitalCard::nextCardNo();
+            $data['hash'] = Str::random(32);
+            $data['contributions_count'] = 0;
+            $data['total_contributions'] = 0;
+            $data['created_by'] = 'System (settings)';
+
+            return DigitalCard::create($data);
+        }
+
+        $card->update($data);
+
+        return $card->fresh();
     }
 
     public function addContribution(Request $request, DigitalCard $card)
