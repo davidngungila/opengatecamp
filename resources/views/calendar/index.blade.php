@@ -22,11 +22,9 @@
         'speaker'     => $s->speaker,
         'facilitator' => $s->facilitator,
         'description' => $s->description,
-        'event_id'    => $s->event_id,
         'event_title' => $s->event?->title,
     ],
     ])->values()->toJson(JSON_HEX_APOS | JSON_HEX_QUOT | JSON_HEX_TAG | JSON_HEX_AMP);
-    $eventOptions = collect($campEvents)->mapWithKeys(fn ($e) => [$e->id => $e->title])->all();
     $todayLabel = $today->format('jS F Y');
     $weekNumber = (int) $monthDate->format('W');
 @endphp
@@ -104,12 +102,7 @@
       <input type="hidden" name="id" id="sessId" value="">
       <div class="drawer-body">
         <div class="form-grid">
-          <div class="field full"><label>Date *</label><input type="date" name="session_date" id="sessDate" required></div>
-          <div class="field full"><label>Event</label>
-            <select name="event_id" id="sessEvent">
-              @foreach($campEvents as $ce)<option value="{{ $ce->id }}">{{ $ce->title }}</option>@endforeach
-            </select>
-          </div>
+<div class="field full"><label>Date *</label><input type="date" name="session_date" id="sessDate" required></div>
           <div class="field full"><label>Activity / Title *</label><input name="title" id="sessTitleInput" placeholder="e.g. Opening Devotion, Group Games" required></div>
           <div class="field"><label>Start Time *</label><input type="time" name="start_time" id="sessStart" required></div>
           <div class="field"><label>End Time *</label><input type="time" name="end_time" id="sessEnd" required></div>
@@ -146,7 +139,6 @@
 @push('scripts')
 <script>
 var SESSIONS = {!! $sessionsJson !!};
-var EVENT_OPTIONS = @json($eventOptions);
 var todayLabel = @json($todayLabel);
 var planDate = '';
 
@@ -161,9 +153,6 @@ function fillSessionForm(s){
   document.getElementById('sessSpeaker').value = s.speaker || '';
   document.getElementById('sessFacilitator').value = s.facilitator || '';
   document.getElementById('sessDescription').value = s.description || '';
-  var ev = document.getElementById('sessEvent');
-  if(EVENT_OPTIONS[s.event_id]){ ev.value = s.event_id; }
-  else if(!ev.value && s.event_id){ ev.value = s.event_id; }
 }
 
 function openPlanDrawer(dateStr){
@@ -182,7 +171,6 @@ function openPlanDrawer(dateStr){
   document.getElementById('sessSpeaker').value = '';
   document.getElementById('sessFacilitator').value = '';
   document.getElementById('sessDescription').value = '';
-  document.getElementById('sessEvent').value = EVENT_OPTIONS ? Object.keys(EVENT_OPTIONS)[0] || '' : '';
   document.getElementById('sessDelete').style.display = 'none';
   document.getElementById('sessSubmit').textContent = 'Plan Activity';
   openDrawerById('sessionDrawer');

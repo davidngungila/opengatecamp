@@ -558,7 +558,6 @@ class EventController extends Controller
         return view('calendar.index', [
             'eventsByDay' => $eventsByDay,
             'sessionsByDay' => $sessionsByDay,
-            'campEvents' => $events,
             'today' => now()->startOfDay(),
             'monthDate' => $date,
             'prevMonth' => (clone $date)->modify('-1 month')->format('Y-m'),
@@ -581,12 +580,9 @@ class EventController extends Controller
             'facilitator'    => 'nullable|string|max:255',
             'category'       => 'nullable|string|max:255',
             'description'    => 'nullable|string',
-            'event_id'       => 'nullable|exists:events,id',
         ]);
 
-        $event = ($data['event_id'] ?? null)
-            ? Event::find($data['event_id'])
-            : Event::where('event_type', 'camp')->latest('id')->first();
+        $event = Event::where('event_type', 'camp')->latest('id')->first() ?? Event::latest('id')->first();
 
         $data['event_id'] = $event?->id;
         $data['sort_order'] = (((int) EventSession::where('event_id', $event?->id)->max('sort_order')) + 1);
@@ -612,7 +608,6 @@ class EventController extends Controller
             'facilitator'    => 'nullable|string|max:255',
             'category'       => 'nullable|string|max:255',
             'description'    => 'nullable|string',
-            'event_id'       => 'nullable|exists:events,id',
         ]);
 
         $session->update($data);
