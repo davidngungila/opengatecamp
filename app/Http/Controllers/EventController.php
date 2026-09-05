@@ -600,6 +600,39 @@ class EventController extends Controller
         return back()->with('success', 'Activity planned for '.$session->session_date?->format('d M Y').'.');
     }
 
+    public function updateCalendarSession(Request $request, EventSession $session)
+    {
+        $data = $request->validate([
+            'session_date'   => 'required|date',
+            'title'          => 'required|string|max:255',
+            'start_time'     => 'required',
+            'end_time'       => 'required|after:start_time',
+            'venue'          => 'nullable|string|max:255',
+            'speaker'        => 'nullable|string|max:255',
+            'facilitator'    => 'nullable|string|max:255',
+            'category'       => 'nullable|string|max:255',
+            'description'    => 'nullable|string',
+            'event_id'       => 'nullable|exists:events,id',
+        ]);
+
+        $session->update($data);
+        AuditLog::record('Updated calendar activity', 'Calendar',
+            $session->title.' — '.$session->session_date?->format('Y-m-d')
+            .($session->start_time ? ' '.$session->start_time.'-'.($session->end_time ?? '') : ''));
+
+        return back()->with('success', 'Activity updated for '.$session->session_date?->format('d M Y').'.');
+    }
+
+    public function destroyCalendarSession(Request $request, EventSession $session)
+    {
+        AuditLog::record('Removed calendar activity', 'Calendar',
+            $session->title.' — '.$session->session_date?->format('Y-m-d'));
+
+        $session->delete();
+
+        return back()->with('success', 'Activity removed from the calendar.');
+    }
+
     /**
      * Printable timetable — scope: month (default), a single day, or the whole programme.
      */
