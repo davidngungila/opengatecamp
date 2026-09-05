@@ -155,11 +155,8 @@ class SmsService
                 $date = $sentAt instanceof \DateTimeInterface
                     ? \Illuminate\Support\Carbon::parse($sentAt)
                     : \Illuminate\Support\Carbon::parse($sentAt);
-                $params['sentSince'] = $date->copy()->subMinutes(30)->format('Y-m-d H:i:s');
-                $params['sentUntil'] = $date->copy()->addMinutes(30)->format('Y-m-d H:i:s');
-            }
-            if ($messageId) {
-                $params['messageId'] = $messageId;
+                $params['sentSince'] = $date->copy()->subDay()->format('Y-m-d');
+                $params['sentUntil'] = $date->copy()->addDay()->format('Y-m-d');
             }
             $params['limit'] = 100;
 
@@ -214,52 +211,56 @@ class SmsService
 
     private function statusFromLog(array $report): string
     {
-        $delivery = data_get($report, 'delivery');
-
-        if ($delivery !== null && is_array($delivery)) {
-            $statusName = strtoupper((string) data_get($delivery, 'status.name'));
-            $statusGroup = strtoupper((string) data_get($delivery, 'status.groupName'));
-            $statusId = data_get($delivery, 'status.id');
-
-            $status = $statusName ?: $statusGroup;
-
-            if ($status !== '') {
-                return match (true) {
-                    in_array($status, ['DELIVRD', 'DELIVERED', 'SUCCESS', 'COMPLETED', 'DELIVERED_TO_HANDSET'], true) => 'delivered',
-                    in_array($status, ['UNDELIV', 'UNDELIVERED', 'EXPIRED', 'REJECTD', 'REJECTED', 'FAILED', 'NOT_DELIVERED', 'UNAVAILABLE', 'UNKNOWN'], true) => 'undelivered',
-                    in_array($status, ['ACCEPTD', 'ACCEPTED', 'ACCEPT', 'ENROUTE', 'ENROUTE (SENT)', 'SENTTODLR', 'SENT', 'PENDING', 'DELIVERED_TO_SMSC'], true) => 'pending',
-                    default => 'unknown',
-                };
-            }
-
-            if ($statusId !== null) {
-                return match ((int) $statusId) {
-                    88 => 'delivered',
-                    50, 51, 52, 73, 74 => 'pending',
-                    default => 'unknown',
-                };
-            }
+        if ($this->applyDeliveryStatus($report['delivery'] ?? null)) {
+            return $this->applyDeliveryStatus($report['delivery'] ?? null);
         }
 
+        return $this->statusByObject($report);
+    }
+
+    private function applyDeliveryStatus(mixed $delivery): ?string
+    {
+        if (is_string($delivery) && trim($delivery) !== '') {
+            return $this->statusByValue(strtoupper(trim($delivery)));
+        }
+
+        if (is_array($delivery)) {
+            return $this->statusByObject($delivery);
+        }
+
+        return null;
+    }
+
+    private function statusByValue(string $status): ?string
+    {
+        if ($status === '') {
+            return null;
+        }
+
+        return match (true) {
+            in_array($status, ['DELIVRD', 'DELIVERED', 'SUCCESS', 'COMPLETED', 'DELIVERED_TO_HANDSET'], true) => 'delivered',
+            in_array($status, ['UNDELIV', 'UNDELIVERED', 'EXPIRED', 'REJECTD', 'REJECTED', 'FAILED', 'NOT_DELIVERED', 'UNAVAILABLE', 'UNKNOWN'], true) => 'undelivered',
+            in_array($status, ['ACCEPTD', 'ACCEPTED', 'ACCEPT', 'ENROUTE', 'ENROUTE (SENT)', 'SENTTODLR', 'SENT', 'PENDING', 'DELIVERED_TO_SMSC'], true) => 'pending',
+            default => null,
+        };
+    }
+
+    private function statusByObject(array $report): string
+    {
         $statusName = strtoupper((string) data_get($report, 'status.name'));
         $statusGroup = strtoupper((string) data_get($report, 'status.groupName'));
         $statusId = data_get($report, 'status.id');
 
-        $status = $statusName ?: $statusGroup;
+        $resolved = $this->statusByValue($statusName) ?? $this->statusByValue($statusGroup);
 
-        if ($status !== '') {
-            return match (true) {
-                in_array($status, ['DELIVRD', 'DELIVERED', 'SUCCESS', 'COMPLETED', 'DELIVERED_TO_HANDSET'], true) => 'delivered',
-                in_array($status, ['UNDELIV', 'UNDELIVERED', 'EXPIRED', 'REJECTD', 'REJECTED', 'FAILED', 'NOT_DELIVERED', 'UNAVAILABLE', 'UNKNOWN'], true) => 'undelivered',
-                in_array($status, ['ACCEPTD', 'ACCEPTED', 'ACCEPT', 'ENROUTE', 'ENROUTE (SENT)', 'SENTTODLR', 'SENT', 'PENDING', 'DELIVERED_TO_SMSC'], true) => 'pending',
-                default => 'unknown',
-            };
+        if ($resolved !== null) {
+            return $resolved;
         }
 
         if ($statusId !== null) {
             return match ((int) $statusId) {
-                88 => 'delivered',
-                50, 51, 52, 73, 74 => 'pending',
+                73, 88 => 'delivered',
+                50, 51, 52, 74 => 'pending',
                 default => 'unknown',
             };
         }
