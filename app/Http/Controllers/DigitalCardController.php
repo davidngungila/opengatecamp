@@ -625,7 +625,7 @@ class DigitalCardController extends Controller
         $this->streamPdf($card);
     }
 
-    private function streamPdf(DigitalCard $card): void
+    private function streamPdf(DigitalCard $card, string $dest = 'D'): void
     {
         $qrData = app(QrCodeService::class)->pngDataUri(
             "OGCM|CARD|{$card->card_no}|{$card->hash}"
@@ -645,7 +645,7 @@ class DigitalCardController extends Controller
         ]);
 
         $mpdf->WriteHTML($html);
-        $mpdf->Output("DigitalCard-{$card->card_no}.pdf", 'D');
+        $mpdf->Output("DigitalCard-{$card->card_no}.pdf", $dest);
     }
 
     public function preview(DigitalCard $card)
@@ -661,25 +661,9 @@ class DigitalCardController extends Controller
     {
         $card = DigitalCard::where('hash', $hash)
             ->whereIn('status', ['active', 'closed'])
-            ->withCount(['contributions' => fn ($q) => $q->where('status', 'confirmed')])
             ->firstOrFail();
 
-        $recipient = $this->recipientFromRequest($request, $card->id);
-
-        return view('digital-cards.public', compact('card', 'recipient'));
-    }
-
-    private function recipientFromRequest(Request $request, int $cardId): ?DigitalCardRecipient
-    {
-        $token = trim((string) $request->query('r'));
-
-        if ($token === '') {
-            return null;
-        }
-
-        return DigitalCardRecipient::where('token', $token)
-            ->where('digital_card_id', $cardId)
-            ->first();
+        $this->streamPdf($card, 'I');
     }
 
     public function contribute(Request $request, string $hash)
