@@ -97,13 +97,13 @@
           </select>
         </div>
         <div class="field"><label>Target Amount (TZS)</label><input type="number" min="0" step="0.01" name="digital_card_target_amount" value="{{ $s('digital_card.target_amount') }}" placeholder="e.g. 500000"></div>
-        <div class="field"><label>Background Color</label><input type="color" name="digital_card_background_color" value="{{ $s('digital_card.background_color', '#1a237e') }}"></div>
+        <div class="field"><label>Background Color</label><input type="color" name="digital_card_background_color" value="{{ $s('digital_card.background_color', '#ffffff') }}"></div>
         <div class="field"><label>Accent Color</label><input type="color" name="digital_card_accent_color" value="{{ $s('digital_card.accent_color', '#ffd700') }}"></div>
         <div class="field"><label>Button Text</label><input name="digital_card_cta_text" value="{{ $s('digital_card.cta_text', 'Contribute Now') }}"></div>
         <div class="field full"><label>Background Image</label>
           <input type="file" name="digital_card_background_image" id="dcBgImage" accept="image/jpeg,image/png,image/webp">
           <div style="display:flex;align-items:center;gap:12px;margin-top:10px">
-            <div id="dcBgPreview" style="width:110px;height:138px;border-radius:10px;border:1px solid var(--border);background-size:cover;background-position:center;background-color:{{ $s('digital_card.background_color', '#1a237e') }};@if($s('digital_card.background_image'))background-image:url('{{ asset('storage/'.$s('digital_card.background_image')) }}');@endif"></div>
+            <div id="dcBgPreview" style="width:110px;height:138px;border-radius:10px;border:1px solid var(--border);background-size:cover;background-position:center;background-color:{{ $s('digital_card.background_color', '#ffffff') }};@if($s('digital_card.background_image'))background-image:url('{{ asset('storage/'.$s('digital_card.background_image')) }}');@endif"></div>
             <div style="flex:1">
               <div style="font-size:12.5px;color:var(--text-secondary);margin-bottom:6px">JPEG, PNG or WebP up to 4 MB.</div>
               <label style="display:inline-flex;align-items:center;gap:6px;font-size:12.5px;color:var(--text-secondary);cursor:pointer"><input type="checkbox" name="digital_card_remove_background" value="1" style="width:auto">Remove background image</label>
