@@ -20,37 +20,14 @@ use Mpdf\Mpdf;
 
 class DigitalCardController extends Controller
 {
-    public function index(Request $request)
+    public function index()
     {
-        $cards = DigitalCard::with(['event', 'contributions.digitalCard', 'recipients.digitalCard'])
-            ->latest()
-            ->get();
-
-        $eventCards = $cards;
-
-        $contributions = $eventCards->flatMap->contributions->sortByDesc('created_at')->values();
-        $recipients = $eventCards->flatMap->recipients->sortByDesc('created_at')->values();
-        $confirmedTotal = $contributions->where('status', 'confirmed')->sum('amount');
-        $targetTotal = $eventCards->sum('target_amount');
-        $progressPercent = $targetTotal > 0 ? round($confirmedTotal / $targetTotal * 100, 1) : 0;
-
-        $primaryCard = $eventCards
-            ->sortByDesc(fn ($c) => $c->contributions->where('status', 'confirmed')->sum('amount'))
-            ->first() ?? $eventCards->first();
-
-        $types = DigitalCard::types();
-        $statuses = DigitalCard::statuses();
-        $methodLabels = DigitalCardContribution::methods();
-        $contributionStatuses = DigitalCardContribution::statuses();
-
         $currentEventName = (string) Setting::get('event.name', 'Open Gate Camp');
         $currentEventDate = Setting::get('event.start_date');
         $currentEventVenue = (string) Setting::get('event.venue', '');
 
         return view('digital-cards.index', compact(
-            'eventCards', 'contributions', 'recipients', 'confirmedTotal', 'targetTotal',
-            'progressPercent', 'primaryCard', 'types', 'statuses', 'methodLabels',
-            'contributionStatuses', 'currentEventName', 'currentEventDate', 'currentEventVenue',
+            'currentEventName', 'currentEventDate', 'currentEventVenue',
         ));
     }
 
@@ -148,7 +125,8 @@ class DigitalCardController extends Controller
         $card = DigitalCard::create($data);
         AuditLog::record('Created digital card', 'Digital Cards', "{$card->card_no} — {$card->title}");
 
-        return back()->with('success', "Digital card {$card->card_no} created.");
+        return redirect()->route('cards.details', $card)
+            ->with('success', "Digital card {$card->card_no} created. Invite people to it via SMS.");
     }
 
     public function update(Request $request, DigitalCard $card)

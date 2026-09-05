@@ -32,7 +32,10 @@
     <div class="section-actions">
       <a class="btn btn-outline" href="{{ route('cards.preview', $card) }}" target="_blank">Preview</a>
       <a class="btn btn-outline" href="{{ route('cards.show', $card->hash) }}" target="_blank">Public Page</a>
-      <a class="btn btn-accent" href="{{ route('cards.pdf', $card) }}">Pakua PDF</a>
+      @if(!$isCommittee)
+      <button type="button" class="btn btn-accent" data-send-sms data-id="{{ $card->id }}" data-title="{{ $card->title }}" data-url="{{ $card->public_url }}">Invite via SMS</button>
+      @endif
+      <a class="btn btn-outline" href="{{ route('cards.pdf', $card) }}">Pakua PDF</a>
     </div>
   </div>
 
@@ -162,6 +165,38 @@
     </div>
   </div>
 
+@if(!$isCommittee)
+<div class="drawer-overlay" id="cardSmsDrawer">
+  <div class="drawer-panel">
+    <div class="drawer-head">
+      <div><h3>Invite People</h3><p id="smsCardTitle">—</p></div>
+      <button type="button" class="modal-close" data-drawer-close><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><path d="M18 6L6 18M6 6l12 12"/></svg></button>
+    </div>
+    <form method="POST" action="" id="sendSmsForm">
+      @csrf
+      <input type="hidden" name="invitees" id="smsInvitees" value="">
+      <div class="drawer-body">
+        <div class="form-grid">
+          <div class="field full"><label>Card Link</label><input type="text" id="smsCardUrl" readonly style="background:var(--blue-light);color:var(--blue-accent);font-weight:700"></div>
+          <div class="field full">
+            <div style="display:flex;align-items:center;justify-content:space-between;gap:8px;margin-bottom:8px">
+              <label style="margin:0">Invitees — Full Name &amp; Phone</label>
+              <button type="button" class="btn btn-secondary btn-sm" onclick="addInviteRow()">+ Add Person</button>
+            </div>
+            <div id="smsInviteRows"></div>
+            <div class="text-muted" style="font-size:11px;margin-top:6px">Each person receives a personalised SMS with their own card link. Their invite status changes to <b>Invited</b> once the SMS is sent.</div>
+          </div>
+        </div>
+      </div>
+      <div class="drawer-foot">
+        <button type="button" class="btn btn-secondary" data-drawer-close>Cancel</button>
+        <button type="submit" class="btn btn-accent">Invite &amp; Send SMS</button>
+      </div>
+    </form>
+  </div>
+</div>
+@endif
+
 </div>
 
 @push('scripts')
@@ -197,6 +232,60 @@
       });
     });
   });
+
+  document.querySelectorAll('[data-send-sms]').forEach(function(btn){
+    btn.addEventListener('click', function(){
+      var d = btn.dataset;
+      document.getElementById('smsCardTitle').textContent = d.title || '—';
+      document.getElementById('smsCardUrl').value = d.url || '';
+      resetInviteRows();
+      document.getElementById('sendSmsForm').action = "{{ url('/digital-cards') }}/" + d.id + "/send-sms";
+      openDrawerById('cardSmsDrawer');
+    });
+  });
+
+  function inviteRowHtml(){
+    return '<div class="invite-row" style="display:grid;grid-template-columns:1.5fr 1fr auto;gap:8px;margin-bottom:8px">' +
+      '<input class="inv-name" placeholder="Full Name">' +
+      '<input class="inv-phone" placeholder="+255 7XX XXX XXX">' +
+      '<button type="button" class="btn btn-sm" onclick="removeInviteRow(this)" style="height:38px;padding:0 10px;background:transparent;color:var(--danger)" title="Remove person">&times;</button>' +
+      '</div>';
+  }
+
+  function resetInviteRows(){
+    var box = document.getElementById('smsInviteRows');
+    box.innerHTML = '';
+    box.insertAdjacentHTML('beforeend', inviteRowHtml());
+  }
+
+  function addInviteRow(){
+    document.getElementById('smsInviteRows').insertAdjacentHTML('beforeend', inviteRowHtml());
+  }
+
+  function removeInviteRow(btn){
+    btn.closest('.invite-row').remove();
+  }
+
+  var sendSmsForm = document.getElementById('sendSmsForm');
+  if (sendSmsForm) {
+    sendSmsForm.addEventListener('submit', function(event){
+      var invitees = [];
+      document.querySelectorAll('#smsInviteRows .invite-row').forEach(function(row){
+        var name = row.querySelector('.inv-name').value.trim();
+        var phone = row.querySelector('.inv-phone').value.replace(/[^+\d]/g, '');
+        if (phone) invitees.push({ name: name, phone: phone });
+      });
+      if (invitees.length === 0) {
+        event.preventDefault();
+        toast('Add at least one person with a phone number', 'error');
+        return;
+      }
+      document.getElementById('smsInvitees').value = JSON.stringify(invitees);
+      var btn = sendSmsForm.querySelector('button[type="submit"]');
+      btn.disabled = true;
+      btn.textContent = 'Sending...';
+    });
+  }
 })();
 </script>
 @endpush
