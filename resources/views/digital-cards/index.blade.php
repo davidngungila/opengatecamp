@@ -15,10 +15,7 @@
       {{ $totals['invited'] }} invited · {{ $totals['delivered'] }} delivered · {{ $totals['failed'] }} failed · {{ $totals['pending'] }} pending
     </div></div>
     @if(!$isCommittee)
-    <div style="display:flex;gap:8px">
-      <button type="button" class="btn btn-secondary" data-drawer-open="inviteNewDrawer">Add List</button>
-      <button type="button" class="btn btn-accent" data-drawer-open="inviteNewDrawer">+ New Invite</button>
-    </div>
+    <button type="button" class="btn btn-accent" data-drawer-open="inviteNewDrawer">Add List</button>
     @endif
   </div>
 
@@ -123,20 +120,19 @@
 <div class="drawer-overlay" id="inviteNewDrawer">
   <div class="drawer-panel">
     <div class="drawer-head">
-      <div><h3>New Invite / Add List</h3><p>Add people to the list, or send the SMS invite straight away. Each person gets their own short personalised link.</p></div>
+      <div><h3>Add List</h3><p>Add people to the pending list. Send the SMS invites afterwards in bulk (below) or from the card details page.</p></div>
       <button type="button" class="modal-close" data-drawer-close><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><path d="M18 6L6 18M6 6l12 12"/></svg></button>
     </div>
     <div class="drawer-body">
       <div style="display:flex;align-items:center;justify-content:space-between;gap:8px;margin-bottom:10px">
-        <div class="text-muted" style="font-size:12px"><b>Save List</b> adds them as pending (SMS later). <b>Invite &amp; Send SMS</b> invites them now.</div>
+        <div class="text-muted" style="font-size:12px">Each phone number can only have one card — duplicates will be skipped. SMS is sent later in bulk.</div>
         <button type="button" class="btn btn-secondary btn-sm" onclick="addInviteRow()">+ Add Person</button>
       </div>
       <div id="smsInviteRows"></div>
     </div>
     <div class="drawer-foot">
       <button type="button" class="btn btn-secondary" data-drawer-close>Cancel</button>
-      <button type="button" class="btn btn-secondary" id="addListBtn">Save List</button>
-      <button type="submit" class="btn btn-accent" id="sendSmsBtn">Invite &amp; Send SMS</button>
+      <button type="submit" class="btn btn-accent" id="addListBtn">Save List</button>
     </div>
   </div>
 </div>
@@ -235,11 +231,9 @@
         return;
       }
 
-      var sendBtn = document.getElementById('sendSmsBtn');
       var listBtn = document.getElementById('addListBtn');
-      sendBtn.disabled = true;
-      sendBtn.textContent = busyLabel;
       listBtn.disabled = true;
+      listBtn.textContent = busyLabel;
 
       var formData = new FormData();
       formData.append('invitees', JSON.stringify(invitees));
@@ -252,9 +246,7 @@
       })
       .then(function(r){ return r.json(); })
       .then(function(j){
-        sendBtn.disabled = false;
         listBtn.disabled = false;
-        sendBtn.textContent = 'Invite & Send SMS';
         listBtn.textContent = 'Save List';
         resetInviteRows();
         if (j && j.ok) { toast(j.message || successLabel, 'success'); }
@@ -265,19 +257,9 @@
         }
       })
       .catch(function(){
-        sendBtn.disabled = false;
         listBtn.disabled = false;
-        sendBtn.textContent = 'Invite & Send SMS';
         listBtn.textContent = 'Save List';
         toast('Could not complete the action. Please try again.', 'error');
-      });
-    }
-
-    var sendSmsBtn = document.getElementById('sendSmsBtn');
-    if (sendSmsBtn) {
-      sendSmsBtn.addEventListener('click', function(event){
-        event.preventDefault();
-        submitInvites('{{ route('cards.sendSms', $card) }}', 'Invitations sent', 'Sending...');
       });
     }
 

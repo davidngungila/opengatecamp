@@ -301,6 +301,19 @@ class DigitalCardController extends Controller
             return back()->with('error', 'No valid names and phone numbers provided. Fill in Full Name and Phone for each person.');
         }
 
+        $existingPhones = DigitalCardRecipient::whereIn('phone', array_column($invitees, 'phone'))
+            ->pluck('phone')
+            ->flip()
+            ->all();
+
+        $invitees = array_values(array_filter($invitees, function ($invitee) use ($existingPhones) {
+            return ! isset($existingPhones[$invitee['phone']]);
+        }));
+
+        if (empty($invitees)) {
+            return back()->with('error', 'These phone numbers already have a digital card. Each contact can only have one card.');
+        }
+
         $sms = app(SmsService::class);
         if (! $sms->isConfigured()) {
             return back()->with('error', 'SMS API token not configured.');
@@ -313,12 +326,18 @@ class DigitalCardController extends Controller
         $createdRecipients = [];
 
         foreach ($invitees as $invitee) {
+            if (isset($existingPhones[$invitee['phone']])) {
+                continue;
+            }
+
             $recipient = DigitalCardRecipient::create([
                 'digital_card_id' => $card->id,
                 'name' => ($invitee['name'] ?? '') !== '' ? $invitee['name'] : null,
                 'phone' => $invitee['phone'],
                 'status' => 'pending',
             ]);
+
+            $existingPhones[$invitee['phone']] = true;
 
             $result = $this->sendRecipientSms($recipient, $template);
 
@@ -440,24 +459,41 @@ class DigitalCardController extends Controller
             return back()->with('error', 'No valid names and phone numbers provided. Fill in Full Name and Phone for each person.');
         }
 
+        $existingPhones = DigitalCardRecipient::whereIn('phone', array_column($invitees, 'phone'))
+            ->pluck('phone')
+            ->flip()
+            ->all();
+
         $createdRecipients = [];
+        $skipped = [];
 
         foreach ($invitees as $invitee) {
+            if (isset($existingPhones[$invitee['phone']])) {
+                $skipped[] = $invitee['phone'];
+
+                continue;
+            }
+
             $createdRecipients[] = DigitalCardRecipient::create([
                 'digital_card_id' => $card->id,
                 'name' => ($invitee['name'] ?? '') !== '' ? $invitee['name'] : null,
                 'phone' => $invitee['phone'],
                 'status' => 'pending',
             ]);
+
+            $existingPhones[$invitee['phone']] = true;
         }
 
         AuditLog::record(
             'Added digital card invite list',
             'Digital Cards',
-            "{$card->card_no} — ".count($createdRecipients).' person(s) added to list'
+            "{$card->card_no} — ".count($createdRecipients).' added, '.count($skipped).' skipped (already listed)'
         );
 
         $notice = count($createdRecipients).' person(s) added to the list. Send SMS to invite them.';
+        if (count($skipped) > 0) {
+            $notice .= ' '.count($skipped).' skipped (phone already has a card): '.implode(', ', array_slice($skipped, 0, 5)).(count($skipped) > 5 ? '…' : '');
+        }
 
         if ($request->ajax() || $request->wantsJson()) {
             return response()->json([
@@ -808,7 +844,12 @@ class DigitalCardController extends Controller
         ]);
 
         $mpdf->WriteHTML($html);
-        $mpdf->Output("DigitalCard-{$card->card_no}.pdf", $dest);
+
+        $fileName = $recipientName
+            ? trim(preg_replace('/[^\pL\pN\s._-]+/u', '', str_replace('_', ' ', $recipientName))).'-'.$card->card_no
+            : $card->card_no;
+
+        $mpdf->Output("DigitalCard-{$fileName}.pdf", $dest);
     }
 
     public function preview(DigitalCard $card)
