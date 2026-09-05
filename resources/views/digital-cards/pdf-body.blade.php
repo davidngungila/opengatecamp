@@ -15,6 +15,14 @@
         font-weight: 900;
     }
 
+    @font-face {
+        font-family: "Poppins Black";
+        src: url("{{ ($web ?? false)
+            ? asset('fonts/Poppins-Black.ttf')
+            : storage_path('fonts/Poppins-Black.ttf') }}");
+        font-weight: normal;
+    }
+
     @php
         $bgUrl = null;
 
@@ -117,6 +125,7 @@
     }
 
     .organization .main {
+        font-family: "Poppins Black", Poppins, Arial, sans-serif;
         font-size: 30px;
         font-weight: 900;
         letter-spacing: .8px;
@@ -301,7 +310,7 @@
     }
 
     .payment .col + .col {
-        padding-left: 35px;
+        padding-left: 25px;
     }
 
     .payment-card {
@@ -310,29 +319,29 @@
         border: 2px solid {{ $primary }};
         border-radius: 10px;
 
-        padding: 10px 15px;
+        padding: 6px 12px;
 
         text-align: center;
     }
 
     .payment-card .method {
-        font-size: 17px;
+        font-size: 14px;
         font-weight: 900;
         color: {{ $dark }};
         text-transform: uppercase;
     }
 
     .payment-card .number {
-        margin-top: 2px;
+        margin-top: 1px;
 
-        font-size: 27px;
+        font-size: 21px;
         font-weight: 900;
 
         color: {{ $primary }};
     }
 
     .payment-card .name {
-        font-size: 15px;
+        font-size: 13px;
         font-weight: bold;
         color: {{ $dark }};
     }
@@ -485,7 +494,7 @@
             </div>
 
             <div class="donor-name">
-                [JINA LA MCHANGIAJI]
+                {{ $recipientName ?? '[JINA LA MCHANGIAJI]' }}
             </div>
 
         </div>

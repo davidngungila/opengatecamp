@@ -633,7 +633,7 @@ class DigitalCardController extends Controller
         $this->streamPdf($card);
     }
 
-    private function streamPdf(DigitalCard $card, string $dest = 'D'): void
+    private function streamPdf(DigitalCard $card, string $dest = 'D', ?string $recipientName = null): void
     {
         if (strtolower((string) $card->background_color) === '#1a237e') {
             $card->background_color = '#ffffff';
@@ -643,7 +643,7 @@ class DigitalCardController extends Controller
             "OGCM|CARD|{$card->card_no}|{$card->hash}"
         );
 
-        $html = view('digital-cards.pdf', compact('card', 'qrData'))->render();
+        $html = view('digital-cards.pdf', compact('card', 'qrData', 'recipientName'))->render();
 
         $mpdf = new Mpdf([
             'mode' => 'utf-8',
@@ -675,7 +675,19 @@ class DigitalCardController extends Controller
             ->whereIn('status', ['active', 'closed'])
             ->firstOrFail();
 
-        $this->streamPdf($card, 'I');
+        $recipientName = null;
+
+        if ($token = $request->query('r')) {
+            $recipient = DigitalCardRecipient::where('digital_card_id', $card->id)
+                ->where('token', $token)
+                ->first();
+
+            if ($recipient && $recipient->name) {
+                $recipientName = $recipient->name;
+            }
+        }
+
+        $this->streamPdf($card, 'I', $recipientName);
     }
 
     public function contribute(Request $request, string $hash)

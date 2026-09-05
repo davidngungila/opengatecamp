@@ -4,6 +4,6 @@
 <meta charset="UTF-8">
 </head>
 <body>
-@include('digital-cards.pdf-body', compact('card', 'qrData'))
+@include('digital-cards.pdf-body', ['card' => $card, 'qrData' => $qrData, 'recipientName' => $recipientName ?? null])
 </body>
 </html>
