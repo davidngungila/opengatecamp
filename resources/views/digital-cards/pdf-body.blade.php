@@ -127,7 +127,7 @@
     .organization .main {
         font-family: "Poppins Black", Poppins, Arial, sans-serif;
         font-size: 30px;
-        font-weight: 900;
+        font-weight: bold;
         letter-spacing: .8px;
         color: #000000;
         line-height: 1.15;
@@ -273,6 +273,14 @@
         font-weight: bold;
         color: {{ $dark }};
         margin-top: 4px;
+    }
+
+    .contribution-box .note {
+        font-size: 16px;
+        font-weight: bold;
+        color: {{ $primary }};
+        margin-top: 8px;
+        line-height: 1.4;
     }
 
 
@@ -482,6 +490,10 @@
 
             <div class="target">
                 Lengo la Camp: TZS 20,000,000/=
+            </div>
+
+            <div class="note">
+                Unaweza lipia sasa kupitia Lipa namba ya Voda: 67676666 na kwa namba ya simu 0756 112 102
             </div>
 
         </div>
