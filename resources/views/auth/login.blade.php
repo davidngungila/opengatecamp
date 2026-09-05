@@ -37,6 +37,11 @@
 /* Right login panel */
 .login-panel{flex:1;display:flex;align-items:center;justify-content:center;padding:24px;}
 .login-card{width:100%;max-width:440px;margin:0 auto;}
+.login-org{text-align:center;margin-bottom:30px;}
+.login-logo{width:88px;height:88px;object-fit:contain;border-radius:22px;margin:0 auto 16px;
+  background:#fff;padding:8px;box-shadow:0 8px 24px rgba(37,99,235,.22);display:block;}
+.login-org h1{font-size:17px;font-weight:800;color:var(--navy-900);margin:0 0 5px;line-height:1.3;}
+.login-org p{font-size:13px;font-weight:600;color:var(--text-secondary);margin:0;}
 .login-card h1{font-size:20px;font-weight:800;margin:0 0 4px;}
 .login-card .sub{font-size:13px;color:var(--text-secondary);font-weight:500;margin:0 0 22px;}
 .login-error{background:var(--danger-bg);color:var(--danger);border:1px solid rgba(220,38,38,.2);
@@ -113,6 +118,12 @@
 
   <div class="login-panel">
     <div class="login-card fade-in">
+      <div class="login-org">
+        <img src="{{ asset('logo.png') }}" alt="OpenGate Camp Connect" class="login-logo">
+        <h1>Inter-Colleges Charismatic Catholic Renewal Tanzania</h1>
+        <p>Diocese of Moshi and Arusha</p>
+      </div>
+
       @if($errors->any())
         <div class="login-error">{{ $errors->first() }}</div>
       @endif
