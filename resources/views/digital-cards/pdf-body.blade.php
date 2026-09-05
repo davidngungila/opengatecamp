@@ -13,10 +13,17 @@
                 : null;
         }
     }
+    $bc = (string) ($card->background_color ?: '#ffffff');
+    $bchex = ltrim($bc, '#');
+    if (strlen($bchex) === 3) { $bchex = $bchex[0].$bchex[0].$bchex[1].$bchex[1].$bchex[2].$bchex[2]; }
+    $brightness = (0.299*hexdec(substr($bchex,0,2)) + 0.587*hexdec(substr($bchex,2,2)) + 0.114*hexdec(substr($bchex,4,2)));
+    $isLight = ($bgUrl !== null) ? false : $brightness > 150;
+    $textColor = $isLight ? '#0f172a' : '#ffffff';
+    $mutedColor = $isLight ? '#475569' : 'rgba(255,255,255,.94)';
   @endphp
-  .pdf-page{font-family:Manrope,Arial,sans-serif;color:#000;width:1080px;height:1350px;position:relative;line-height:1.32;background-color:{{ $card->background_color }};@if($bgUrl) background-image:url("{{ $bgUrl }}");background-size:cover;background-position:center;@endif}
+  .pdf-page{font-family:Manrope,Arial,sans-serif;color:{{ $textColor }};width:1080px;height:1350px;position:relative;line-height:1.32;background-color:{{ $bc }};@if($bgUrl) background-image:url("{{ $bgUrl }}");background-size:cover;background-position:center;@endif}
   .pdf-page *{box-sizing:border-box;margin:0;padding:0;}
-  .pdf-page .scrim{position:absolute;top:0;left:0;width:1080px;height:1350px;background:rgba(8,12,20,.45);}
+  .pdf-page .scrim{position:absolute;top:0;left:0;width:1080px;height:1350px;background:{{ $isLight ? 'rgba(255,255,255,.10)' : 'rgba(8,12,20,.45)' }};}
   .pdf-page .sheet{padding:0 44px;position:relative;overflow:hidden;}
   .pdf-page .logo{text-align:center;padding-top:22px;margin-bottom:8px;}
   .pdf-page .logo img{width:110px;height:110px;}
@@ -25,31 +32,31 @@
   .pdf-page .org-sub{font-size:22px;letter-spacing:4px;font-weight:800;margin-top:2px;}
   .pdf-page .org-line{font-size:22px;letter-spacing:2px;font-weight:800;margin-top:2px;}
   .pdf-page .org-tag{font-size:25px;font-weight:800;letter-spacing:5px;margin-top:2px;}
-  .pdf-page .title{font-size:30px;font-weight:800;text-align:center;letter-spacing:6px;border-top:2px dashed #000;border-bottom:2px dashed #000;padding:8px 0;margin:12px 0;text-transform:uppercase;}
+  .pdf-page .title{font-size:30px;font-weight:800;text-align:center;letter-spacing:6px;border-top:2px dashed {{ $textColor }};border-bottom:2px dashed {{ $textColor }};padding:8px 0;margin:12px 0;text-transform:uppercase;}
   .pdf-page table.head{width:100%;border-collapse:collapse;font-size:21px;}
   .pdf-page table.head td{padding:2px 6px;}
-  .pdf-page table.head td.lbl{color:#444;}
+  .pdf-page table.head td.lbl{color:{{ $mutedColor }};}
   .pdf-page table.head td.r{text-align:right;font-weight:bold;white-space:nowrap;}
-  .pdf-page .ruled{border-top:2px dashed #000;margin:8px 0;}
-  .pdf-page .cardav{background:{{ $card->background_color }};border:3px solid {{ $card->accent_color }};border-radius:18px;color:#fff;padding:22px 34px;text-align:center;margin-top:8px;}
-  .pdf-page .type-tag{display:inline-block;font-size:18px;font-weight:800;letter-spacing:4px;text-transform:uppercase;color:#fff;border:2px solid {{ $card->accent_color }};border-radius:999px;padding:4px 16px;margin-bottom:6px;}
+  .pdf-page .ruled{border-top:2px dashed {{ $textColor }};margin:8px 0;}
+  .pdf-page .cardav{background:{{ $bc }};border:3px solid {{ $card->accent_color }};border-radius:18px;color:{{ $textColor }};padding:22px 34px;text-align:center;margin-top:8px;}
+  .pdf-page .type-tag{display:inline-block;font-size:18px;font-weight:800;letter-spacing:4px;text-transform:uppercase;color:{{ $textColor }};border:2px solid {{ $card->accent_color }};border-radius:999px;padding:4px 16px;margin-bottom:6px;}
   .pdf-page .card-title{font-size:46px;font-weight:800;letter-spacing:.6px;line-height:1.2;}
   .pdf-page .card-subtitle{font-size:22px;font-weight:600;color:{{ $card->accent_color }};margin-top:2px;}
   .pdf-page .card-ornament{width:110px;height:3px;background:{{ $card->accent_color }};margin:8px auto;}
-  .pdf-page .card-message{font-size:21px;color:rgba(255,255,255,.94);text-align:left;margin-top:8px;white-space:pre-line;}
+  .pdf-page .card-message{font-size:21px;color:{{ $mutedColor }};text-align:left;margin-top:8px;white-space:pre-line;}
   .pdf-page .amt{text-align:center;font-size:24px;font-weight:800;margin:10px 0 2px;background:#000;color:#fff;padding:6px 0;letter-spacing:2px;border-radius:8px;}
-  .pdf-page .progress-note{font-size:19px;color:#444;text-align:center;}
+  .pdf-page .progress-note{font-size:19px;color:{{ $mutedColor }};text-align:center;}
   .pdf-page .qr{text-align:center;margin:10px 0 0;}
   .pdf-page .qr img{width:110px;height:110px;}
   .pdf-page .barcode{text-align:center;font-size:18px;letter-spacing:5px;font-weight:bold;margin-top:2px;}
   .pdf-page .qr-cap{text-align:center;font-size:19px;font-weight:bold;margin-bottom:2px;}
-  .pdf-page .form-card{border:2px dashed #000;border-radius:14px;padding:14px 26px;page-break-inside:avoid;margin-top:10px;}
-  .pdf-page .form-note{font-size:18px;color:#444;margin-bottom:10px;}
-  .pdf-page .dotline{border-bottom:2px dotted #444;height:25px;}
+  .pdf-page .form-card{border:2px dashed {{ $textColor }};border-radius:14px;padding:14px 26px;page-break-inside:avoid;margin-top:10px;}
+  .pdf-page .form-note{font-size:18px;color:{{ $mutedColor }};margin-bottom:10px;}
+  .pdf-page .dotline{border-bottom:2px dotted {{ $mutedColor }};height:25px;}
   .pdf-page table.form{width:100%;border-collapse:collapse;}
   .pdf-page table.form td{padding:4px 4px;vertical-align:middle;}
-  .pdf-page table.form td.lbl{width:36%;font-size:20px;font-weight:bold;color:#333;}
-  .pdf-page .foot{margin-top:10px;text-align:center;font-size:18px;line-height:1.4;border-top:2px dashed #000;padding-top:6px;}
+  .pdf-page table.form td.lbl{width:36%;font-size:20px;font-weight:bold;color:{{ $textColor }};}
+  .pdf-page .foot{margin-top:10px;text-align:center;font-size:18px;line-height:1.4;border-top:2px dashed {{ $textColor }};padding-top:6px;}
 </style>
 <div class="pdf-page">
   @if($bgUrl)<div class="scrim"></div>@endif

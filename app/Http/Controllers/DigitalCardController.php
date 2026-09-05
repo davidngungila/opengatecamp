@@ -88,11 +88,18 @@ class DigitalCardController extends Controller
     {
         $eventName = (string) Setting::get('event.name', 'Open Gate Camp');
 
+        $bgColorRaw = (string) Setting::get('digital_card.background_color');
+        if ($bgColorRaw === '' || strtolower($bgColorRaw) === '#1a237e') {
+            $bgColor = '#ffffff';
+        } else {
+            $bgColor = $bgColorRaw;
+        }
+
         $data = [
             'title' => (string) Setting::get('digital_card.title', $eventName),
             'message' => (string) Setting::get('digital_card.message', 'Thank you for supporting Open Gate Camp. Contribute using the link below.'),
             'target_amount' => (float) (Setting::get('digital_card.target_amount') ?: 0),
-            'background_color' => (string) (Setting::get('digital_card.background_color') ?: '#ffffff'),
+            'background_color' => $bgColor,
             'accent_color' => (string) (Setting::get('digital_card.accent_color') ?: '#ffd700'),
             'cta_text' => (string) (Setting::get('digital_card.cta_text') ?: 'Contribute Now'),
             'sms_text' => (string) (Setting::get('digital_card.sms_text') ?: 'You are invited! View your digital card and contribute: {link}'),
@@ -628,6 +635,10 @@ class DigitalCardController extends Controller
 
     private function streamPdf(DigitalCard $card, string $dest = 'D'): void
     {
+        if (strtolower((string) $card->background_color) === '#1a237e') {
+            $card->background_color = '#ffffff';
+        }
+
         $qrData = app(QrCodeService::class)->pngDataUri(
             "OGCM|CARD|{$card->card_no}|{$card->hash}"
         );
