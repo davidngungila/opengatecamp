@@ -578,7 +578,7 @@
         ====================================================== --}}
         <div class="motto">
 
-            “Wahubirije Wasipopelekwa?...” — Warumi 10:15
+            “Fungua malango ili taifa lenye haki lipate kuingia” — Isaya 26:2
 
         </div>
 
