@@ -11,7 +11,11 @@
         <div class="field full">
           <label>Send To *</label>
           <select id="recipientType" style="width:100%" onchange="onRecipientTypeChange(this)">
-            <option value="all_active">All Active Members</option>
+            <option value="admission">Admission Desk</option>
+            <option value="registration">Registrations</option>
+            <option value="pledge">Pledges</option>
+            <option value="digital_card">Digital Cards</option>
+            <option value="all_active" selected>All Active Members</option>
             <option value="all">All Members</option>
             <option value="manual">Manual Single Number</option>
             <option value="group">By Group</option>
@@ -140,6 +144,24 @@ function onRecipientTypeChange(sel) {
     return;
   }
 
+  var STATUS_MAP = {
+    admission: [['', 'All Statuses'], ['pending', 'Pending'], ['confirmed', 'Confirmed'], ['attended', 'Attended'], ['no_show', 'No Show'], ['cancelled', 'Cancelled']],
+    registration: [['', 'All Statuses'], ['pending', 'Pending'], ['confirmed', 'Confirmed'], ['attended', 'Attended'], ['no_show', 'No Show'], ['cancelled', 'Cancelled']],
+    pledge: [['', 'All Statuses'], ['pending', 'Pending'], ['partial', 'Partial'], ['fulfilled', 'Fulfilled'], ['cancelled', 'Cancelled']],
+    digital_card: [['', 'All Statuses'], ['draft', 'Draft'], ['active', 'Active'], ['closed', 'Closed']]
+  };
+
+  if (STATUS_MAP[f]) {
+    valSel.innerHTML = '';
+    STATUS_MAP[f].forEach(function(s) { valSel.innerHTML += '<option value="'+s[0]+'">'+s[1]+'</option>'; });
+    wrap.style.display = 'block';
+    manualWrap.style.display = 'none';
+    document.getElementById('manualPhone').value = '';
+    document.getElementById('recipientValue').value = '';
+    loadRecipients();
+    return;
+  }
+
   if (f === 'group') {
     valSel.innerHTML = '<option value="">— Select Group —</option>';
     groupOptions.forEach(function(g) { valSel.innerHTML += '<option value="'+g.id+'">'+g.name+'</option>'; });
@@ -214,8 +236,15 @@ function loadRecipients() {
     data.members.forEach(function(m) {
       var tr = document.createElement('tr');
       tr.style.borderBottom = '1px solid var(--border)';
-      var typeBadge = m.type === 'student' ? '<span class="badge badge-info badge-dotted">Student</span>' : '<span class="badge badge-neutral badge-dotted">Non-Student</span>';
-      var statusClass = m.status === 'Active' ? 'success' : (m.status === 'New' ? 'info' : 'neutral');
+      var isMember = m.type === 'student' || m.type === 'non_student';
+      var typeBadge = isMember
+        ? '<span class="badge badge-'+(m.type === 'student' ? 'info' : 'neutral')+' badge-dotted">'+(m.type === 'student' ? 'Student' : 'Non-Student')+'</span>'
+        : '<span class="badge badge-purple badge-dotted">'+m.type+'</span>';
+      var s = String(m.status).toLowerCase();
+      var statusClass = ['attended','fulfilled','active','invited','delivered','paid','success'].indexOf(s) !== -1 ? 'success'
+        : (['pending','partial','no_show','no show','draft','unchecked','enroute','sending'].indexOf(s) !== -1 ? 'warning'
+        : (['cancelled','failed','closed','undelivered','expired','rejected'].indexOf(s) !== -1 ? 'danger'
+        : (s === 'confirmed' || s === 'new' ? 'info' : 'neutral')));
       tr.innerHTML = '<td style="padding:8px 10px;font-weight:600">'+m.name+'</td>'+
         '<td style="padding:8px 10px;font-family:monospace">'+m.phone+'</td>'+
         '<td style="padding:8px 10px">'+typeBadge+'</td>'+

@@ -267,6 +267,10 @@ class MessagingController extends Controller
         $filter = $request->input('filter', 'all_active');
         $value  = $request->input('value');
 
+        if (in_array($filter, ['admission', 'registration', 'pledge', 'digital_card'], true)) {
+            return $this->moduleRecipients($filter, $value);
+        }
+
         $query = Member::whereNotNull('phone')->where('phone', '!=', '');
 
         switch ($filter) {
@@ -331,6 +335,70 @@ class MessagingController extends Controller
                 'group'    => $m->group?->name ?? '—',
                 'ministry' => $m->ministry?->name ?? '—',
             ]),
+        ]);
+    }
+
+    private function currentEvent(): ?\App\Models\Event
+    {
+        return \App\Models\Event::where('event_type', 'camp')->orderByDesc('start_date')->first()
+            ?? \App\Models\Event::orderByDesc('start_date')->first();
+    }
+
+    private function moduleRecipients(string $module, ?string $status): \Illuminate\Http\JsonResponse
+    {
+        $event = $this->currentEvent();
+
+        if ($module === 'admission' || $module === 'registration') {
+            $query = \App\Models\EventAttendee::whereNotNull('phone')->where('phone', '!=', '')
+                ->when($event, fn ($q) => $q->where('event_id', $event->id))
+                ->when($status, fn ($q) => $q->where('status', $status))
+                ->orderBy('name');
+
+            $rows = $query->get(['name', 'phone', 'status', 'member_id']);
+
+            $rows = $rows->map(fn ($a) => [
+                'name'     => $a->name,
+                'phone'    => $a->phone,
+                'type'     => $module === 'admission' ? 'Admission' : 'Registration',
+                'status'   => $a->getStatusLabel(),
+                'group'    => $event?->title ?? 'All Events',
+                'ministry' => $a->getRegionLabel(),
+            ]);
+        } elseif ($module === 'pledge') {
+            $query = \App\Models\Pledge::whereNotNull('phone')->where('phone', '!=', '')
+                ->when($event, fn ($q) => $q->where('event_id', $event->id))
+                ->when($status, fn ($q) => $q->where('status', $status))
+                ->orderBy('name');
+
+            $rows = $query->get(['name', 'phone', 'status', 'event_id', 'pledge_no'])->map(fn ($p) => [
+                'name'     => $p->name,
+                'phone'    => $p->phone,
+                'type'     => 'Pledge',
+                'status'   => $p->getStatusLabel(),
+                'group'    => $p->event?->title ?? '—',
+                'ministry' => (string) $p->pledge_no,
+            ]);
+        } else {
+            $query = \App\Models\DigitalCardRecipient::whereNotNull('phone')->where('phone', '!=', '')
+                ->whereHas('digitalCard', fn ($q) => $q->when($status, fn ($sq) => $sq->where('status', $status)))
+                ->with('digitalCard:id,title,card_type,status,card_no')
+                ->orderBy('name');
+
+            $rows = $query->get()->map(fn ($r) => [
+                'name'     => $r->name,
+                'phone'    => $r->phone,
+                'type'     => 'Digital Card',
+                'status'   => $r->digitalCard?->getStatusLabel() ?? '—',
+                'group'    => ($r->digitalCard?->title ?: '—').' ('.$r->digitalCard?->card_no.')',
+                'ministry' => (string) $r->status,
+            ]);
+        }
+
+        $rows = $rows->values();
+
+        return response()->json([
+            'count'   => $rows->count(),
+            'members' => $rows,
         ]);
     }
 
