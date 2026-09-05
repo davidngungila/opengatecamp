@@ -279,6 +279,8 @@ class SettingsController extends Controller
             'digital_card_leader_event_name' => 'nullable|string|max:255',
             'digital_card_leader_secretary_name' => 'nullable|string|max:255',
             'digital_card_leader_treasurer_name' => 'nullable|string|max:255',
+            'digital_card_leader_secretary_phone' => 'nullable|string|max:30',
+            'digital_card_leader_treasurer_phone' => 'nullable|string|max:30',
             'digital_card_leader_event_stamp' => 'nullable|image|mimes:jpeg,png,webp|max:2048',
             'digital_card_leader_secretary_stamp' => 'nullable|image|mimes:jpeg,png,webp|max:2048',
             'digital_card_leader_treasurer_stamp' => 'nullable|image|mimes:jpeg,png,webp|max:2048',
@@ -334,6 +336,8 @@ class SettingsController extends Controller
             'digital_card_leader_event_name' => 'digital_card.leader_event_name',
             'digital_card_leader_secretary_name' => 'digital_card.leader_secretary_name',
             'digital_card_leader_treasurer_name' => 'digital_card.leader_treasurer_name',
+            'digital_card_leader_secretary_phone' => 'digital_card.leader_secretary_phone',
+            'digital_card_leader_treasurer_phone' => 'digital_card.leader_treasurer_phone',
         ] as $field => $key) {
             Setting::put($key, $data[$field] ?? null);
         }

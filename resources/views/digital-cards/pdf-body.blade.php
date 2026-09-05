@@ -535,8 +535,16 @@
         ====================================================== --}}
         <div class="contribution-box">
 
+            @php
+                $noteSecName = (string) \App\Models\Setting::get('digital_card.leader_secretary_name', '');
+                $noteSecPhone = (string) \App\Models\Setting::get('digital_card.leader_secretary_phone', '');
+                $noteTreName = (string) \App\Models\Setting::get('digital_card.leader_treasurer_name', '');
+                $noteTrePhone = (string) \App\Models\Setting::get('digital_card.leader_treasurer_phone', '');
+                $noteSecBlock = ($noteSecName ?: '[Jina]').' — '.($noteSecPhone ?: '[Namba ya Simu]');
+                $noteTreBlock = ($noteTreName ?: '[Jina]').' — '.($noteTrePhone ?: '[Namba ya Simu]');
+            @endphp
             <div class="note">
-                Unaweza lipia sasa kupitia Lipa namba ya Voda: 67676666 na kwa namba ya simu 0756 112 102
+                Unaweza kuwasilisha mchango wako sasa kupitia Lipa Namba ya Vodacom: 67676666 au kwa namba ya simu 0756 112 102. Kwa mawasiliano zaidi kuhusu namna ya kuwasilisha mchango wako, wasiliana na Katibu {{ $noteSecBlock }} au Mhazini {{ $noteTreBlock }}.
             </div>
 
         </div>
