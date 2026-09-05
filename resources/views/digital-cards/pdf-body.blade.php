@@ -487,7 +487,7 @@
             </div>
 
             <div class="donor-name">
-                {{ $recipientName ?? '[JINA LA MCHANGIAJI]' }}
+                {{ $recipientName ?? '' }}
             </div>
 
         </div>
