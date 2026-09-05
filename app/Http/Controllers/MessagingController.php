@@ -773,7 +773,7 @@ class MessagingController extends Controller
             ]);
         }
 
-        $report = app(SmsService::class)->getDelivery($messageId);
+        $report = app(SmsService::class)->getDelivery($messageId, $message->phone, (string) \App\Models\Setting::get('sms.sender_id', ''), $message->created_at);
 
         $deliveryStatus = (string) ($report['status'] ?? 'unknown');
         $message->update([

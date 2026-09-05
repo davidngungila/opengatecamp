@@ -632,7 +632,7 @@ class DigitalCardController extends Controller
             ]);
         }
 
-        $report = app(SmsService::class)->getDelivery($recipient->message_id);
+        $report = app(SmsService::class)->getDelivery($recipient->message_id, $recipient->phone, (string) \App\Models\Setting::get('sms.sender_id', ''), $recipient->sent_at);
 
         $deliveryStatus = (string) ($report['status'] ?? 'unknown');
         $recipient->update([

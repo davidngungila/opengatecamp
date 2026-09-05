@@ -129,23 +129,45 @@ class SmsService
     }
 
     /**
-     * Query the provider's report endpoint for a delivered message.
+     * Query the provider's logs endpoint for a delivered message.
      *
-     * @param  string  $messageId  The provider message ID returned on send
-     * @return array   ['success' => bool, 'status' => 'delivered'|'undelivered'|'pending'|'unknown'|..., 'raw' => array]
+     * @param  string                         $messageId  The provider message ID returned on send
+     * @param  string|null                    $to         Destination phone (255…) used to narrow the search
+     * @param  string|null                    $from       Sender ID used to narrow the search
+     * @param  string|\DateTimeInterface|null $sentAt     Date/time the message was sent (for the sentSince/sentUntil range)
+     * @return array       ['success' => bool, 'status' => 'delivered'|'undelivered'|'pending'|'unknown'|..., 'raw' => array]
      */
-    public function getDelivery(string $messageId): array
+    public function getDelivery(string $messageId, ?string $to = null, ?string $from = null, null|string|\DateTimeInterface $sentAt = null): array
     {
         if (! $this->isConfigured()) {
             return ['success' => false, 'status' => 'NOT_CONFIGURED', 'raw' => []];
         }
 
         try {
+            $params = [];
+            if ($to) {
+                $params['to'] = $this->formatPhone($to);
+            }
+            if ($from) {
+                $params['from'] = $from;
+            }
+            if ($sentAt) {
+                $date = $sentAt instanceof \DateTimeInterface
+                    ? \Illuminate\Support\Carbon::parse($sentAt)
+                    : \Illuminate\Support\Carbon::parse($sentAt);
+                $params['sentSince'] = $date->copy()->subMinutes(30)->format('Y-m-d H:i:s');
+                $params['sentUntil'] = $date->copy()->addMinutes(30)->format('Y-m-d H:i:s');
+            }
+            if ($messageId) {
+                $params['messageId'] = $messageId;
+            }
+            $params['limit'] = 100;
+
             $response = Http::withHeaders([
                 'Authorization' => 'Bearer '.$this->token,
                 'Content-Type'  => 'application/json',
                 'Accept'        => 'application/json',
-            ])->timeout(15)->get($this->baseUrl.'/api/v2/reports', ['messageId' => $messageId]);
+            ])->timeout(15)->get($this->baseUrl.'/api/v2/logs', $params);
 
             $body = $response->json() ?: [];
 
@@ -155,7 +177,7 @@ class SmsService
 
             return [
                 'success' => true,
-                'status'  => $this->parseDeliveryStatus($body),
+                'status'  => $this->parseDeliveryStatus($body, $messageId),
                 'raw'     => $body,
             ];
         } catch (\Exception $e) {
@@ -165,27 +187,71 @@ class SmsService
         }
     }
 
-    private function parseDeliveryStatus(array $body): string
+    private function parseDeliveryStatus(array $body, ?string $messageId = null): string
     {
-        $report = data_get($body, 'reports.0', $body);
-        $statusName = strtoupper((string) (data_get($report, 'status.name') ?? data_get($body, 'status.name', '')));
-        $statusId = data_get($report, 'status.id') ?? data_get($body, 'status.id');
+        $logs = $body['results'] ?? $body['logs'] ?? $body['data'] ?? $body['messages'] ?? [];
 
-        $deliveredCount = (int) (data_get($report, 'deliveredCount') ?? data_get($body, 'deliveredCount', 0));
-        $notDeliveredCount = (int) (data_get($report, 'notDeliveredCount') ?? data_get($body, 'notDeliveredCount', 0));
+        if (isset($logs[0]) && is_array($logs[0])) {
+            $report = null;
 
-        if ($deliveredCount > 0 && $notDeliveredCount === 0) {
-            return 'delivered';
+            if ($messageId !== null) {
+                foreach ($logs as $log) {
+                    if (in_array($messageId, [(string) ($log['messageId'] ?? ''), (string) ($log['id'] ?? '')], true)) {
+                        $report = $log;
+
+                        break;
+                    }
+                }
+            }
+
+            $report = $report ?? $logs[0];
+        } else {
+            $report = $body;
         }
-        if ($deliveredCount === 0 && $notDeliveredCount > 0) {
-            return 'undelivered';
+
+        return $this->statusFromLog($report);
+    }
+
+    private function statusFromLog(array $report): string
+    {
+        $delivery = data_get($report, 'delivery');
+
+        if ($delivery !== null && is_array($delivery)) {
+            $statusName = strtoupper((string) data_get($delivery, 'status.name'));
+            $statusGroup = strtoupper((string) data_get($delivery, 'status.groupName'));
+            $statusId = data_get($delivery, 'status.id');
+
+            $status = $statusName ?: $statusGroup;
+
+            if ($status !== '') {
+                return match (true) {
+                    in_array($status, ['DELIVRD', 'DELIVERED', 'SUCCESS', 'COMPLETED', 'DELIVERED_TO_HANDSET'], true) => 'delivered',
+                    in_array($status, ['UNDELIV', 'UNDELIVERED', 'EXPIRED', 'REJECTD', 'REJECTED', 'FAILED', 'NOT_DELIVERED', 'UNAVAILABLE', 'UNKNOWN'], true) => 'undelivered',
+                    in_array($status, ['ACCEPTD', 'ACCEPTED', 'ACCEPT', 'ENROUTE', 'ENROUTE (SENT)', 'SENTTODLR', 'SENT', 'PENDING', 'DELIVERED_TO_SMSC'], true) => 'pending',
+                    default => 'unknown',
+                };
+            }
+
+            if ($statusId !== null) {
+                return match ((int) $statusId) {
+                    88 => 'delivered',
+                    50, 51, 52, 73, 74 => 'pending',
+                    default => 'unknown',
+                };
+            }
         }
 
-        if ($statusName !== '') {
-            return match ($statusName) {
-                'DELIVRD', 'DELIVERED', 'SUCCESS', 'COMPLETED' => 'delivered',
-                'UNDELIV', 'UNDELIVERED', 'EXPIRED', 'REJECTD', 'FAILED', 'UNKNOWN' => 'undelivered',
-                'ACCEPTD', 'ACCEPT', 'ENROUTE', 'SENTTODLR', 'PENDING', 'SENT' => 'pending',
+        $statusName = strtoupper((string) data_get($report, 'status.name'));
+        $statusGroup = strtoupper((string) data_get($report, 'status.groupName'));
+        $statusId = data_get($report, 'status.id');
+
+        $status = $statusName ?: $statusGroup;
+
+        if ($status !== '') {
+            return match (true) {
+                in_array($status, ['DELIVRD', 'DELIVERED', 'SUCCESS', 'COMPLETED', 'DELIVERED_TO_HANDSET'], true) => 'delivered',
+                in_array($status, ['UNDELIV', 'UNDELIVERED', 'EXPIRED', 'REJECTD', 'REJECTED', 'FAILED', 'NOT_DELIVERED', 'UNAVAILABLE', 'UNKNOWN'], true) => 'undelivered',
+                in_array($status, ['ACCEPTD', 'ACCEPTED', 'ACCEPT', 'ENROUTE', 'ENROUTE (SENT)', 'SENTTODLR', 'SENT', 'PENDING', 'DELIVERED_TO_SMSC'], true) => 'pending',
                 default => 'unknown',
             };
         }
