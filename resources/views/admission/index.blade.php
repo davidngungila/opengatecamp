@@ -138,7 +138,7 @@
         <div class="info-row" style="grid-column:1/-1;border-bottom:none"><span>Notes</span><b id="admNotes" style="white-space:pre-wrap">—</b></div>
       </div>
       <hr style="border:none;border-top:1px solid var(--border);margin:14px 0">
-      <a id="admTicketLink" class="btn btn-secondary btn-sm" style="width:100%;justify-content:center" href="#" target="_blank">Open Ticket (PDF)</a>
+      <button type="button" class="btn btn-secondary btn-sm" style="width:100%;justify-content:center" onclick="previewTicket()">Open Ticket (PDF)</button>
     </div>
     <div class="drawer-foot" style="display:block">
       <form method="POST" action="{{ route('admission.admit') }}" id="admAdmitForm" style="display:none" data-confirm
@@ -153,10 +153,13 @@
     </div>
   </div>
 </div>
+@include('partials.ticket-preview-drawer')
 @endsection
 
 @push('scripts')
 <script>
+var currentTicketUrl = '';
+var currentTicketName = '';
 document.addEventListener('DOMContentLoaded', function(){
   var BASE = '{{ url('/attendees') }}';
   document.querySelectorAll('.admit-row').forEach(function(row){
@@ -185,12 +188,15 @@ document.addEventListener('DOMContentLoaded', function(){
     document.getElementById('admCheckedIn').textContent = d.checkedin || 'Not admitted';
     document.getElementById('admCheckedInBy').textContent = d.checkedinby || '—';
     document.getElementById('admNotes').textContent = d.notes || '—';
-    var link = document.getElementById('admTicketLink');
-    link.href = BASE + '/' + d.id + '/ticket';
+    currentTicketUrl = BASE + '/' + d.id + '/ticket';
+    currentTicketName = d.name || '';
     document.getElementById('admAdmitCode').value = d.ticket || '';
     document.getElementById('admAdmitForm').style.display = d.checkedin ? 'none' : 'block';
     openDrawerById('admitDetailDrawer');
   }
+  window.previewTicket = function(){
+    openTicketPreview(currentTicketUrl, currentTicketName + ' – ticket');
+  };
 });
 </script>
 @endpush

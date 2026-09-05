@@ -104,7 +104,7 @@
                   <button type="button" data-record-att-payment data-id="{{ $a->hashed_id }}" data-name="{{ $a->name }}" data-amount="{{ $a->amount_paid }}">Record Payment</button>
                   <button type="button" data-send-att-sms data-id="{{ $a->hashed_id }}" data-name="{{ $a->name }}" data-phone="{{ $a->phone }}">Send SMS</button>
                   @if($a->hasCompletedContribution())
-                  <a href="{{ route('attendees.ticket.pdf', $a) }}" target="_blank" class="action-link" style="display:block;width:100%;padding:8px 14px;font-size:12.5px;color:var(--text-primary);text-decoration:none;box-sizing:border-box">Print Ticket (PDF)</a>
+                  <button type="button" data-open-att-ticket data-id="{{ $a->hashed_id }}" data-name="{{ $a->name }}" style="display:block;width:100%;padding:8px 14px;font-size:12.5px;color:var(--text-primary);text-decoration:none;box-sizing:border-box;background:none;border:none;text-align:left;cursor:pointer">Open Ticket (PDF)</button>
                   <button type="button" data-send-att-ticket data-id="{{ $a->hashed_id }}" data-name="{{ $a->name }}" data-phone="{{ $a->phone }}" data-ticket="{{ $a->getTicketNo() }}">Send Ticket SMS</button>
                   @endif
                 </div>
@@ -215,13 +215,13 @@
           <span class="daction-txt"><b>Send SMS</b><small>Send a text message to this attendee</small></span>
           <span class="daction-arrow">›</span>
         </button>
-        <a href="javascript:void(0)" class="daction" id="attActTicket" style="display:none">
+        <button type="button" class="daction" id="attActTicket" style="display:none">
           <span class="daction-ico" style="background:rgba(139,92,246,.12);color:purple">
             <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M2 9a3 3 0 010 6v2a2 2 0 002 2h16a2 2 0 002-2v-2a3 3 0 000-6V7a2 2 0 00-2-2H4a2 2 0 00-2 2z"/><path d="M13 5v2M13 17v2M13 11v2"/></svg>
           </span>
-          <span class="daction-txt"><b>Print Ticket (PDF)</b><small>Download this attendee's ticket</small></span>
+          <span class="daction-txt"><b>Open Ticket (PDF)</b><small>Preview this attendee's ticket</small></span>
           <span class="daction-arrow">›</span>
-        </a>
+        </button>
         <button type="button" class="daction" id="attActTicketSms" style="display:none">
           <span class="daction-ico" style="background:rgba(16,185,129,.12);color:var(--success)">
             <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6L9 17l-5-5"/></svg>
@@ -287,6 +287,7 @@
     </form>
   </div>
 </div>
+@include('partials.ticket-preview-drawer')
 @endsection
 
 @push('scripts')
@@ -361,8 +362,7 @@ document.addEventListener('DOMContentLoaded', function(){
     var ticketUrl = "{{ url('/attendees') }}/" + d.id + "/ticket";
     var ticketBtn = document.getElementById('attActTicket');
     ticketBtn.style.display = canTicket ? 'flex' : 'none';
-    ticketBtn.href = canTicket ? ticketUrl : 'javascript:void(0)';
-    ticketBtn.target = canTicket ? '_blank' : '';
+    ticketBtn.onclick = canTicket ? function(){ openTicketPreview(ticketUrl, (d.name || 'Attendee') + ' – ticket'); } : null;
     document.getElementById('attActTicketSms').style.display = canTicket ? 'flex' : 'none';
 
     openDrawerById('attDetailDrawer');
@@ -399,6 +399,13 @@ document.addEventListener('DOMContentLoaded', function(){
       document.getElementById('attSmsMessage').value = 'Hello ' + (d.name||'') + ',\\nYou are registered for {{ \App\Models\Setting::get("event.name", "Open Gate Camp") }}. We look forward to seeing you!';
       document.getElementById('attSmsForm').action = "{{ url('/attendees') }}/" + d.id + "/sms";
       openDrawerById('attSmsDrawer');
+    });
+  });
+
+  document.querySelectorAll('[data-open-att-ticket]').forEach(function(btn){
+    btn.addEventListener('click', function(){
+      var d = btn.dataset;
+      openTicketPreview("{{ url('/attendees') }}/" + d.id + "/ticket", (d.name || 'Attendee') + ' – ticket');
     });
   });
 
