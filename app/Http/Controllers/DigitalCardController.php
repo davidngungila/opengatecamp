@@ -25,18 +25,13 @@ class DigitalCardController extends Controller
         $card = $this->currentCard();
 
         $recipients = $card->recipients()->latest('created_at')->get();
-        $confirmedTotal = $card->contributions()->where('status', 'confirmed')->sum('amount');
-        $contributionsCount = $card->contributions()->count();
-        $targetAmount = (float) $card->target_amount;
-        $progressPercent = $targetAmount > 0 ? round($confirmedTotal / $targetAmount * 100, 1) : 0;
 
         $currentEventName = (string) Setting::get('event.name', 'Open Gate Camp');
         $currentEventDate = Setting::get('event.start_date');
         $currentEventVenue = (string) Setting::get('event.venue', '');
 
         return view('digital-cards.index', compact(
-            'card', 'recipients', 'confirmedTotal', 'contributionsCount',
-            'targetAmount', 'progressPercent', 'currentEventName', 'currentEventDate', 'currentEventVenue',
+            'card', 'recipients', 'currentEventName', 'currentEventDate', 'currentEventVenue',
         ));
     }
 

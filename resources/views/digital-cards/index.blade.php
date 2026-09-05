@@ -13,40 +13,6 @@
       @if($currentEventDate)<span>· {{ \Carbon\Carbon::parse($currentEventDate)->format('d M Y') }}</span>@endif
       @if($currentEventVenue)<span>· {{ $currentEventVenue }}</span>@endif
     </div></div>
-    <div class="section-actions">
-      <a class="btn btn-outline" href="{{ route('cards.preview', $card) }}" target="_blank">Preview Card</a>
-      <a class="btn btn-outline" href="{{ route('cards.show', $card->hash) }}" target="_blank">Public Page</a>
-    </div>
-  </div>
-
-  <div class="table-card" style="margin-bottom:18px">
-    <div style="padding:18px">
-      <div style="display:flex;flex-wrap:wrap;justify-content:space-between;align-items:flex-start;gap:12px">
-        <div style="min-width:0">
-          <div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap">
-            <span class="badge badge-neutral badge-dotted">{{ $card->card_no }}</span>
-            <span class="badge badge-{{ $card->getStatusColor() }} badge-dotted">{{ $card->getStatusLabel() }}</span>
-          </div>
-          <h3 style="font-size:18px;margin:8px 0 4px">{{ $card->title }}</h3>
-          @if($card->message)
-          <p style="color:var(--text-secondary);font-size:13px;margin:0;max-width:560px;line-height:1.6">{{ $card->message }}</p>
-          @endif
-          <div style="margin-top:8px;font-size:12.5px"><span style="color:var(--text-tertiary);font-weight:600">Public link:</span> <a href="{{ route('cards.show', $card->hash) }}" target="_blank" class="link-mono" style="color:#2563eb;text-decoration:none">{{ $card->public_url }}</a></div>
-        </div>
-        <div style="display:flex;gap:14px;flex-wrap:wrap;align-items:center">
-          <div class="mini-stat"><span>Raised</span><b>TZS {{ number_format($confirmedTotal) }}</b></div>
-          <div class="mini-stat"><span>Target</span><b>TZS {{ number_format($targetAmount) }}</b></div>
-          <div class="mini-stat"><span>Contributions</span><b>{{ number_format($contributionsCount) }}</b></div>
-          <div class="mini-stat"><span>Invited</span><b>{{ number_format($recipients->count()) }}</b></div>
-        </div>
-      </div>
-      @if($targetAmount > 0)
-      <div style="margin-top:16px">
-        <div style="height:8px;border-radius:999px;background:#e2e8f0;overflow:hidden"><div style="height:100%;width:{{ min(100, $progressPercent) }}%;background:{{ $card->accent_color }};border-radius:999px"></div></div>
-        <div style="font-size:11.5px;color:var(--text-tertiary);font-weight:700;margin-top:6px">{{ number_format($progressPercent, 1) }}% of goal reached</div>
-      </div>
-      @endif
-    </div>
   </div>
 
   @if(!$isCommittee)
@@ -106,11 +72,6 @@
 </div>
 
 <style>
-  .section-actions{display:flex;gap:10px;flex-wrap:wrap;}
-  .mini-stat{background:#f8fafc;border:1px solid #e2e8f0;border-radius:12px;padding:10px 14px;}
-  .mini-stat span{display:block;font-size:10.5px;font-weight:700;text-transform:uppercase;letter-spacing:.5px;color:#94a3b8;margin-bottom:4px;}
-  .mini-stat b{font-size:15px;font-weight:800;color:#0f172a;}
-  .link-mono{font-family:ui-monospace,SFMono-Regular,Menlo,monospace;font-size:12px;}
   .table-head{display:flex;align-items:center;justify-content:space-between;gap:12px;padding:16px 18px 0;}
   .invite-row{display:grid;grid-template-columns:1.5fr 1fr auto;gap:8px;margin-bottom:8px;}
   @media (max-width:600px){.invite-row{grid-template-columns:1fr 1fr auto;}}
