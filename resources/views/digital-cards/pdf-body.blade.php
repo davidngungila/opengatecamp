@@ -480,18 +480,6 @@
         ====================================================== --}}
         <div class="contribution-box">
 
-            <div class="label">
-                Mchango Unaopendekezwa
-            </div>
-
-            <div class="amount">
-                TZS 15,000/=
-            </div>
-
-            <div class="target">
-                Lengo la Camp: TZS 20,000,000/=
-            </div>
-
             <div class="note">
                 Unaweza lipia sasa kupitia Lipa namba ya Voda: 67676666 na kwa namba ya simu 0756 112 102
             </div>
