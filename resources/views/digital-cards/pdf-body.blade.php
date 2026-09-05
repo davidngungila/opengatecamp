@@ -334,23 +334,6 @@
         height: 46px;
     }
 
-    .signatures .sign-stamp {
-        height: 56px;
-
-        margin: 0 auto;
-
-        display: flex;
-        align-items: flex-end;
-        justify-content: center;
-    }
-
-    .signatures .sign-stamp img {
-        max-height: 54px;
-        max-width: 120px;
-
-        object-fit: contain;
-    }
-
     .signatures .sign-name {
         margin-top: 4px;
 
