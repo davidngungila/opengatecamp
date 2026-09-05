@@ -8,6 +8,11 @@
   <div class="section-head">
     <h2>Message History</h2>
     <span class="badge badge-neutral">{{ $messages->total() }} total</span>
+    <div style="margin-left:auto;display:flex;align-items:center;gap:10px">
+      <button type="button" class="btn btn-primary" id="bulkCheckBtn" onclick="bulkCheckDelivery()" title="Check delivery status for all SMS messages on this page">
+        <span id="bulkCheckLabel">Check All ({{ $checkableCount }})</span>
+      </button>
+    </div>
   </div>
 
   @if(session('error'))
@@ -241,6 +246,56 @@ function checkDelivery(id){
     if(btn){ btn.disabled = false; btn.textContent = 'Check'; }
     if(drawerBtn){ drawerBtn.disabled = false; drawerBtn.textContent = 'Check Delivery'; }
     toast('Delivery check failed', 'error');
+  });
+}
+
+function bulkCheckDelivery(){
+  var ids = [];
+  for(var id in MSG_DATA){
+    if(MSG_DATA[id].channel === 'sms' && MSG_DATA[id].api_message_id){ ids.push(id); }
+  }
+  if(ids.length === 0){ toast('No SMS messages with message IDs on this page', 'warning'); return; }
+
+  var btn = document.getElementById('bulkCheckBtn');
+  var lbl = document.getElementById('bulkCheckLabel');
+  btn.disabled = true; lbl.textContent = 'Checking ' + ids.length + '...';
+  ids.forEach(function(id){
+    var b = document.getElementById('del-badge-' + id);
+    if(b){ b.textContent = '…'; }
+  });
+
+  fetch("{{ route('messaging.delivery.bulk') }}", {
+    method: 'POST',
+    headers: {
+      'X-Requested-With': 'XMLHttpRequest',
+      'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').getAttribute('content'),
+      'Content-Type': 'application/json'
+    },
+    body: JSON.stringify({ ids: ids })
+  }).then(function(r){ return r.json(); }).then(function(d){
+    if(d.results){
+      for(var id in d.results){
+        var res = d.results[id];
+        var badge = document.getElementById('del-badge-' + id);
+        if(badge){ badge.className = 'badge badge-dotted badge-' + res.color; badge.textContent = res.label; }
+        var chk = document.getElementById('del-check-' + id);
+        if(chk){ chk.disabled = false; chk.textContent = 'Check'; }
+        if(MSG_DATA[id]){ MSG_DATA[id].delivery_status = res.status; }
+      }
+    }
+    var s = d.summary || {};
+    toast('Checked ' + (s.checked || ids.length) + ': ' + (s.delivered||0) + ' delivered, ' + (s.undelivered||0) + ' not delivered, ' + (s.pending||0) + ' pending, ' + (s.unknown||0) + ' unknown' + ((s.failed||0) ? ', ' + s.failed + ' failed' : ''), 'success');
+    btn.disabled = false; lbl.textContent = 'Check All (' + ids.length + ')';
+  }).catch(function(){
+    toast('Bulk delivery check failed', 'error');
+    ids.forEach(function(id){
+      var b = document.getElementById('del-badge-' + id);
+      if(b && b.textContent === '…'){ b.textContent = 'Unchecked'; }
+      var chk = document.getElementById('del-check-' + id);
+      if(chk){ chk.disabled = false; chk.textContent = 'Check'; }
+    });
+    btn.disabled = false;
+    lbl.textContent = 'Check All (' + ids.length + ')';
   });
 }
 

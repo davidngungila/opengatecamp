@@ -160,11 +160,22 @@ class SmsService
             }
             $params['limit'] = 100;
 
-            $response = Http::withHeaders([
-                'Authorization' => 'Bearer '.$this->token,
-                'Content-Type'  => 'application/json',
-                'Accept'        => 'application/json',
-            ])->timeout(15)->get($this->baseUrl.'/api/v2/logs', $params);
+            $attempts = 0;
+            do {
+                $attempts++;
+                $response = Http::withHeaders([
+                    'Authorization' => 'Bearer '.$this->token,
+                    'Content-Type'  => 'application/json',
+                    'Accept'        => 'application/json',
+                ])->timeout(15)->get($this->baseUrl.'/api/v2/logs', $params);
+
+                if (! $response->successful() && $response->status() === 429 && $attempts < 3) {
+                    usleep(1500000 * $attempts);
+                    continue;
+                }
+
+                break;
+            } while (true);
 
             $body = $response->json() ?: [];
 

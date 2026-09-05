@@ -180,6 +180,7 @@ Route::middleware(['auth', 'committee.readonly'])->group(function () {
         Route::get('/messaging/history', [MessagingController::class, 'history'])->name('messaging.history');
         Route::get('/messaging/history/{message}', [MessagingController::class, 'show'])->name('messaging.show');
         Route::post('/messaging/history/{message}/delivery', [MessagingController::class, 'checkDelivery'])->name('messaging.delivery');
+        Route::post('/messaging/history/bulk-delivery', [MessagingController::class, 'bulkCheckDelivery'])->name('messaging.delivery.bulk');
         Route::get('/messaging/templates', [MessagingController::class, 'templates'])->name('messaging.templates');
         Route::post('/messaging/templates', [MessagingController::class, 'templateStore'])->name('messaging.templates.store');
         Route::delete('/messaging/templates/{id}', [MessagingController::class, 'templateDestroy'])->name('messaging.templates.destroy');

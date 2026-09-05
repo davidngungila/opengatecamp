@@ -124,6 +124,7 @@ class MessagingController extends Controller
             'channel'  => $channel,
             'status'   => $status,
             'q'        => $q,
+            'checkableCount' => $messages->getCollection()->filter(fn ($m) => $m->channel === 'sms' && (bool) $m->api_message_id)->count(),
         ]);
 
         return view('messaging.history', $data);
@@ -809,5 +810,64 @@ class MessagingController extends Controller
             'pending' => 'warning',
             default => 'neutral',
         };
+    }
+
+    public function bulkCheckDelivery(Request $request)
+    {
+        $ids = $request->input('ids', []);
+
+        if (! is_array($ids) || count($ids) === 0) {
+            return response()->json(['ok' => false, 'error' => 'No messages selected.']);
+        }
+
+        $messages = Message::whereIn('id', array_map('intval', $ids))
+            ->where('channel', 'sms')
+            ->whereNotNull('api_message_id')
+            ->get();
+
+        $sms = app(SmsService::class);
+        $sender = (string) Setting::get('sms.sender_id', 'TMCS MoCU');
+        $results = [];
+        $summary = ['checked' => 0, 'delivered' => 0, 'undelivered' => 0, 'pending' => 0, 'unknown' => 0, 'failed' => 0];
+        $i = 0;
+
+        foreach ($messages as $message) {
+            if ($i > 0) {
+                usleep(600000);
+            }
+            $i++;
+
+            try {
+                $report = $sms->getDelivery($message->api_message_id, $message->phone, $sender, $message->created_at);
+            } catch (\Throwable $e) {
+                $report = ['success' => false, 'status' => 'EXCEPTION'];
+            }
+
+            $deliveryStatus = (string) ($report['status'] ?? 'unknown');
+            $success = (bool) ($report['success'] ?? false);
+
+            $message->update([
+                'delivery_status' => $deliveryStatus,
+                'delivery_checked_at' => now(),
+            ]);
+
+            $summary['checked']++;
+            $summary[$deliveryStatus] = ($summary[$deliveryStatus] ?? 0) + 1;
+            if (! $success) {
+                $summary['failed']++;
+            }
+
+            $results[$message->id] = [
+                'status' => $deliveryStatus,
+                'label'  => $this->deliveryLabel($deliveryStatus),
+                'color'  => $this->deliveryColor($deliveryStatus),
+            ];
+        }
+
+        return response()->json([
+            'ok' => true,
+            'results' => $results,
+            'summary' => $summary,
+        ]);
     }
 }
