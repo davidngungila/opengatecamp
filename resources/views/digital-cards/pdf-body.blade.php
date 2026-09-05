@@ -129,7 +129,7 @@
         font-size: 30px;
         font-weight: 900;
         letter-spacing: .8px;
-        color: {{ $dark }};
+        color: #000000;
         line-height: 1.15;
         text-transform: uppercase;
     }
