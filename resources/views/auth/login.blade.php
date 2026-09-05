@@ -121,7 +121,7 @@
       <div class="login-org">
         <img src="{{ asset('logo.png') }}" alt="OpenGate Camp Connect" class="login-logo">
         <h1>Inter-Colleges Charismatic Catholic Renewal Tanzania</h1>
-        <p>Diocese of Moshi Archdiocese of Arusha</p>
+        <p>Archdiocese of Arusha and Diocese of Moshi</p>
       </div>
 
       @if($errors->any())
