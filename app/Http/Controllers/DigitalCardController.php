@@ -20,7 +20,7 @@ use Mpdf\Mpdf;
 
 class DigitalCardController extends Controller
 {
-    public function index()
+    public function index(Request $request)
     {
         $card = $this->currentCard();
 
