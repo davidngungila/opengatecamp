@@ -2,7 +2,7 @@
 <div class="drawer-overlay" id="ticketPrevDrawer">
   <div class="drawer-panel drawer-panel-lg">
     <div class="drawer-head">
-      <div><h3>Ticket Preview</h3><p class="cu-sub" id="tpMeta" style="color:var(--text-tertiary);font-size:12px">—</p></div>
+      <div><h3 id="tpTitle">Ticket Preview</h3><p class="cu-sub" id="tpMeta" style="color:var(--text-tertiary);font-size:12px">—</p></div>
       <button type="button" class="modal-close" data-drawer-close><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><path d="M18 6L6 18M6 6l12 12"/></svg></button>
     </div>
     <div class="drawer-body ticket-prev-body">
@@ -11,6 +11,7 @@
     </div>
     <div class="drawer-foot">
       <a id="tpNewTab" class="btn btn-secondary" href="#" target="_blank">Open in New Tab</a>
+      <a id="tpDownload" class="btn btn-secondary" href="#" style="display:none">Download PDF</a>
       <button type="button" class="btn btn-secondary" data-drawer-close>Close</button>
       <button type="button" class="btn btn-accent" onclick="tpPrint()">Print</button>
     </div>
@@ -27,10 +28,17 @@
 </style>
 <script>
 function openTicketPreview(url, label){
+  openPdfPreview(url, label, 'Ticket Preview', url);
+}
+function openPdfPreview(url, label, title, downloadUrl){
   var frame = document.getElementById('tpFrame');
   var overlay = document.getElementById('tpLoading');
+  document.getElementById('tpTitle').textContent = title || 'Preview';
   document.getElementById('tpMeta').textContent = label || '';
   document.getElementById('tpNewTab').href = url;
+  var dl = document.getElementById('tpDownload');
+  if(downloadUrl){ dl.href = downloadUrl; dl.style.display = 'inline-flex'; }
+  else { dl.style.display = 'none'; }
   frame.onload = function(){ overlay.classList.add('hidden'); };
   frame.src = url;
   overlay.classList.remove('hidden');

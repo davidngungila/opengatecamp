@@ -38,6 +38,7 @@
           @forelse($pledges as $pl)
           @php
             $paymentsArr = $pl->payments->map(fn($p) => [
+                'id'     => $p->id,
                 'date'   => $p->pay_date?->format('d M Y'),
                 'amount' => $p->amount,
                 'method' => $p->method,
@@ -242,6 +243,13 @@
     </div>
   </div>
 </div>
+
+@include('partials.ticket-preview-drawer')
+
+<style>
+.pay-receipt{display:inline-flex;align-items:center;gap:5px;margin-top:6px;font-size:11px;font-weight:700;color:var(--blue-accent);background:var(--blue-light);border:1px solid var(--border-strong);border-radius:8px;padding:5px 9px;cursor:pointer;transition:all .15s;}
+.pay-receipt:hover{background:var(--blue-accent);color:#fff;border-color:var(--blue-accent);}
+</style>
 @endsection
 
 @push('scripts')
@@ -296,13 +304,19 @@ document.addEventListener('DOMContentLoaded', function(){
         list.innerHTML = '<div class="pay-empty">No payments recorded yet</div>';
       } else {
         payments.forEach(function(p, i){
+          var recHtml = '';
+          if(p.id){
+            var recUrl = "{{ url('/pledges/payments') }}/" + p.id + "/receipt";
+            var dlUrl = recUrl + "?download=1";
+            recHtml = '<button type="button" class="pay-receipt" data-rec-preview="' + recUrl + '" data-rec-name="' + (d.name || 'Payment') + '" data-rec-download="' + dlUrl + '"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><path d="M14 2v6h6"/><path d="M12 18v-6"/><path d="M9 15l3 3 3-3"/></svg> Receipt</button>';
+          }
           var item = document.createElement('div');
           item.className = 'pay-item';
           item.innerHTML =
             '<div class="pay-ico"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6L9 17l-5-5"/></svg></div>' +
             '<div class="pay-main"><div class="pm-name">Payment ' + (i+1) + (p.ref ? ' · ' + p.ref : '') + '</div>' +
             '<div class="pm-sub">' + (p.date||'—') + (p.method ? ' · ' + p.method.charAt(0).toUpperCase() + p.method.slice(1) : '') + (p.by ? ' · Recorded by ' + p.by : '') + '</div></div>' +
-            '<div class="pay-amt">' + fmt(Number(p.amount||0)) + '</div>';
+            '<div class="pay-amt">' + fmt(Number(p.amount||0)) + recHtml + '</div>';
           list.appendChild(item);
         });
       }
@@ -335,6 +349,13 @@ document.addEventListener('DOMContentLoaded', function(){
 
   document.getElementById('drawerPaymentBtn').addEventListener('click', function(){
     openPaymentDrawer(this.dataset);
+  });
+
+  document.getElementById('drawerPayments').addEventListener('click', function(e){
+    var t = e.target.closest('[data-rec-preview]');
+    if(!t) return;
+    e.preventDefault();
+    openPdfPreview(t.dataset.recPreview, (t.dataset.recName || 'Payment') + ' – receipt', 'Receipt Preview', t.dataset.recDownload);
   });
 
   function openPaymentDrawer(d){

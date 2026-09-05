@@ -241,6 +241,44 @@ class PledgeController extends Controller
         return back()->with('success', $notice);
     }
 
+    public function paymentReceipt(Request $request, PledgePayment $payment)
+    {
+        $mode = $request->boolean('download') ? 'D' : 'I';
+
+        $entry = $payment->journalEntry;
+        if ($entry && $entry->status === 'posted') {
+            $delegate = Request::create('/_receipt', 'GET', ['inline' => $mode === 'I' ? '1' : null]);
+
+            return app(AccountingController::class)->receiptPdf($delegate, $entry);
+        }
+
+        $org = \App\Models\Setting::get('org.name', 'OpenGate Camp Connect');
+        $receiptNo = 'RCP-P'.str_pad((string) $payment->id, 4, '0', STR_PAD_LEFT);
+
+        $html = view('pledges.receipt', [
+            'payment' => $payment,
+            'pledge' => $payment->pledge,
+            'receiptNo' => $receiptNo,
+            'org' => $org,
+            'logoPath' => public_path('logo.png'),
+        ])->render();
+
+        $mpdf = new \Mpdf\Mpdf([
+            'mode' => 'utf-8',
+            'format' => [80, 350],
+            'margin_left'  => 4,
+            'margin_right' => 4,
+            'margin_top'   => 3,
+            'margin_bottom' => 3,
+            'tempDir' => storage_path('app/private/mpdf'),
+        ]);
+        $mpdf->WriteHTML($html);
+
+        $filename = 'Pledge-Receipt-'.$payment->id.'.pdf';
+
+        return $mpdf->Output($filename, $mode);
+    }
+
     public function update(Request $request, Pledge $pledge)
     {
         $data = $request->validate([

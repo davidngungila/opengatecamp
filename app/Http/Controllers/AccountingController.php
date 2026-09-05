@@ -643,7 +643,7 @@ class AccountingController extends Controller
         ]);
     }
 
-    public function receiptPdf(JournalEntry $entry)
+    public function receiptPdf(Request $request, JournalEntry $entry)
     {
         abort_unless($entry->status === 'posted', 404);
 
@@ -715,7 +715,7 @@ class AccountingController extends Controller
 
         $filename = 'Receipt-'.preg_replace('/[^A-Za-z0-9-_]/', '', str_replace('JE-', '', $entry->entry_no)).'.pdf';
 
-        return $mpdf->Output($filename, 'D');
+        return $mpdf->Output($filename, $request->boolean('inline') ? 'I' : 'D');
     }
 
     /**

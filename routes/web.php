@@ -152,6 +152,7 @@ Route::middleware(['auth', 'committee.readonly'])->group(function () {
     Route::put('/pledges/{pledge}', [PledgeController::class, 'update'])->name('pledges.update');
     Route::delete('/pledges/{pledge}', [PledgeController::class, 'destroy'])->name('pledges.destroy');
     Route::post('/pledges/{pledge}/payments', [PledgeController::class, 'recordPayment'])->name('pledges.payments');
+    Route::get('/pledges/payments/{payment}/receipt', [PledgeController::class, 'paymentReceipt'])->name('pledges.payments.receipt');
     Route::post('/pledges/{pledge}/remind', [PledgeController::class, 'remind'])->name('pledges.remind');
     Route::post('/pledges/{pledge}/thanks', [PledgeController::class, 'sendThanks'])->name('pledges.thanks');
 
