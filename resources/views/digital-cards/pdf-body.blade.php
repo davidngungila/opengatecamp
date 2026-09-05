@@ -208,14 +208,14 @@
     }
 
     .paragraph {
-        font-size: 20px;
-        line-height: 1.42;
+        font-size: 24px;
+        line-height: 1.45;
 
         font-weight: 600;
 
         text-align: center;
 
-        margin-top: 13px;
+        margin-top: 14px;
     }
 
     .paragraph b {
@@ -288,13 +288,24 @@
     .payment {
         margin: 0 50px;
 
-        display: flex;
-        justify-content: center;
-        gap: 35px;
+        width: 100%;
+
+        border-collapse: separate;
+        border-spacing: 0;
+    }
+
+    .payment .col {
+        width: 50%;
+
+        text-align: center;
+    }
+
+    .payment .col + .col {
+        padding-left: 35px;
     }
 
     .payment-card {
-        width: 430px;
+        display: block;
 
         border: 2px solid {{ $primary }};
         border-radius: 10px;
@@ -438,11 +449,7 @@
         <div class="organization">
 
             <div class="main">
-                UMOJA WA VYUO
-            </div>
-
-            <div class="sub">
-                KARISMATIKI KATOLIKI TANZANIA
+                UMOJA WA VYUO KARISMATIKI KATOLIKI TANZANIA
             </div>
 
             <div class="sub">
@@ -550,42 +557,36 @@
         </div>
 
 
-        <div class="payment">
-
-            <div class="payment-card">
-
-                <div class="method">
-                    M-PESA
-                </div>
-
-                <div class="number">
-                    0756 112 102
-                </div>
-
-                <div class="name">
-                    TAFES MoCU
-                </div>
-
-            </div>
-
-
-            <div class="payment-card">
-
-                <div class="method">
-                    NMB ACCOUNT
-                </div>
-
-                <div class="number">
-                    40310079853
-                </div>
-
-                <div class="name">
-                    TAFES MoCU
-                </div>
-
-            </div>
-
-        </div>
+        <table class="payment">
+            <tr>
+                <td class="col">
+                    <div class="payment-card">
+                        <div class="method">
+                            M-PESA
+                        </div>
+                        <div class="number">
+                            0756 112 102
+                        </div>
+                        <div class="name">
+                            TAFES MoCU
+                        </div>
+                    </div>
+                </td>
+                <td class="col">
+                    <div class="payment-card">
+                        <div class="method">
+                            NMB ACCOUNT
+                        </div>
+                        <div class="number">
+                            40310079853
+                        </div>
+                        <div class="name">
+                            TAFES MoCU
+                        </div>
+                    </div>
+                </td>
+            </tr>
+        </table>
 
 
         {{-- =====================================================
