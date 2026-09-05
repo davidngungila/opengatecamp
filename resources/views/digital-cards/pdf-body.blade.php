@@ -566,39 +566,6 @@
 
 
         {{-- =====================================================
-             SIGNATURES
-        ====================================================== --}}
-        <table class="signatures">
-
-            <tr>
-
-                <td>
-                    <div class="sign-line"></div>
-                    <div class="sign-name">Jina la Mratibu wa Tukio</div>
-                    <div class="sign-role">Mratibu wa Tukio / Event Coordinator</div>
-                    <div class="sign-contact">0756 112 102</div>
-                </td>
-
-                <td>
-                    <div class="sign-line"></div>
-                    <div class="sign-name">Jina la Katibu</div>
-                    <div class="sign-role">Katibu / Secretary</div>
-                    <div class="sign-contact">0756 112 102</div>
-                </td>
-
-                <td>
-                    <div class="sign-line"></div>
-                    <div class="sign-name">Jina la Mhasibu</div>
-                    <div class="sign-role">Mweka Hazina / Treasurer</div>
-                    <div class="sign-contact">0756 112 102</div>
-                </td>
-
-            </tr>
-
-        </table>
-
-
-        {{-- =====================================================
              MOTTO
         ====================================================== --}}
         <div class="motto">
