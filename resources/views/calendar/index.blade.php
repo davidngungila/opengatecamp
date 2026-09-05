@@ -147,7 +147,7 @@
 <script>
 var SESSIONS = {!! $sessionsJson !!};
 var EVENT_OPTIONS = @json($eventOptions);
-var todayLabel = {{ json_encode($todayLabel) }};
+var todayLabel = @json($todayLabel);
 var planDate = '';
 
 function fillSessionForm(s){
@@ -171,9 +171,9 @@ function openPlanDrawer(dateStr){
   document.getElementById('sessTitle').textContent = 'Plan Day Activity';
   document.getElementById('sessSub').textContent = dateStr ? 'Scheduling activity for ' + dateStr : 'Schedule an activity for a specific day and hours';
   document.getElementById('sessMethod').value = 'POST';
-  document.getElementById('sessionForm').action = {{ json_encode(route('calendar.sessions.store')) }};
+  document.getElementById('sessionForm').action = @json(route('calendar.sessions.store'));
   document.getElementById('sessId').value = '';
-  document.getElementById('sessDate').value = dateStr || {{ json_encode($today->format('Y-m-d')) }};
+  document.getElementById('sessDate').value = dateStr || @json($today->format('Y-m-d'));
   document.getElementById('sessTitleInput').value = '';
   document.getElementById('sessStart').value = '';
   document.getElementById('sessEnd').value = '';
@@ -196,7 +196,7 @@ function openEditDrawer(id){
   document.getElementById('sessTitle').textContent = 'Edit Activity';
   document.getElementById('sessSub').textContent = (s.event_title || 'Calendar') + ' · ' + s.session_date;
   document.getElementById('sessMethod').value = 'PUT';
-  document.getElementById('sessionForm').action = {{ json_encode(url('/calendar/sessions')) }} + '/' + id;
+  document.getElementById('sessionForm').action = @json(url('/calendar/sessions')) + '/' + id;
   document.getElementById('sessDelete').style.display = '';
   document.getElementById('sessSubmit').textContent = 'Save Changes';
   openDrawerById('sessionDrawer');
@@ -206,7 +206,7 @@ function deleteSession(){
   var id = document.getElementById('sessId').value;
   if(!id) return;
   var f = document.getElementById('sessionDeleteForm');
-  f.action = {{ json_encode(url('/calendar/sessions')) }} + '/' + id;
+  f.action = @json(url('/calendar/sessions')) + '/' + id;
   confirmAction(f, 'Delete this activity?', 'This activity will be removed from the calendar permanently.', 'Delete');
 }
 </script>
