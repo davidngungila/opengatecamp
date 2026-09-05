@@ -23,7 +23,6 @@
     </div>
     <form method="POST" action="{{ route('cards.sendSms', $card) }}" id="sendSmsForm" style="padding:16px 18px 18px">
       @csrf
-      <input type="hidden" name="invitees" id="smsInvitees" value="">
       <div style="display:flex;align-items:center;justify-content:space-between;gap:8px;margin-bottom:8px">
         <div class="text-muted" style="font-size:12px">Each person receives a personalised SMS with their own card link. Invite status changes to <b>Invited</b> once sent.</div>
         <button type="button" class="btn btn-secondary btn-sm" onclick="addInviteRow()">+ Add Person</button>
@@ -37,11 +36,11 @@
   @endif
 
   <div class="table-card">
-    <div class="table-head"><h3>Invitations ({{ number_format($recipients->count()) }})</h3></div>
+    <div class="table-head"><h3>Invitations (<span id="inviteCount">{{ number_format($recipients->count()) }}</span>)</h3></div>
     <div class="table-scroll">
       <table class="data-table">
         <thead><tr><th>Name</th><th>Phone</th><th>Invite Status</th><th>Delivery</th><th>Personalised Link</th><th>Sent At</th></tr></thead>
-        <tbody>
+        <tbody id="invitesTbody">
           @forelse($recipients as $r)
           <tr>
             <td><b>{{ $r->name ?: '—' }}</b></td>
@@ -105,6 +104,7 @@
   if (sendSmsForm) {
     resetInviteRows();
     sendSmsForm.addEventListener('submit', function(event){
+      event.preventDefault();
       var invitees = [];
       document.querySelectorAll('#smsInviteRows .invite-row').forEach(function(row){
         var name = row.querySelector('.inv-name').value.trim();
@@ -112,15 +112,77 @@
         if (phone) invitees.push({ name: name, phone: phone });
       });
       if (invitees.length === 0) {
-        event.preventDefault();
         toast('Enter at least one person\'s full name and phone number', 'error');
         return;
       }
-      document.getElementById('smsInvitees').value = JSON.stringify(invitees);
+
       var btn = sendSmsForm.querySelector('button[type="submit"]');
       btn.disabled = true;
       btn.textContent = 'Sending...';
+
+      var formData = new FormData();
+      formData.append('invitees', JSON.stringify(invitees));
+      formData.append('_token', document.querySelector('meta[name="csrf-token"]').content);
+
+      fetch(sendSmsForm.action, {
+        method: 'POST',
+        headers: { 'X-Requested-With': 'XMLHttpRequest', 'Accept': 'application/json' },
+        body: formData
+      })
+      .then(function(r){ return r.json(); })
+      .then(function(j){
+        btn.disabled = false;
+        btn.textContent = 'Invite & Send SMS';
+        resetInviteRows();
+        if (j && j.ok) {
+          toast(j.message || 'Invitations sent', 'success');
+        } else {
+          toast((j && j.message) || 'Invitations could not be sent', 'error');
+        }
+        if (j && j.recipients && j.recipients.length) {
+          j.recipients.forEach(addInviteRowToTable);
+        }
+      })
+      .catch(function(){
+        btn.disabled = false;
+        btn.textContent = 'Invite & Send SMS';
+        toast('Could not send invitations. Please try again.', 'error');
+      });
     });
+  }
+
+  function addInviteRowToTable(r){
+    var tbody = document.getElementById('invitesTbody');
+    var countEl = document.getElementById('inviteCount');
+
+    var delivery = '<span class="badge badge-' + (r.delivery_color || 'neutral') + ' badge-dotted" id="rdel-badge-' + r.id + '">' + (r.delivery_label || '—') + '</span>';
+    if (r.message_id) {
+      delivery += '<button type="button" class="btn btn-sm btn-secondary" style="height:26px;padding:0 8px;font-size:11px" data-check-recipient-delivery data-id="' + r.id + '" data-mid="' + r.message_id + '" title="Check delivery via API">Check</button>';
+    }
+    var checkedAt = r.checked_at ? '<div style="font-size:10.5px;color:var(--text-tertiary);margin-top:3px">' + r.checked_at + '</div>' : '';
+
+    var html =
+      '<tr>' +
+        '<td><b>' + esc(r.name || '—') + '</b></td>' +
+        '<td style="font-family:monospace">' + esc(r.phone) + '</td>' +
+        '<td><span class="badge badge-' + (r.status_color || 'neutral') + ' badge-dotted">' + esc(r.status_label || 'Pending') + '</span></td>' +
+        '<td><div style="display:flex;align-items:center;gap:6px;white-space:nowrap">' + delivery + '</div>' + checkedAt + '</td>' +
+        '<td><a href="' + r.link + '" target="_blank" class="link-mono">' + esc((r.token || '').substring(0, 12)) + '…</a></td>' +
+        '<td>' + esc(r.sent_at || 'Not sent') + '</td>' +
+      '</tr>';
+
+    if (tbody) {
+      var empty = tbody.querySelector('.empty-state');
+      if (empty) empty.closest('tr').remove();
+      tbody.insertAdjacentHTML('afterbegin', html);
+    }
+    if (countEl) countEl.textContent = (parseInt(countEl.textContent, 10) || 0) + 1;
+  }
+
+  function esc(str){
+    return String(str == null ? '' : str)
+      .replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;')
+      .replace(/"/g, '&quot;').replace(/'/g, '&#39;');
   }
 
   document.addEventListener('click', function(e){

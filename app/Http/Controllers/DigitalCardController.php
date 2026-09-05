@@ -253,6 +253,7 @@ class DigitalCardController extends Controller
         $success = 0;
         $fail = 0;
         $messageIds = [];
+        $createdRecipients = [];
 
         foreach ($invitees as $invitee) {
             $token = Str::random(32);
@@ -276,7 +277,7 @@ class DigitalCardController extends Controller
                 $fail++;
             }
 
-            DigitalCardRecipient::create([
+            $recipient = DigitalCardRecipient::create([
                 'digital_card_id' => $card->id,
                 'name' => ($invitee['name'] ?? '') !== '' ? $invitee['name'] : null,
                 'phone' => $invitee['phone'],
@@ -285,6 +286,7 @@ class DigitalCardController extends Controller
                 'status' => $result['success'] ? 'invited' : 'failed',
                 'message_id' => $result['api_message_id'] ?? null,
             ]);
+            $createdRecipients[] = $recipient;
 
             if (! empty($result['api_message_id'])) {
                 $messageIds[] = $result['api_message_id'];
@@ -322,6 +324,30 @@ class DigitalCardController extends Controller
         $notice = "{$success} person(s) invited by SMS.";
         if ($fail > 0) {
             $notice .= " {$fail} failed.";
+        }
+
+        if ($request->ajax() || $request->wantsJson()) {
+            return response()->json([
+                'ok' => $success > 0,
+                'success_count' => $success,
+                'fail_count' => $fail,
+                'message' => $notice,
+                'recipients' => collect($createdRecipients)->map(fn (DigitalCardRecipient $r) => [
+                    'id' => $r->id,
+                    'name' => $r->name,
+                    'phone' => $r->phone,
+                    'status' => $r->status,
+                    'status_label' => ucfirst((string) $r->status),
+                    'status_color' => $r->getInviteStatusColor(),
+                    'message_id' => $r->message_id,
+                    'delivery_label' => $r->delivery_status ? ucfirst(str_replace('_', ' ', $r->delivery_status)) : ($r->message_id ? 'Unchecked' : '—'),
+                    'delivery_color' => $r->getDeliveryStatusColor(),
+                    'checked_at' => $r->delivery_checked_at?->format('d M Y H:i'),
+                    'sent_at' => $r->sent_at?->format('d M Y H:i') ?: 'Not sent',
+                    'link' => route('cards.show', $r->digitalCard?->hash).'?r='.$r->token,
+                    'token' => $r->token,
+                ])->values()->all(),
+            ]);
         }
 
         return back()->with($success > 0 ? 'success' : 'error', $notice);
