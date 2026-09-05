@@ -86,7 +86,7 @@
       Digital Card
     </h2>
     <p style="font-size:12.5px;color:var(--text-tertiary);margin:0 0 16px">Content used on the person invitation digital card. These are the "rest of the settings" — the invite form only needs each person's full name and phone number.</p>
-    <form method="POST" action="{{ route('settings.digital-card') }}">
+    <form method="POST" action="{{ route('settings.digital-card') }}" enctype="multipart/form-data">
       @csrf
       <div class="form-grid">
         <div class="field"><label>Card Title</label><input name="digital_card_title" value="{{ $s('digital_card.title', $s('event.name', 'Open Gate Camp')) }}" placeholder="Open Gate Camp Giving"></div>
@@ -100,6 +100,16 @@
         <div class="field"><label>Background Color</label><input type="color" name="digital_card_background_color" value="{{ $s('digital_card.background_color', '#1a237e') }}"></div>
         <div class="field"><label>Accent Color</label><input type="color" name="digital_card_accent_color" value="{{ $s('digital_card.accent_color', '#ffd700') }}"></div>
         <div class="field"><label>Button Text</label><input name="digital_card_cta_text" value="{{ $s('digital_card.cta_text', 'Contribute Now') }}"></div>
+        <div class="field full"><label>Background Image</label>
+          <input type="file" name="digital_card_background_image" id="dcBgImage" accept="image/jpeg,image/png,image/webp">
+          <div style="display:flex;align-items:center;gap:12px;margin-top:10px">
+            <div id="dcBgPreview" style="width:110px;height:138px;border-radius:10px;border:1px solid var(--border);background-size:cover;background-position:center;background-color:{{ $s('digital_card.background_color', '#1a237e') }};@if($s('digital_card.background_image'))background-image:url('{{ asset('storage/'.$s('digital_card.background_image')) }}');@endif"></div>
+            <div style="flex:1">
+              <div style="font-size:12.5px;color:var(--text-secondary);margin-bottom:6px">JPEG, PNG or WebP up to 4 MB.</div>
+              <label style="display:inline-flex;align-items:center;gap:6px;font-size:12.5px;color:var(--text-secondary);cursor:pointer"><input type="checkbox" name="digital_card_remove_background" value="1" style="width:auto">Remove background image</label>
+            </div>
+          </div>
+        </div>
         <div class="field full"><label>Card Message</label><textarea name="digital_card_message" rows="3" placeholder="Messages shown on the card the invited person opens">{{ $s('digital_card.message') }}</textarea></div>
         <div class="field full"><label>SMS Template (use {link} and {name} placeholders)</label><textarea name="digital_card_sms_text" rows="3" placeholder="View your special digital card: {link}">{{ $s('digital_card.sms_text') }}</textarea></div>
       </div>
@@ -110,3 +120,24 @@
   </div>
 </div>
 @endsection
+
+@push('scripts')
+<script>
+document.addEventListener('DOMContentLoaded', function(){
+  var input = document.getElementById('dcBgImage');
+  var preview = document.getElementById('dcBgPreview');
+  if (!input || !preview) return;
+  input.addEventListener('change', function(){
+    if (input.files && input.files[0]) {
+      var reader = new FileReader();
+      reader.onload = function(e){
+        preview.style.backgroundImage = "url('" + e.target.result + "')";
+        preview.style.backgroundSize = 'cover';
+        preview.style.backgroundPosition = 'center';
+      };
+      reader.readAsDataURL(input.files[0]);
+    }
+  });
+});
+</script>
+@endpush

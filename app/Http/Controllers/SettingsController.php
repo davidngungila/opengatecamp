@@ -275,7 +275,28 @@ class SettingsController extends Controller
             'digital_card_cta_text' => 'nullable|string|max:100',
             'digital_card_sms_text' => 'nullable|string',
             'digital_card_status' => 'nullable|in:active,closed',
+            'digital_card_background_image' => 'nullable|image|mimes:jpeg,png,webp|max:4096',
         ]);
+
+        if ($request->hasFile('digital_card_background_image')) {
+            $image = $request->file('digital_card_background_image');
+            $path = $image->store('digital-cards', 'public');
+
+            $old = (string) Setting::get('digital_card.background_image', '');
+            if ($old !== '' && \Illuminate\Support\Facades\Storage::disk('public')->exists($old) && $old !== $path) {
+                \Illuminate\Support\Facades\Storage::disk('public')->delete($old);
+            }
+
+            Setting::put('digital_card.background_image', $path);
+        }
+
+        if ($request->filled('digital_card_remove_background')) {
+            $old = (string) Setting::get('digital_card.background_image', '');
+            if ($old !== '') {
+                \Illuminate\Support\Facades\Storage::disk('public')->delete($old);
+            }
+            Setting::put('digital_card.background_image', '');
+        }
 
         foreach ([
             'digital_card_title' => 'digital_card.title',

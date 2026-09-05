@@ -96,6 +96,7 @@ class DigitalCardController extends Controller
             'accent_color' => (string) (Setting::get('digital_card.accent_color') ?: '#ffd700'),
             'cta_text' => (string) (Setting::get('digital_card.cta_text') ?: 'Contribute Now'),
             'sms_text' => (string) (Setting::get('digital_card.sms_text') ?: 'You are invited! View your digital card and contribute: {link}'),
+            'image_path' => (string) (Setting::get('digital_card.background_image') ?: ''),
             'status' => (string) (Setting::get('digital_card.status') ?: 'active'),
             'card_type' => 'camp_invitation',
             'event_id' => null,
