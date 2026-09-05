@@ -97,8 +97,18 @@
           </select>
         </div>
         <div class="field"><label>Target Amount (TZS)</label><input type="number" min="0" step="0.01" name="digital_card_target_amount" value="{{ $s('digital_card.target_amount') }}" placeholder="e.g. 500000"></div>
-        <div class="field"><label>Background Color</label><input type="color" name="digital_card_background_color" value="{{ $s('digital_card.background_color', '#ffffff') }}"></div>
+        <div class="field"><label>Background Color</label><input type="color" name="digital_card_background_color" id="dcBgColor" value="{{ $s('digital_card.background_color', '#ffffff') }}"></div>
         <div class="field"><label>Accent Color</label><input type="color" name="digital_card_accent_color" value="{{ $s('digital_card.accent_color', '#ffd700') }}"></div>
+        <div class="field full"><label>Quick Background Colors</label>
+          <div class="dc-swatches" style="display:flex;flex-wrap:wrap;gap:8px">
+            @php $dcPresets = ['#ffffff', '#1a237e', '#0f172a', '#14532d', '#7f1d1d', '#581c87', '#0e7490', '#b45309', '#f43f5e', '#2563eb']; @endphp
+            @php $dcCurrent = strtolower($s('digital_card.background_color', '#ffffff')) @endphp
+            @foreach($dcPresets as $dcPreset)
+            <button type="button" class="dc-swatch" data-color="{{ $dcPreset }}" title="{{ $dcPreset }}"
+              style="width:26px;height:26px;border-radius:8px;border:2px solid {{ strtolower($dcPreset) === $dcCurrent ? 'var(--accent)' : 'transparent' }};background:{{ $dcPreset }};cursor:pointer;padding:0"></button>
+            @endforeach
+          </div>
+        </div>
         <div class="field"><label>Button Text</label><input name="digital_card_cta_text" value="{{ $s('digital_card.cta_text', 'Contribute Now') }}"></div>
         <div class="field full"><label>Background Image</label>
           <input type="file" name="digital_card_background_image" id="dcBgImage" accept="image/jpeg,image/png,image/webp">
@@ -126,6 +136,22 @@
 document.addEventListener('DOMContentLoaded', function(){
   var input = document.getElementById('dcBgImage');
   var preview = document.getElementById('dcBgPreview');
+  var colorInput = document.getElementById('dcBgColor');
+
+  document.querySelectorAll('.dc-swatch').forEach(function(sw){
+    sw.addEventListener('click', function(){
+      var c = sw.dataset.color;
+      colorInput.value = c;
+      if (preview) {
+        preview.style.backgroundImage = 'none';
+        preview.style.backgroundColor = c;
+      }
+      document.querySelectorAll('.dc-swatch').forEach(function(s){
+        s.style.borderColor = s === sw ? 'var(--accent)' : 'transparent';
+      });
+    });
+  });
+
   if (!input || !preview) return;
   input.addEventListener('change', function(){
     if (input.files && input.files[0]) {
