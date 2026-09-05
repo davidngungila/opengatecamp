@@ -277,77 +277,6 @@
 
 
     /* =========================================================
-       PAYMENT SECTION
-    ========================================================= */
-
-    .payment-title {
-        text-align: center;
-
-        margin-top: 10px;
-        margin-bottom: 8px;
-
-        font-size: 22px;
-        font-weight: 900;
-
-        color: {{ $primary }};
-
-        text-transform: uppercase;
-    }
-
-    .payment {
-        margin: 0 50px;
-
-        width: 100%;
-
-        border-collapse: separate;
-        border-spacing: 0;
-    }
-
-    .payment .col {
-        width: 50%;
-
-        text-align: center;
-    }
-
-    .payment .col + .col {
-        padding-left: 35px;
-    }
-
-    .payment-card {
-        display: block;
-
-        border: 2px solid {{ $primary }};
-        border-radius: 10px;
-
-        padding: 10px 15px;
-
-        text-align: center;
-    }
-
-    .payment-card .method {
-        font-size: 17px;
-        font-weight: 900;
-        color: {{ $dark }};
-        text-transform: uppercase;
-    }
-
-    .payment-card .number {
-        margin-top: 2px;
-
-        font-size: 27px;
-        font-weight: 900;
-
-        color: {{ $primary }};
-    }
-
-    .payment-card .name {
-        font-size: 15px;
-        font-weight: bold;
-        color: {{ $dark }};
-    }
-
-
-    /* =========================================================
        QR
     ========================================================= */
 
@@ -556,46 +485,6 @@
             </div>
 
         </div>
-
-
-        {{-- =====================================================
-             PAYMENT
-        ====================================================== --}}
-        <div class="payment-title">
-            Changia Kupitia
-        </div>
-
-
-        <table class="payment">
-            <tr>
-                <td class="col">
-                    <div class="payment-card">
-                        <div class="method">
-                            M-PESA
-                        </div>
-                        <div class="number">
-                            0756 112 102
-                        </div>
-                        <div class="name">
-                            TAFES MoCU
-                        </div>
-                    </div>
-                </td>
-                <td class="col">
-                    <div class="payment-card">
-                        <div class="method">
-                            NMB ACCOUNT
-                        </div>
-                        <div class="number">
-                            40310079853
-                        </div>
-                        <div class="name">
-                            TAFES MoCU
-                        </div>
-                    </div>
-                </td>
-            </tr>
-        </table>
 
 
         {{-- =====================================================
