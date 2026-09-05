@@ -872,12 +872,17 @@ class DigitalCardController extends Controller
 
         $qrData = app(QrCodeService::class)->pngDataUri($publicUrl);
 
-        return view('digital-cards.preview', compact('card', 'qrData', 'recipientName', 'publicUrl'));
+        return view('digital-cards.preview', compact('card', 'qrData', 'recipientName', 'publicUrl', 'recipient'));
     }
 
     public function recipientPreview(DigitalCardRecipient $recipient)
     {
         return $this->preview($recipient->digitalCard, $recipient);
+    }
+
+    public function recipientPdf(DigitalCardRecipient $recipient)
+    {
+        $this->streamPdf($recipient->digitalCard, 'D', $recipient->name, $recipient->token);
     }
 
     public function show(Request $request, string $hash)

@@ -62,7 +62,7 @@
     <label class="pv-check"><input type="checkbox" id="pvActual"> Actual size</label>
     <a class="pv-link" href="{{ $publicUrl ?? route('cards.show', $card->hash) }}" target="_blank">Fungua Ukurasa</a>
     <a class="pv-link" href="{{ route('cards.index') }}">Rudi</a>
-    <a class="pv-link" style="background:{{ $card->accent_color }};color:#0a0f1e;border-color:transparent" href="{{ route('cards.pdf', $card) }}">Pakua PDF</a>
+    <a class="pv-link" style="background:{{ $card->accent_color }};color:#0a0f1e;border-color:transparent" href="{{ isset($recipient) ? route('cards.recipient.pdf', $recipient) : route('cards.pdf', $card) }}">Pakua PDF</a>
   </div>
 </header>
 
