@@ -6,6 +6,7 @@ use App\Models\AuditLog;
 use App\Models\Group;
 use App\Models\Member;
 use App\Models\Message;
+use App\Models\MessageTemplate;
 use App\Models\Ministry;
 use App\Models\Setting;
 use App\Services\SmsService;
@@ -56,7 +57,48 @@ class MessagingController extends Controller
 
     public function templates()
     {
-        return view('messaging.templates', $this->sharedData());
+        if (MessageTemplate::count() === 0) {
+            MessageTemplate::insert(array_map(fn ($tpl) => [
+                'name'       => $tpl[0],
+                'message'    => $tpl[1],
+                'created_by' => 'System',
+                'created_at' => now(),
+                'updated_at' => now(),
+            ], MessageTemplate::defaultTemplates()));
+        }
+
+        return view('messaging.templates', $this->sharedData() + [
+            'templates' => MessageTemplate::latest()->get(),
+        ]);
+    }
+
+    public function templateStore(Request $request)
+    {
+        $data = $request->validate([
+            'name'    => 'required|string|max:120',
+            'message' => 'required|string|max:2000',
+        ]);
+
+        MessageTemplate::create([
+            'name'       => $data['name'],
+            'message'    => $data['message'],
+            'created_by' => auth()->user()?->name ?? 'Daniel Mwinuka',
+        ]);
+
+        AuditLog::record('Created message template', 'Communication — Templates', $data['name']);
+
+        return back()->with('success', "Template '{$data['name']}' saved.");
+    }
+
+    public function templateDestroy(int $id)
+    {
+        $template = MessageTemplate::findOrFail($id);
+
+        $template->delete();
+
+        AuditLog::record('Deleted message template', 'Communication — Templates', $template->name);
+
+        return back()->with('success', "Template '{$template->name}' deleted.");
     }
 
     public function history(Request $request)
@@ -715,5 +757,57 @@ class MessagingController extends Controller
         $name = $request->input('name', '');
 
         return redirect()->route('messaging.sms')->with('template', $template)->with('templateName', $name);
+    }
+
+    public function checkDelivery(Request $request, Message $message)
+    {
+        $messageId = $message->api_message_id;
+
+        if ($message->channel !== 'sms' || ! $messageId) {
+            return response()->json([
+                'ok' => false,
+                'status' => 'unknown',
+                'label' => 'No Message ID',
+                'color' => 'neutral',
+                'checked_at' => $message->delivery_checked_at?->format('d M Y H:i'),
+            ]);
+        }
+
+        $report = app(SmsService::class)->getDelivery($messageId);
+
+        $deliveryStatus = (string) ($report['status'] ?? 'unknown');
+        $message->update([
+            'delivery_status' => $deliveryStatus,
+            'delivery_checked_at' => now(),
+        ]);
+
+        return response()->json([
+            'ok' => (bool) ($report['success'] ?? false),
+            'status' => $deliveryStatus,
+            'label' => $this->deliveryLabel($deliveryStatus),
+            'color' => $this->deliveryColor($deliveryStatus),
+            'checked_at' => now()->format('d M Y H:i'),
+            'raw' => $report['raw'] ?? null,
+        ]);
+    }
+
+    private function deliveryLabel(string $status): string
+    {
+        return match ($status) {
+            'delivered' => 'Delivered',
+            'undelivered' => 'Not delivered',
+            'pending' => 'Pending',
+            default => 'Unknown',
+        };
+    }
+
+    private function deliveryColor(string $status): string
+    {
+        return match ($status) {
+            'delivered' => 'success',
+            'undelivered' => 'danger',
+            'pending' => 'warning',
+            default => 'neutral',
+        };
     }
 }

@@ -155,6 +155,7 @@ Route::middleware(['auth', 'committee.readonly'])->group(function () {
     Route::post('/digital-cards/{card}/status', [DigitalCardController::class, 'updateStatus'])->name('cards.status');
     Route::post('/digital-cards/{card}/add-contribution', [DigitalCardController::class, 'addContribution'])->name('cards.addContribution');
     Route::post('/digital-cards/{card}/send-sms', [DigitalCardController::class, 'sendSms'])->name('cards.sendSms');
+    Route::post('/digital-cards/recipients/{recipient}/delivery', [DigitalCardController::class, 'checkRecipientDelivery'])->name('cards.recipient.delivery');
     Route::get('/digital-cards/{card}/pdf', [DigitalCardController::class, 'downloadPdf'])->name('cards.pdf');
     Route::get('/digital-cards/{card}/preview', [DigitalCardController::class, 'preview'])->name('cards.preview');
 
@@ -168,7 +169,10 @@ Route::middleware(['auth', 'committee.readonly'])->group(function () {
         Route::post('/messaging/notifications/mark-all-read', [MessagingController::class, 'markAllNotificationsRead'])->name('messaging.notifications.mark-all-read');
         Route::get('/messaging/history', [MessagingController::class, 'history'])->name('messaging.history');
         Route::get('/messaging/history/{message}', [MessagingController::class, 'show'])->name('messaging.show');
+        Route::post('/messaging/history/{message}/delivery', [MessagingController::class, 'checkDelivery'])->name('messaging.delivery');
         Route::get('/messaging/templates', [MessagingController::class, 'templates'])->name('messaging.templates');
+        Route::post('/messaging/templates', [MessagingController::class, 'templateStore'])->name('messaging.templates.store');
+        Route::delete('/messaging/templates/{id}', [MessagingController::class, 'templateDestroy'])->name('messaging.templates.destroy');
         Route::get('/messaging/settings', [MessagingController::class, 'settings'])->name('messaging.settings');
         Route::get('/messaging/settings/email', [MessagingController::class, 'emailSettings'])->name('messaging.settings.email');
         Route::post('/messaging/settings/email', [MessagingController::class, 'saveEmailSettings'])->name('messaging.settings.email.save');

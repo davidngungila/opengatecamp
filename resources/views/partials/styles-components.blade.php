@@ -318,7 +318,7 @@ input:checked + .slider::before{transform:translateX(18px);}
 .settings-actions-cell{display:flex;gap:8px;flex-wrap:wrap;}
 
 .message-thread{border-radius:14px;border:1px solid var(--border);background:var(--white);padding:16px;margin-bottom:10px;}
-.msg-templates{display:grid;grid-template-columns:repeat(3,1fr);gap:12px;}
+.msg-templates{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:12px;}
 .tpl-card{border:1px solid var(--border);border-radius:12px;padding:14px;background:var(--white);}
 .tpl-card h5{margin:0 0 6px;font-size:13px;font-weight:800;}
 .tpl-card p{margin:0;font-size:12px;color:var(--text-secondary);line-height:1.5;}
@@ -329,6 +329,8 @@ input:checked + .slider::before{transform:translateX(18px);}
 .text-muted{color:var(--text-tertiary);}
 .hidden{display:none !important;}
 .avatar-ring{box-shadow:0 0 0 3px var(--white),0 0 0 4px var(--border-strong);}
+.filter-grid{grid-template-columns:1.4fr 1fr 1fr auto;align-items:end;gap:12px;}
+.cal-scroll{overflow-x:auto;}
 
 @media (max-width:1180px){
   .kpi-grid{grid-template-columns:repeat(2,1fr);}
@@ -345,10 +347,16 @@ input:checked + .slider::before{transform:translateX(18px);}
   .search-box{display:none;}
   .quick-actions-grid{grid-template-columns:repeat(2,1fr);}
   .form-grid{grid-template-columns:1fr;}
+  .filter-grid{grid-template-columns:1fr;}
+  .msg-templates{grid-template-columns:repeat(2,minmax(0,1fr));}
   .page-content{padding:18px 14px 50px;}
   .topbar{padding:0 14px;}
   .modal-box.lg,.modal-box.full{max-width:100%;}
   .user-chip .u-meta{display:none;}
+}
+@media (max-width:600px){
+  .cal-scroll .calendar-grid{min-width:560px;gap:6px;}
+  .cal-cell{min-height:62px;padding:6px;}
 }
 @media (max-width:520px){
   .kpi-grid{grid-template-columns:1fr;}
@@ -363,6 +371,7 @@ input:checked + .slider::before{transform:translateX(18px);}
   .mini-row>span:last-child{width:100%;text-align:right;margin-top:2px;}
   .section-head{flex-direction:column;align-items:flex-start;}
   .section-head .btn{align-self:flex-start;}
+  .msg-templates{grid-template-columns:1fr;}
 }
 
 .kpi-grid.cols-3{grid-template-columns:repeat(3,1fr);}

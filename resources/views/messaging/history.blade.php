@@ -18,7 +18,7 @@
   @endif
 
   <div class="glass-card" style="margin-bottom:20px;padding:16px 20px">
-    <form method="GET" action="{{ route('messaging.history') }}" class="form-grid" style="grid-template-columns:1fr 1fr 1fr auto;align-items:end;gap:12px">
+    <form method="GET" action="{{ route('messaging.history') }}" class="form-grid filter-grid">
       <div class="field"><label>Search</label>
         <input name="q" value="{{ $q }}" placeholder="Search recipients, phone, or message...">
       </div>
@@ -49,6 +49,7 @@
             <th>Date</th>
             <th>Channel</th>
             <th>Status</th>
+            <th>Delivery</th>
             <th>Recipients</th>
             <th>Message</th>
             <th>Sent By</th>
@@ -66,6 +67,19 @@
               <div style="font-size:10.5px;color:var(--text-tertiary);margin-top:3px;max-width:180px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap" title="{{ is_array($m->api_response) ? json_encode($m->api_response) : $m->api_response }}">API: {{ is_array($m->api_response) ? 'error' : Str::limit($m->api_response,40) }}</div>
               @endif
             </td>
+            @php
+              $hasMsgId = $m->channel==='sms' && (bool) $m->api_message_id;
+              $delColor = match ($m->delivery_status) { 'delivered'=>'success', 'undelivered'=>'danger', 'pending'=>'warning', default=>'neutral' };
+              $delLabel = $m->delivery_status ? \Illuminate\Support\Str::headline($m->delivery_status) : ($hasMsgId ? 'Unchecked' : '—');
+            @endphp
+            <td>
+              <div style="display:flex;align-items:center;gap:6px;white-space:nowrap">
+                <span class="badge badge-dotted badge-{{ $delColor }}" id="del-badge-{{ $m->id }}">{{ $delLabel }}</span>
+                @if($hasMsgId)
+                <button type="button" class="btn btn-sm btn-secondary" id="del-check-{{ $m->id }}" style="height:26px;padding:0 8px;font-size:11px" data-check-delivery data-id="{{ $m->id }}" title="Check delivery via API">Check</button>
+                @endif
+              </div>
+            </td>
             <td style="font-weight:600;max-width:220px">{{ $m->recipients }}
               @if($m->phone)
               <div style="font-size:11px;color:var(--text-tertiary);font-family:monospace">{{ $m->phone }}</div>
@@ -78,7 +92,7 @@
             </td>
           </tr>
           @empty
-          <tr><td colspan="7"><div class="empty-state"><h3>No messages found</h3><p>Try adjusting your filters.</p></div></td></tr>
+          <tr><td colspan="8"><div class="empty-state"><h3>No messages found</h3><p>Try adjusting your filters.</p></div></td></tr>
           @endforelse
         </tbody>
       </table>
@@ -117,6 +131,7 @@
         <div style="margin-top:12px;display:grid;grid-template-columns:auto 1fr;gap:8px 18px;font-size:13px;font-family:monospace">
           <div style="color:var(--text-tertiary)">API Message ID</div><div id="msgApiId">—</div>
           <div style="color:var(--text-tertiary)">Status</div><div id="msgApiStatus">—</div>
+          <div style="color:var(--text-tertiary)">Delivery</div><div><span id="msgDeliveryBadge" class="badge badge-dotted badge-neutral">—</span></div>
           <div style="color:var(--text-tertiary);vertical-align:top">Response</div>
           <div id="msgApiResponse" style="background:var(--bg-muted,#f8fafc);border-radius:8px;padding:10px 12px;overflow:auto;max-height:220px;white-space:pre-wrap;word-break:break-word">—</div>
         </div>
@@ -124,6 +139,7 @@
     </div>
     <div class="drawer-foot">
       <button type="button" class="btn btn-secondary" data-drawer-close>Close</button>
+      <button type="button" class="btn btn-primary" id="msgCheckDeliveryBtn" onclick="checkDelivery(window.__msgId)">Check Delivery</button>
     </div>
   </div>
 </div>
@@ -143,6 +159,8 @@
             'created_by'  => $m->created_by,
             'api_message_id' => $m->api_message_id,
             'api_response'   => is_array($m->api_response) ? json_encode($m->api_response, JSON_PRETTY_PRINT) : $m->api_response,
+            'delivery_status' => $m->delivery_status,
+            'delivery_checked_at' => $m->delivery_checked_at?->format('d M Y H:i'),
         ],
     ];
 })->toArray();
@@ -182,11 +200,54 @@ function openMsg(id){
   document.getElementById('msgApiResponse').textContent = d.api_response || '—';
   document.getElementById('msgApiWrap').style.display = (d.api_message_id || d.api_response) ? '' : 'none';
 
+  var dBadge = document.getElementById('msgDeliveryBadge');
+  var delStatus = d.delivery_status || (d.channel === 'sms' && d.api_message_id ? 'unchecked' : 'na');
+  var delLabel = delStatus === 'unchecked' ? 'Unchecked' : (delStatus === 'na' ? '—' : delStatus.charAt(0).toUpperCase() + delStatus.slice(1));
+  var delColor = delStatus === 'delivered' ? 'success' : (delStatus === 'undelivered' ? 'danger' : (delStatus === 'pending' ? 'warning' : 'neutral'));
+  dBadge.className = 'badge badge-dotted badge-' + delColor;
+  dBadge.textContent = delLabel;
+  window.__msgId = id;
+  var chkBtn = document.getElementById('msgCheckDeliveryBtn');
+  if (chkBtn) chkBtn.style.display = (d.channel === 'sms' && d.api_message_id) ? '' : 'none';
+
   document.getElementById('msgMeta').textContent = d.channel === 'sms' ? 'SMS message' : 'Email message';
   openDrawerById('msgDetailDrawer');
 }
 
+function checkDelivery(id){
+  if(!id) return;
+  var btn = document.getElementById('del-check-' + id);
+  if(btn){ btn.disabled = true; btn.textContent = 'Checking...'; }
+  var drawerBtn = document.getElementById('msgCheckDeliveryBtn');
+  if(drawerBtn){ drawerBtn.disabled = true; drawerBtn.textContent = 'Checking...'; }
+  fetch("{{ url('/messaging/history') }}/" + id + "/delivery", {
+    method: 'POST',
+    headers: {
+      'X-Requested-With': 'XMLHttpRequest',
+      'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').getAttribute('content')
+    }
+  }).then(function(r){ return r.json(); }).then(function(d){
+    var label = d.label || d.status || 'Unknown';
+    var color = d.color || 'neutral';
+    var badge = document.getElementById('del-badge-' + id);
+    if(badge){ badge.className = 'badge badge-dotted badge-' + color; badge.textContent = label; }
+    var dBadge = document.getElementById('msgDeliveryBadge');
+    if(dBadge){ dBadge.className = 'badge badge-dotted badge-' + color; dBadge.textContent = label; }
+    if(window.MSG_DATA && MSG_DATA[id]){ MSG_DATA[id].delivery_status = d.status || 'unknown'; }
+    if(btn){ btn.disabled = false; btn.textContent = 'Check'; }
+    if(drawerBtn){ drawerBtn.disabled = false; drawerBtn.textContent = 'Check Delivery'; }
+    toast(label + (d.checked_at ? ' · checked ' + d.checked_at : ''), d.status === 'undelivered' ? 'warning' : 'success');
+  }).catch(function(){
+    if(btn){ btn.disabled = false; btn.textContent = 'Check'; }
+    if(drawerBtn){ drawerBtn.disabled = false; drawerBtn.textContent = 'Check Delivery'; }
+    toast('Delivery check failed', 'error');
+  });
+}
+
 document.addEventListener('DOMContentLoaded', function(){
+  document.querySelectorAll('[data-check-delivery]').forEach(function(btnEl){
+    btnEl.addEventListener('click', function(){ checkDelivery(btnEl.dataset.id); });
+  });
   document.querySelectorAll('.msg-row').forEach(function(row){
     row.addEventListener('click', function(e){
       if(e.target.closest('a') || e.target.closest('button') || e.target.closest('form')) return;

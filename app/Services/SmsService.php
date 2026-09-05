@@ -128,6 +128,79 @@ class SmsService
         }
     }
 
+    /**
+     * Query the provider's report endpoint for a delivered message.
+     *
+     * @param  string  $messageId  The provider message ID returned on send
+     * @return array   ['success' => bool, 'status' => 'delivered'|'undelivered'|'pending'|'unknown'|..., 'raw' => array]
+     */
+    public function getDelivery(string $messageId): array
+    {
+        if (! $this->isConfigured()) {
+            return ['success' => false, 'status' => 'NOT_CONFIGURED', 'raw' => []];
+        }
+
+        try {
+            $response = Http::withHeaders([
+                'Authorization' => 'Bearer '.$this->token,
+                'Content-Type'  => 'application/json',
+                'Accept'        => 'application/json',
+            ])->timeout(15)->get($this->baseUrl.'/api/v2/reports', ['messageId' => $messageId]);
+
+            $body = $response->json() ?: [];
+
+            if (! $response->successful()) {
+                return ['success' => false, 'status' => 'API_ERROR_'.$response->status(), 'raw' => $body];
+            }
+
+            return [
+                'success' => true,
+                'status'  => $this->parseDeliveryStatus($body),
+                'raw'     => $body,
+            ];
+        } catch (\Exception $e) {
+            Log::error('SMS delivery check failed', ['error' => $e->getMessage()]);
+
+            return ['success' => false, 'status' => 'EXCEPTION', 'raw' => ['error' => $e->getMessage()]];
+        }
+    }
+
+    private function parseDeliveryStatus(array $body): string
+    {
+        $report = data_get($body, 'reports.0', $body);
+        $statusName = strtoupper((string) (data_get($report, 'status.name') ?? data_get($body, 'status.name', '')));
+        $statusId = data_get($report, 'status.id') ?? data_get($body, 'status.id');
+
+        $deliveredCount = (int) (data_get($report, 'deliveredCount') ?? data_get($body, 'deliveredCount', 0));
+        $notDeliveredCount = (int) (data_get($report, 'notDeliveredCount') ?? data_get($body, 'notDeliveredCount', 0));
+
+        if ($deliveredCount > 0 && $notDeliveredCount === 0) {
+            return 'delivered';
+        }
+        if ($deliveredCount === 0 && $notDeliveredCount > 0) {
+            return 'undelivered';
+        }
+
+        if ($statusName !== '') {
+            return match ($statusName) {
+                'DELIVRD', 'DELIVERED', 'SUCCESS', 'COMPLETED' => 'delivered',
+                'UNDELIV', 'UNDELIVERED', 'EXPIRED', 'REJECTD', 'FAILED', 'UNKNOWN' => 'undelivered',
+                'ACCEPTD', 'ACCEPT', 'ENROUTE', 'SENTTODLR', 'PENDING', 'SENT' => 'pending',
+                default => 'unknown',
+            };
+        }
+
+        if ($statusId !== null) {
+            return match ((int) $statusId) {
+                88 => 'delivered',
+                50, 51, 52, 73, 74 => 'pending',
+                default => 'unknown',
+            };
+        }
+
+        return 'unknown';
+    }
+
     private function formatPhone(string $phone): string
     {
         $phone = preg_replace('/[\s\-]/', '', $phone);

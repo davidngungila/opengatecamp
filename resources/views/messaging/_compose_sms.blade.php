@@ -1,4 +1,4 @@
-<div class="two-col" style="grid-template-columns:1.4fr 1fr;align-items:start">
+<div class="two-col" style="align-items:start">
   <div class="glass-card">
     <h2 style="font-size:14.5px;margin:0 0 14px">Compose SMS</h2>
     <form method="POST" action="{{ route('messaging.store') }}" id="composeForm">

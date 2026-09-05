@@ -8,32 +8,16 @@
 @php
     $heroBg = $primaryCard?->background_color ?: '#1a237e';
     $heroAccent = $primaryCard?->accent_color ?: '#ffd700';
-    $heroTitle = $selectedEvent?->title ?? ($primaryCard?->title ?: 'Giving Campaign');
+    $heroTitle = $primaryCard?->title ?: $currentEventName;
     $methodLabels = $methodLabels ?? \App\Models\DigitalCardContribution::methods();
     $contributionStatuses = $contributionStatuses ?? \App\Models\DigitalCardContribution::statuses();
-    $typeColors = [
-        'camp_invitation' => '#1a237e',
-        'fundraising'     => '#0d47a1',
-        'thank_you'       => '#4a148c',
-        'birthday'        => '#e91e63',
-        'christmas'       => '#1b5e20',
-        'general'         => '#263238',
-    ];
-    $typeAccents = [
-        'camp_invitation' => '#ffd700',
-        'fundraising'     => '#4caf50',
-        'thank_you'       => '#ff6f00',
-        'birthday'        => '#ffffff',
-        'christmas'       => '#c62828',
-        'general'         => '#2563eb',
-    ];
 @endphp
 <div class="fade-in">
 
   <div class="section-head">
     <div><h2>Digital Cards</h2><div class="sub">
       {{ count($eventCards) }} {{ Str::plural('card', count($eventCards)) }}
-      @if($selectedEvent) · {{ $selectedEvent->title }}@endif
+      · {{ $currentEventName }}
       · TZS {{ number_format($confirmedTotal) }} collected
     </div></div>
     @if(!$isCommittee)
@@ -41,20 +25,17 @@
     @endif
   </div>
 
-  <form class="toolbar" method="GET" action="{{ route('cards.index') }}">
-    <select class="filter-select" name="e" onchange="this.form.submit()" style="min-width:280px">
-      @if(count($events) > 0)
-        @foreach($events as $ev)
-          <option value="{{ $ev->id }}" @if((int)$eventId === (int)$ev->id) selected @endif>{{ $ev->title }} · {{ $ev->start_date?->format('d M Y') }}</option>
-        @endforeach
-      @else
-        <option value="" selected>No events yet</option>
-      @endif
-    </select>
-    <div class="tfield-grow" style="color:var(--text-tertiary);display:flex;align-items:center;font-size:12.5px;font-weight:600">
-      Pending / failed previews are excluded — only confirmed contributions count toward the campaign.
+  <div class="toolbar" style="flex-wrap:wrap">
+    <div style="display:flex;align-items:center;gap:10px;flex-wrap:wrap">
+      <span class="badge badge-info badge-dotted">Current Event</span>
+      <b>{{ $currentEventName }}</b>
+      @if($currentEventDate)<span class="text-muted">· {{ \Carbon\Carbon::parse($currentEventDate)->format('d M Y') }}</span>@endif
+      @if($currentEventVenue)<span class="text-muted">· {{ $currentEventVenue }}</span>@endif
     </div>
-  </form>
+    <div class="tfield-grow" style="color:var(--text-tertiary);display:flex;align-items:center;font-size:12.5px;font-weight:600">
+      This system manages a single event. Pending / failed previews are excluded — only confirmed contributions count toward the campaign.
+    </div>
+  </div>
 
   @if($eventCards->isEmpty())
   <div class="table-card">
@@ -72,8 +53,8 @@
     <div class="camp-tag">GIVING CAMPAIGN</div>
     <div class="camp-title">{{ $heroTitle }}</div>
     <div class="camp-meta">
-      @if($selectedEvent?->start_date)<span>📅 {{ $selectedEvent->start_date->format('d M Y') }}</span>@endif
-      @if($selectedEvent?->venue)<span>📍 {{ $selectedEvent->venue }}</span>@endif
+      @if($currentEventDate)<span>📅 {{ \Carbon\Carbon::parse($currentEventDate)->format('d M Y') }}</span>@endif
+      @if($currentEventVenue)<span>📍 {{ $currentEventVenue }}</span>@endif
       <span>🖥 {{ count($eventCards) }} card{{ count($eventCards) === 1 ? '' : 's' }}</span>
     </div>
     <div class="camp-numbers">
@@ -148,17 +129,29 @@
     </div>
     <div class="table-scroll">
       <table class="data-table">
-        <thead><tr><th>Name</th><th>Phone</th><th>Personalised Link</th><th>Sent At</th></tr></thead>
+        <thead><tr><th>Name</th><th>Phone</th><th>Invite Status</th><th>Delivery</th><th>Personalised Link</th><th>Sent At</th></tr></thead>
         <tbody>
           @forelse($recipients as $r)
           <tr>
             <td><b>{{ $r->name ?: '—' }}</b></td>
-            <td>{{ $r->phone }}</td>
+            <td style="font-family:monospace">{{ $r->phone }}</td>
+            <td><span class="badge badge-{{ $r->getInviteStatusColor() }} badge-dotted">{{ $r->status ? ucfirst($r->status) : 'Pending' }}</span></td>
+            <td>
+              <div style="display:flex;align-items:center;gap:6px;white-space:nowrap">
+                <span class="badge badge-{{ $r->getDeliveryStatusColor() }} badge-dotted" id="rdel-badge-{{ $r->id }}">{{ $r->delivery_status ? ucfirst(str_replace('_',' ',$r->delivery_status)) : ($r->message_id ? 'Unchecked' : '—') }}</span>
+                @if($r->message_id)
+                <button type="button" class="btn btn-sm btn-secondary" id="rdel-check-{{ $r->id }}" style="height:26px;padding:0 8px;font-size:11px" data-check-recipient-delivery data-id="{{ $r->id }}" data-mid="{{ $r->message_id }}" title="Check delivery via API">Check</button>
+                @endif
+              </div>
+              @if($r->delivery_checked_at)
+              <div style="font-size:10.5px;color:var(--text-tertiary);margin-top:3px">{{ $r->delivery_checked_at->format('d M Y H:i') }}</div>
+              @endif
+            </td>
             <td><a href="{{ route('cards.show', $r->digitalCard?->hash).'?r='.$r->token }}" target="_blank" class="link-mono">{{ substr($r->token, 0, 12) }}…</a></td>
             <td>{{ $r->sent_at?->format('d M Y H:i') ?: 'Not sent' }}</td>
           </tr>
           @empty
-          <tr><td colspan="4"><div class="empty-state"><h3>No recipients yet</h3><p>Invite people via SMS — each person gets a personalised card link.</p></div></td></tr>
+          <tr><td colspan="6"><div class="empty-state"><h3>No recipients yet</h3><p>Invite people via SMS — each person gets a personalised card link.</p></div></td></tr>
           @endforelse
         </tbody>
       </table>
@@ -166,7 +159,7 @@
   </div>
 
   <div class="table-card">
-    <div class="table-head"><h3>Cards for this event ({{ count($eventCards) }})</h3></div>
+    <div class="table-head"><h3>Person Invitation Cards ({{ count($eventCards) }})</h3></div>
     <div class="table-scroll">
       <table class="data-table">
         <thead><tr><th>Card No</th><th>Title / Type</th><th>Collected</th><th>Target</th><th>Progress</th><th>Status</th><th style="width:60px">Actions</th></tr></thead>
@@ -237,7 +230,7 @@
 <div class="drawer-overlay" id="cardNewDrawer">
   <div class="drawer-panel">
     <div class="drawer-head">
-      <div><h3>Create Digital Card</h3><p>Design a professional card to share via SMS</p></div>
+      <div><h3>Create Digital Card</h3><p>Person invitation card · {{ $currentEventName }}</p></div>
       <button type="button" class="modal-close" data-drawer-close><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><path d="M18 6L6 18M6 6l12 12"/></svg></button>
     </div>
     <form method="POST" action="{{ route('cards.store') }}" enctype="multipart/form-data">
@@ -245,15 +238,8 @@
       <div class="drawer-body">
         <div class="form-grid">
           <div class="field"><label>Title</label><input name="title" placeholder="e.g. Open Gate Camp Season 3" value="{{ old('title') }}"></div>
-          <div class="field"><label>Card Type *</label><select name="card_type" id="newCardType" required>
-            @foreach($types as $k=>$t)<option value="{{ $k }}" @if(old('card_type')==$k) selected @endif>{{ $t }}</option>@endforeach
-          </select></div>
-          <div class="field full"><label>Message</label><textarea name="message" placeholder="Write a heartfelt message for your recipients..." value="{{ old('message') }}"></textarea></div>
-          <div class="field"><label>Linked Event</label><select name="event_id">
-            <option value="">— None —</option>
-            @foreach($events as $e)<option value="{{ $e->id }}" @if((int)$eventId === (int)$e->id) selected @endif>{{ $e->title }} · {{ $e->start_date?->format('d M Y') }}</option>@endforeach
-          </select></div>
           <div class="field"><label>Target Amount (TZS)</label><input type="number" step="0.01" min="0" name="target_amount" value="{{ old('target_amount') }}" placeholder="e.g. 500000"></div>
+          <div class="field full"><label>Message</label><textarea name="message" placeholder="Write a heartfelt message for your recipients..." value="{{ old('message') }}"></textarea></div>
           <div class="field"><label>Background Color</label><input type="color" name="background_color" id="newCardBg" value="{{ old('background_color', '#1a237e') }}"></div>
           <div class="field"><label>Accent Color</label><input type="color" name="accent_color" id="newCardAccent" value="{{ old('accent_color', '#ffd700') }}"></div>
           <div class="field full"><label>Background Image (optional — replaces the color on the card)</label><input type="file" name="image_path" accept="image/*"></div>
@@ -281,15 +267,8 @@
       <div class="drawer-body">
         <div class="form-grid">
           <div class="field"><label>Title</label><input name="title" id="editCardTitle" placeholder="Optional — leave blank to hide"></div>
-          <div class="field"><label>Card Type *</label><select name="card_type" id="editCardType">
-            @foreach($types as $k=>$t)<option value="{{ $k }}">{{ $t }}</option>@endforeach
-          </select></div>
-          <div class="field full"><label>Message</label><textarea name="message" id="editCardMessage" placeholder="Optional — leave blank to hide"></textarea></div>
-          <div class="field"><label>Linked Event</label><select name="event_id" id="editCardEvent">
-            <option value="">— None —</option>
-            @foreach($events as $e)<option value="{{ $e->id }}">{{ $e->title }} · {{ $e->start_date?->format('d M Y') }}</option>@endforeach
-          </select></div>
           <div class="field"><label>Target Amount (TZS)</label><input type="number" step="0.01" min="0" name="target_amount" id="editCardTarget"></div>
+          <div class="field full"><label>Message</label><textarea name="message" id="editCardMessage" placeholder="Optional — leave blank to hide"></textarea></div>
           <div class="field"><label>Background Color</label><input type="color" name="background_color" id="editCardBg"></div>
           <div class="field"><label>Accent Color</label><input type="color" name="accent_color" id="editCardAccent"></div>
           <div class="field full"><label>Background Image (optional — replaces the color on the card)</label><input type="file" name="image_path" accept="image/*" id="editCardImage">
@@ -340,22 +319,28 @@
 <div class="drawer-overlay" id="cardSmsDrawer">
   <div class="drawer-panel">
     <div class="drawer-head">
-      <div><h3>Send Card Link via SMS</h3><p id="smsCardTitle">—</p></div>
+      <div><h3>Invite People</h3><p id="smsCardTitle">—</p></div>
       <button type="button" class="modal-close" data-drawer-close><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><path d="M18 6L6 18M6 6l12 12"/></svg></button>
     </div>
     <form method="POST" action="" id="sendSmsForm">
       @csrf
+      <input type="hidden" name="invitees" id="smsInvitees" value="">
       <div class="drawer-body">
         <div class="form-grid">
           <div class="field full"><label>Card Link</label><input type="text" id="smsCardUrl" readonly style="background:var(--blue-light);color:var(--blue-accent);font-weight:700"></div>
-          <div class="field full"><label>Recipients — Name &amp; Phone</label><textarea name="phones" id="smsPhones" placeholder='John Doe, +255 7XX XXX XXX&#10;Jane Smith, +255 6XX XXX XXX&#10;+255 7XX XXX XXX'></textarea>
-            <div class="text-muted" style="font-size:11px;margin-top:6px">One per line: <b>Name, Phone</b> (or a phone number alone). Each person gets a personalized link — their name and phone are pre-filled when they open the card.</div>
+          <div class="field full">
+            <div style="display:flex;align-items:center;justify-content:space-between;gap:8px;margin-bottom:8px">
+              <label style="margin:0">Invitees — Full Name &amp; Phone</label>
+              <button type="button" class="btn btn-secondary btn-sm" onclick="addInviteRow()">+ Add Person</button>
+            </div>
+            <div id="smsInviteRows"></div>
+            <div class="text-muted" style="font-size:11px;margin-top:6px">Each person receives a personalised SMS with their own card link. Their invite status changes to <b>Invited</b> once the SMS is sent.</div>
           </div>
         </div>
       </div>
       <div class="drawer-foot">
         <button type="button" class="btn btn-secondary" data-drawer-close>Cancel</button>
-        <button type="submit" class="btn btn-accent">Send SMS</button>
+        <button type="submit" class="btn btn-accent">Invite &amp; Send SMS</button>
       </div>
     </form>
   </div>
@@ -396,32 +381,11 @@
 @push('scripts')
 <script>
 (function(){
-  var typeColors = @json($typeColors);
-  var typeAccents = @json($typeAccents);
-
-  var newTypeEl = document.getElementById('newCardType');
-  var newBgEl = document.getElementById('newCardBg');
-  var newAccentEl = document.getElementById('newCardAccent');
-
-  function applyTypeColors(type) {
-    if (typeColors[type]) {
-      newBgEl.value = typeColors[type];
-      newAccentEl.value = typeAccents[type];
-    }
-  }
-
-  if (newTypeEl) {
-    applyTypeColors(newTypeEl.value);
-    newTypeEl.addEventListener('change', function() { applyTypeColors(this.value); });
-  }
-
   document.querySelectorAll('[data-edit-card]').forEach(function(btn){
     btn.addEventListener('click', function(){
       var d = btn.dataset;
       document.getElementById('editCardTitle').value = d.title || '';
       document.getElementById('editCardMessage').value = d.message || '';
-      document.getElementById('editCardType').value = d.type || 'general';
-      document.getElementById('editCardEvent').value = d.event || '';
       document.getElementById('editCardTarget').value = d.target || '';
       document.getElementById('editCardBg').value = d.bg || '#1a237e';
       document.getElementById('editCardAccent').value = d.accent || '#ffd700';
@@ -438,18 +402,86 @@
       var d = btn.dataset;
       document.getElementById('smsCardTitle').textContent = d.title || '—';
       document.getElementById('smsCardUrl').value = d.url || '';
-      document.getElementById('smsPhones').value = '';
+      resetInviteRows();
       document.getElementById('sendSmsForm').action = "{{ url('/digital-cards') }}/" + d.id + "/send-sms";
       openDrawerById('cardSmsDrawer');
     });
   });
 
-  var smsPhones = document.getElementById('smsPhones');
-  if (smsPhones) {
-    smsPhones.addEventListener('change', function(){
-      this.value = this.value.split('\n').map(function(line){
-        return line.replace(/,\s*$/, '').trim();
-      }).join('\n');
+  function inviteRowHtml(){
+    return '<div class="invite-row" style="display:grid;grid-template-columns:1.5fr 1fr auto;gap:8px;margin-bottom:8px">' +
+      '<input class="inv-name" placeholder="Full Name">' +
+      '<input class="inv-phone" placeholder="+255 7XX XXX XXX">' +
+      '<button type="button" class="btn btn-sm" onclick="removeInviteRow(this)" style="height:38px;padding:0 10px;background:transparent;color:var(--danger)" title="Remove person">&times;</button>' +
+      '</div>';
+  }
+
+  function resetInviteRows(){
+    var box = document.getElementById('smsInviteRows');
+    box.innerHTML = '';
+    box.insertAdjacentHTML('beforeend', inviteRowHtml());
+  }
+
+  function addInviteRow(){
+    document.getElementById('smsInviteRows').insertAdjacentHTML('beforeend', inviteRowHtml());
+  }
+
+  function removeInviteRow(btn){
+    btn.closest('.invite-row').remove();
+  }
+
+  var sendSmsForm = document.getElementById('sendSmsForm');
+  if (sendSmsForm) {
+    sendSmsForm.addEventListener('submit', function(){
+      var invitees = [];
+      document.querySelectorAll('#smsInviteRows .invite-row').forEach(function(row){
+        var name = row.querySelector('.inv-name').value.trim();
+        var phone = row.querySelector('.inv-phone').value.replace(/[^+\d]/g, '');
+        if (phone) invitees.push({ name: name, phone: phone });
+      });
+      if (invitees.length === 0) {
+        event.preventDefault();
+        toast('Add at least one person with a phone number', 'error');
+        return;
+      }
+      document.getElementById('smsInvitees').value = JSON.stringify(invitees);
+      var btn = sendSmsForm.querySelector('button[type="submit"]');
+      btn.disabled = true;
+      btn.textContent = 'Sending...';
+    });
+  }
+
+  document.addEventListener('click', function(e){
+    var btn = e.target.closest('[data-check-recipient-delivery]');
+    if (!btn) return;
+    checkRecipientDelivery(btn.dataset.id, btn.dataset.mid, btn);
+  });
+
+  function checkRecipientDelivery(id, mid, btn){
+    btn.disabled = true;
+    btn.textContent = '…';
+    fetch("{{ url('/digital-cards/recipients') }}/" + id + "/delivery", {
+      method: 'POST',
+      headers: {
+        'X-Requested-With': 'XMLHttpRequest',
+        'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').content
+      }
+    })
+    .then(function(r){ return r.json(); })
+    .then(function(j){
+      btn.textContent = 'Check';
+      btn.disabled = false;
+      var badge = document.getElementById('rdel-badge-' + id);
+      if (badge && j.label) {
+        badge.textContent = j.label;
+        badge.className = 'badge badge-' + (j.color || 'neutral') + ' badge-dotted';
+      }
+      toast(j.label || 'Status updated', j.color === 'success' ? 'success' : (j.color === 'danger' ? 'error' : 'info'));
+    })
+    .catch(function(){
+      btn.textContent = 'Check';
+      btn.disabled = false;
+      toast('Could not check delivery status', 'error');
     });
   }
 

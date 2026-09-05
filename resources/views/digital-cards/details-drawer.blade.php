@@ -62,9 +62,9 @@
       <div class="cd-block">
         <div class="cd-title">Event &amp; Messaging</div>
         <div class="meta-list">
-          <div class="meta-row"><span class="meta-k">Event</span><span class="meta-v">{{ $card->event?->title ?: '—' }}</span></div>
-          <div class="meta-row"><span class="meta-k">Event Date</span><span class="meta-v">{{ $card->event?->start_date?->format('d M Y') ?: '—' }}</span></div>
-          <div class="meta-row"><span class="meta-k">Venue</span><span class="meta-v">{{ $card->event?->venue ?: '—' }}</span></div>
+          <div class="meta-row"><span class="meta-k">Event</span><span class="meta-v">{{ \App\Models\Setting::get('event.name', 'Open Gate Camp') }}</span></div>
+          <div class="meta-row"><span class="meta-k">Event Date</span><span class="meta-v">{{ \App\Models\Setting::get('event.start_date') ? \Carbon\Carbon::parse(\App\Models\Setting::get('event.start_date'))->format('d M Y') : '—' }}</span></div>
+          <div class="meta-row"><span class="meta-k">Venue</span><span class="meta-v">{{ \App\Models\Setting::get('event.venue') ?: '—' }}</span></div>
           <div class="meta-row"><span class="meta-k">CTA Text</span><span class="meta-v">{{ $card->cta_text ?: '—' }}</span></div>
           <div class="meta-row"><span class="meta-k">Contributor Note</span><span class="meta-v">{{ $card->contributor_note ?: '—' }}</span></div>
         </div>
@@ -102,16 +102,25 @@
         <div class="cd-title">SMS Recipients ({{ number_format($recipients->count()) }})</div>
         <div class="table-scroll cd-table">
           <table class="data-table">
-            <thead><tr><th>Name</th><th>Phone</th><th>Sent At</th></tr></thead>
+            <thead><tr><th>Name</th><th>Phone</th><th>Invite</th><th>Delivery</th><th>Sent At</th></tr></thead>
             <tbody>
               @forelse($recipients as $r)
               <tr>
                 <td><b>{{ $r->name ?: '—' }}</b></td>
-                <td>{{ $r->phone }}</td>
+                <td style="font-family:monospace">{{ $r->phone }}</td>
+                <td><span class="badge badge-{{ $r->getInviteStatusColor() }} badge-dotted">{{ $r->status ? ucfirst($r->status) : 'Pending' }}</span></td>
+                <td>
+                  <div style="display:flex;align-items:center;gap:6px;white-space:nowrap">
+                    <span class="badge badge-{{ $r->getDeliveryStatusColor() }} badge-dotted" id="rdel-badge-{{ $r->id }}">{{ $r->delivery_status ? ucfirst(str_replace('_',' ',$r->delivery_status)) : ($r->message_id ? 'Unchecked' : '—') }}</span>
+                    @if($r->message_id)
+                    <button type="button" class="btn btn-sm btn-secondary" style="height:24px;padding:0 7px;font-size:10.5px" data-check-recipient-delivery data-id="{{ $r->id }}" data-mid="{{ $r->message_id }}" title="Check delivery via API">Check</button>
+                    @endif
+                  </div>
+                </td>
                 <td style="white-space:nowrap">{{ $r->sent_at?->format('d M Y H:i') ?: 'Not sent' }}</td>
               </tr>
               @empty
-              <tr><td colspan="3"><div class="cd-empty">No SMS recipients yet</div></td></tr>
+              <tr><td colspan="5"><div class="cd-empty">No SMS recipients yet</div></td></tr>
               @endforelse
             </tbody>
           </table>

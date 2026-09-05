@@ -15,7 +15,7 @@
   <div style="background:#f0fdf4;border:1px solid #bbf7d0;border-radius:8px;padding:12px 16px;margin-bottom:18px;color:#166534;font-size:13.5px"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:-2px"><path d="M20 6L9 17l-5-5"/></svg> {{ session('success') }}</div>
   @endif
 
-  <div class="two-col" style="grid-template-columns:1.4fr 1fr">
+  <div class="two-col">
     <div class="glass-card">
       <h2 style="font-size:14.5px;margin:0 0 14px">Compose Email</h2>
       <form method="POST" action="{{ route('messaging.store') }}">

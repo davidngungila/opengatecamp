@@ -6,9 +6,9 @@ use App\Models\AuditLog;
 use App\Models\DigitalCard;
 use App\Models\DigitalCardContribution;
 use App\Models\DigitalCardRecipient;
-use App\Models\Event;
 use App\Models\Message;
 use App\Models\Pledge;
+use App\Models\Setting;
 use App\Services\AccountingPostingService;
 use App\Services\QrCodeService;
 use App\Services\SmsService;
@@ -22,24 +22,11 @@ class DigitalCardController extends Controller
 {
     public function index(Request $request)
     {
-        $events = Event::orderByDesc('start_date')->get();
+        $cards = DigitalCard::with(['event', 'contributions.digitalCard', 'recipients.digitalCard'])
+            ->latest()
+            ->get();
 
-        $cards = DigitalCard::with(['event', 'contributions.digitalCard', 'recipients.digitalCard'])->get();
-
-        $availableEventIds = $cards->pluck('event_id')->filter()->unique()->values()->all();
-        $requested = (int) $request->query('e');
-
-        if (in_array($requested, $availableEventIds, true)) {
-            $eventId = $requested;
-        } else {
-            $primary = $cards
-                ->sortByDesc(fn ($c) => $c->contributions->where('status', 'confirmed')->sum('amount'))
-                ->first() ?? $cards->sortByDesc('created_at')->first();
-            $eventId = $primary?->event_id;
-        }
-
-        $eventCards = $cards->where('event_id', $eventId)->values();
-        $selectedEvent = $eventId ? Event::find($eventId) : null;
+        $eventCards = $cards;
 
         $contributions = $eventCards->flatMap->contributions->sortByDesc('created_at')->values();
         $recipients = $eventCards->flatMap->recipients->sortByDesc('created_at')->values();
@@ -56,10 +43,14 @@ class DigitalCardController extends Controller
         $methodLabels = DigitalCardContribution::methods();
         $contributionStatuses = DigitalCardContribution::statuses();
 
+        $currentEventName = (string) Setting::get('event.name', 'Open Gate Camp');
+        $currentEventDate = Setting::get('event.start_date');
+        $currentEventVenue = (string) Setting::get('event.venue', '');
+
         return view('digital-cards.index', compact(
-            'events', 'eventId', 'eventCards', 'selectedEvent', 'contributions',
-            'recipients', 'confirmedTotal', 'targetTotal', 'progressPercent',
-            'primaryCard', 'types', 'statuses', 'methodLabels', 'contributionStatuses',
+            'eventCards', 'contributions', 'recipients', 'confirmedTotal', 'targetTotal',
+            'progressPercent', 'primaryCard', 'types', 'statuses', 'methodLabels',
+            'contributionStatuses', 'currentEventName', 'currentEventDate', 'currentEventVenue',
         ));
     }
 
@@ -126,10 +117,8 @@ class DigitalCardController extends Controller
         $data = $request->validate([
             'title' => 'required|string|max:255',
             'message' => 'required|string',
-            'card_type' => 'required|in:camp_invitation,fundraising,thank_you,birthday,christmas,general',
             'background_color' => 'nullable|string|max:7',
             'accent_color' => 'nullable|string|max:7',
-            'event_id' => 'nullable|exists:events,id',
             'target_amount' => 'nullable|numeric|min:0',
             'contributor_note' => 'nullable|string|max:500',
             'cta_text' => 'nullable|string|max:100',
@@ -139,6 +128,8 @@ class DigitalCardController extends Controller
 
         $data['card_no'] = DigitalCard::nextCardNo();
         $data['hash'] = Str::random(32);
+        $data['card_type'] = 'camp_invitation';
+        $data['event_id'] = null;
         $data['status'] = 'draft';
         $data['is_published'] = false;
         $data['contributions_count'] = 0;
@@ -165,10 +156,8 @@ class DigitalCardController extends Controller
         $data = $request->validate([
             'title' => 'nullable|string|max:255',
             'message' => 'nullable|string',
-            'card_type' => 'required|in:camp_invitation,fundraising,thank_you,birthday,christmas,general',
             'background_color' => 'nullable|string|max:7',
             'accent_color' => 'nullable|string|max:7',
-            'event_id' => 'nullable|exists:events,id',
             'target_amount' => 'nullable|numeric|min:0',
             'contributor_note' => 'nullable|string|max:500',
             'cta_text' => 'nullable|string|max:100',
@@ -179,6 +168,8 @@ class DigitalCardController extends Controller
 
         $data['title'] = (string) ($data['title'] ?? '');
         $data['message'] = (string) ($data['message'] ?? '');
+        $data['card_type'] = 'camp_invitation';
+        $data['event_id'] = null;
 
         if ($request->hasFile('image_path')) {
             if ($card->image_path) {
@@ -226,13 +217,14 @@ class DigitalCardController extends Controller
     public function sendSms(Request $request, DigitalCard $card)
     {
         $data = $request->validate([
-            'phones' => 'required|string',
+            'invitees' => 'nullable|string',
+            'phones' => 'nullable|string',
         ]);
 
-        $recipients = $this->parseRecipients($data['phones']);
+        $invitees = $this->normalizeInvitees($data);
 
-        if (empty($recipients)) {
-            return back()->with('error', 'No valid phone numbers provided.');
+        if (empty($invitees)) {
+            return back()->with('error', 'No valid names and phone numbers provided. Fill in Full Name and Phone for each person.');
         }
 
         $sms = app(SmsService::class);
@@ -243,22 +235,23 @@ class DigitalCardController extends Controller
         $template = $card->sms_text ?: 'You are invited! View your digital card and contribute: {link}';
         $success = 0;
         $fail = 0;
+        $messageIds = [];
 
-        foreach ($recipients as $recipient) {
+        foreach ($invitees as $invitee) {
             $token = Str::random(32);
             $link = route('cards.show', $card->hash).'?r='.$token;
 
             $msg = str_replace(
                 ['{link}', '{name}'],
-                [$link, $recipient['name'] ?? ''],
+                [$link, $invitee['name'] ?? ''],
                 $template
             );
 
-            if (($recipient['name'] ?? '') !== '' && ! str_contains($template, '{name}')) {
-                $msg = 'Shukurani '.$recipient['name'].', '.$msg;
+            if (($invitee['name'] ?? '') !== '' && ! str_contains($template, '{name}')) {
+                $msg = 'Shukurani '.$invitee['name'].', '.$msg;
             }
 
-            $result = $sms->send($recipient['phone'], $msg);
+            $result = $sms->send($invitee['phone'], $msg);
 
             if ($result['success']) {
                 $success++;
@@ -268,42 +261,126 @@ class DigitalCardController extends Controller
 
             DigitalCardRecipient::create([
                 'digital_card_id' => $card->id,
-                'name' => $recipient['name'] ?? null,
-                'phone' => $recipient['phone'],
+                'name' => ($invitee['name'] ?? '') !== '' ? $invitee['name'] : null,
+                'phone' => $invitee['phone'],
                 'token' => $token,
                 'sent_at' => $result['success'] ? now() : null,
+                'status' => $result['success'] ? 'invited' : 'failed',
+                'message_id' => $result['api_message_id'] ?? null,
             ]);
+
+            if (! empty($result['api_message_id'])) {
+                $messageIds[] = $result['api_message_id'];
+            }
         }
 
-        $recipientsList = implode(', ', array_slice(array_column($recipients, 'phone'), 0, 5));
-        if (count($recipients) > 5) {
-            $recipientsList .= '... (+'.(count($recipients) - 5).' more)';
+        $recipientsList = implode(', ', array_slice(array_column($invitees, 'phone'), 0, 5));
+        if (count($invitees) > 5) {
+            $recipientsList .= '... (+'.(count($invitees) - 5).' more)';
         }
 
         Message::create([
             'channel' => 'sms',
             'recipients' => $recipientsList,
-            'phone' => $recipients[0]['phone'] ?? '',
+            'phone' => $invitees[0]['phone'] ?? '',
             'subject' => "Digital card SMS — {$card->card_no}",
             'message' => $template,
             'status' => $success > 0 ? 'sent' : 'failed',
-            'api_message_id' => null,
-            'api_response' => ['success_count' => $success, 'fail_count' => $fail],
+            'api_message_id' => $messageIds[0] ?? null,
+            'api_response' => [
+                'success_count' => $success,
+                'fail_count' => $fail,
+                'invitees' => array_map(fn ($i) => ['name' => $i['name'] ?? null, 'phone' => $i['phone']], $invitees),
+                'message_ids' => $messageIds,
+            ],
             'created_by' => auth()->user()?->name,
         ]);
 
         AuditLog::record(
-            'Sent digital card SMS',
+            'Invited digital card recipients',
             'Digital Cards',
-            "{$card->card_no} — {$success} sent, {$fail} failed"
+            "{$card->card_no} — {$success} invited, {$fail} failed"
         );
 
-        $notice = "{$success} SMS sent successfully.";
+        $notice = "{$success} person(s) invited by SMS.";
         if ($fail > 0) {
             $notice .= " {$fail} failed.";
         }
 
         return back()->with($success > 0 ? 'success' : 'error', $notice);
+    }
+
+    private function normalizeInvitees(array $data): array
+    {
+        if (! empty($data['invitees'])) {
+            $decoded = json_decode($data['invitees'], true);
+
+            if (is_array($decoded)) {
+                return collect($decoded)
+                    ->map(fn ($r) => [
+                        'name' => (string) ($r['name'] ?? ''),
+                        'phone' => preg_replace('/[^+\d]/', '', (string) ($r['phone'] ?? '')),
+                    ])
+                    ->filter(fn ($r) => $r['phone'] !== '')
+                    ->values()
+                    ->all();
+            }
+        }
+
+        return array_map(fn ($r) => [
+            'name' => $r['name'] ?? '',
+            'phone' => $r['phone'],
+        ], $this->parseRecipients((string) ($data['phones'] ?? '')));
+    }
+
+    public function checkRecipientDelivery(Request $request, DigitalCardRecipient $recipient)
+    {
+        if (! $recipient->message_id) {
+            return response()->json([
+                'ok' => false,
+                'status' => 'unknown',
+                'label' => 'No Message ID',
+                'color' => 'neutral',
+                'checked_at' => $recipient->delivery_checked_at?->format('d M Y H:i'),
+            ]);
+        }
+
+        $report = app(SmsService::class)->getDelivery($recipient->message_id);
+
+        $deliveryStatus = (string) ($report['status'] ?? 'unknown');
+        $recipient->update([
+            'delivery_status' => $deliveryStatus,
+            'delivery_checked_at' => now(),
+        ]);
+
+        return response()->json([
+            'ok' => (bool) ($report['success'] ?? false),
+            'status' => $deliveryStatus,
+            'label' => $this->deliveryLabel($deliveryStatus),
+            'color' => $this->deliveryColor($deliveryStatus),
+            'checked_at' => now()->format('d M Y H:i'),
+            'raw' => $report['raw'] ?? null,
+        ]);
+    }
+
+    private function deliveryLabel(string $status): string
+    {
+        return match ($status) {
+            'delivered' => 'Delivered',
+            'undelivered' => 'Not delivered',
+            'pending' => 'Pending',
+            default => 'Unknown',
+        };
+    }
+
+    private function deliveryColor(string $status): string
+    {
+        return match ($status) {
+            'delivered' => 'success',
+            'undelivered' => 'danger',
+            'pending' => 'warning',
+            default => 'neutral',
+        };
     }
 
     private function parseRecipients(string $raw): array

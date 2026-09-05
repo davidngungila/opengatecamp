@@ -83,9 +83,9 @@
     <div class="table-card" style="padding:18px">
       <h3 style="margin-bottom:14px;font-size:15px">Event &amp; Messaging</h3>
       <div class="meta-list">
-        <div class="meta-row"><span class="meta-k">Event</span><span class="meta-v">{{ $card->event?->title ?: '—' }}</span></div>
-        <div class="meta-row"><span class="meta-k">Event Date</span><span class="meta-v">{{ $card->event?->start_date?->format('d M Y') ?: '—' }}</span></div>
-        <div class="meta-row"><span class="meta-k">Venue</span><span class="meta-v">{{ $card->event?->venue ?: '—' }}</span></div>
+        <div class="meta-row"><span class="meta-k">Event</span><span class="meta-v">{{ \App\Models\Setting::get('event.name', 'Open Gate Camp') }}</span></div>
+        <div class="meta-row"><span class="meta-k">Event Date</span><span class="meta-v">{{ \App\Models\Setting::get('event.start_date') ? \Carbon\Carbon::parse(\App\Models\Setting::get('event.start_date'))->format('d M Y') : '—' }}</span></div>
+        <div class="meta-row"><span class="meta-k">Venue</span><span class="meta-v">{{ \App\Models\Setting::get('event.venue') ?: '—' }}</span></div>
         <div class="meta-row"><span class="meta-k">CTA Text</span><span class="meta-v">{{ $card->cta_text ?: '—' }}</span></div>
         <div class="meta-row"><span class="meta-k">Contributor Note</span><span class="meta-v">{{ $card->contributor_note ?: '—' }}</span></div>
       </div>
@@ -133,17 +133,29 @@
     <div class="table-head"><h3>SMS Recipients ({{ number_format($recipients->count()) }})</h3></div>
     <div class="table-scroll">
       <table class="data-table">
-        <thead><tr><th>Name</th><th>Phone</th><th>Personalised Link</th><th>Sent At</th></tr></thead>
+        <thead><tr><th>Name</th><th>Phone</th><th>Invite Status</th><th>Delivery</th><th>Personalised Link</th><th>Sent At</th></tr></thead>
         <tbody>
           @forelse($recipients as $r)
           <tr>
             <td><b>{{ $r->name ?: '—' }}</b></td>
-            <td>{{ $r->phone }}</td>
+            <td style="font-family:monospace">{{ $r->phone }}</td>
+            <td><span class="badge badge-{{ $r->getInviteStatusColor() }} badge-dotted">{{ $r->status ? ucfirst($r->status) : 'Pending' }}</span></td>
+            <td>
+              <div style="display:flex;align-items:center;gap:6px;white-space:nowrap">
+                <span class="badge badge-{{ $r->getDeliveryStatusColor() }} badge-dotted" id="rdel-badge-{{ $r->id }}">{{ $r->delivery_status ? ucfirst(str_replace('_',' ',$r->delivery_status)) : ($r->message_id ? 'Unchecked' : '—') }}</span>
+                @if($r->message_id)
+                <button type="button" class="btn btn-sm btn-secondary" id="rdel-check-{{ $r->id }}" style="height:26px;padding:0 8px;font-size:11px" data-check-recipient-delivery data-id="{{ $r->id }}" data-mid="{{ $r->message_id }}" title="Check delivery via API">Check</button>
+                @endif
+              </div>
+              @if($r->delivery_checked_at)
+              <div style="font-size:10.5px;color:var(--text-tertiary);margin-top:3px">{{ $r->delivery_checked_at->format('d M Y H:i') }}</div>
+              @endif
+            </td>
             <td><a href="{{ route('cards.show', $card->hash).'?r='.$r->token }}" target="_blank" class="link-mono">{{ substr($r->token, 0, 12) }}…</a></td>
             <td>{{ $r->sent_at?->format('d M Y H:i') ?: 'Not sent' }}</td>
           </tr>
           @empty
-          <tr><td colspan="4"><div class="empty-state"><h3>No SMS recipients</h3><p>Send the card via SMS from the list to create personalized recipient links.</p></div></td></tr>
+          <tr><td colspan="6"><div class="empty-state"><h3>No SMS recipients</h3><p>Send the card via SMS from the list to create personalized recipient links.</p></div></td></tr>
           @endforelse
         </tbody>
       </table>
@@ -151,6 +163,43 @@
   </div>
 
 </div>
+
+@push('scripts')
+<script>
+(function(){
+  document.querySelectorAll('[data-check-recipient-delivery]').forEach(function(btn){
+    btn.addEventListener('click', function(){
+      var id = btn.dataset.id;
+      btn.disabled = true;
+      btn.textContent = '…';
+      fetch("{{ url('/digital-cards/recipients') }}/" + id + "/delivery", {
+        method: 'POST',
+        headers: {
+          'X-Requested-With': 'XMLHttpRequest',
+          'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').content
+        }
+      })
+      .then(function(r){ return r.json(); })
+      .then(function(j){
+        btn.textContent = 'Check';
+        btn.disabled = false;
+        var badge = document.getElementById('rdel-badge-' + id);
+        if (badge && j.label) {
+          badge.textContent = j.label;
+          badge.className = 'badge badge-' + (j.color || 'neutral') + ' badge-dotted';
+        }
+        toast(j.label || 'Status updated', j.color === 'success' ? 'success' : (j.color === 'danger' ? 'error' : 'info'));
+      })
+      .catch(function(){
+        btn.textContent = 'Check';
+        btn.disabled = false;
+        toast('Could not check delivery status', 'error');
+      });
+    });
+  });
+})();
+</script>
+@endpush
 
 <style>
   .back-link{display:inline-flex;align-items:center;gap:6px;color:#64748b;text-decoration:none;font-size:13px;font-weight:600;margin-bottom:6px;}
