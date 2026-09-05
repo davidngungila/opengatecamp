@@ -14,7 +14,13 @@
   <div class="section-head">
     <div><h2>Users &amp; Roles</h2><div class="sub">{{ $users->count() }} system users · {{ $roles->count() }} roles</div></div>
     @if($tab === 'users')
-      <button type="button" class="btn btn-accent" data-drawer-open="userModal" onclick="resetUserModal()">+ Add User</button>
+      <div class="flex gap-8">
+        <form method="POST" action="{{ route('users.welcome.bulk') }}" onsubmit="return confirm('Send the welcome SMS to all {{ $users->whereNotNull('phone')->where('phone','!=','')->count() }} users with a phone number? (uses saved default content)')">
+          @csrf
+          <button type="submit" class="btn btn-secondary">Send Welcome to All</button>
+        </form>
+        <button type="button" class="btn btn-accent" data-drawer-open="userModal" onclick="resetUserModal()">+ Add User</button>
+      </div>
     @endif
   </div>
 
@@ -25,26 +31,6 @@
   </div>
 
   @if($tab === 'users')
-  <div class="glass-card" style="margin-bottom:20px">
-    <form method="POST" action="{{ route('users.welcome-message') }}">
-      @csrf
-      <div style="display:flex;gap:18px;align-items:flex-end;flex-wrap:wrap">
-        <div style="flex:1;min-width:280px">
-          <label style="font-size:13px;font-weight:800;display:block;margin-bottom:6px">Welcome SMS Content</label>
-          <textarea name="welcome_message" rows="3" style="width:100%;min-height:84px" placeholder="Karibu {name}! Login at https://opengatecamp.iccrtz.org/login with your phone number.">{{ $welcomeMessage }}</textarea>
-          <small style="color:var(--text-muted)">Placeholders: <code>{name}</code> and <code>{phone}</code> are replaced with each user's details.</small>
-        </div>
-        <button type="submit" class="btn btn-secondary">Save Content</button>
-      </div>
-    </form>
-    <form method="POST" action="{{ route('users.welcome.bulk') }}" onsubmit="return confirm('Send the welcome SMS to all {{ $users->whereNotNull('phone')->where('phone','!=','')->count() }} users with a phone number?')">
-      @csrf
-      <div style="margin-top:10px;display:flex;justify-content:flex-end">
-        <button type="submit" class="btn btn-accent">Send to All</button>
-      </div>
-    </form>
-  </div>
-
   <div class="table-card">
     <div class="table-scroll">
       <table class="data-table">
@@ -211,6 +197,25 @@
         <span>Permissions</span><span class="payments-count" id="usrPermCount">0</span>
       </div>
       <div id="usrPermList" class="payments-list"></div>
+
+      <div class="payments-head" style="margin-top:18px">
+        <span>Welcome SMS</span><span class="payments-count" id="usrWelcomePhone">—</span>
+      </div>
+      <form method="POST" id="welcomeSmsForm">
+        @csrf
+        <div class="field" style="margin-top:8px">
+          <textarea name="welcome_message" id="usrWelcomeMsg" rows="4" style="width:100%" placeholder="Karibu {name}! Login at https://opengatecamp.iccrtz.org/login with your phone number.">{{ $welcomeMessage }}</textarea>
+          <small style="color:var(--text-muted)">Placeholders: <code>{name}</code> and <code>{phone}</code> are replaced with this user's details. Edit freely — each user can get a different message.</small>
+        </div>
+        <div class="flex gap-8" style="margin-top:12px;justify-content:flex-end">
+          <button type="button" class="btn btn-secondary btn-sm" id="usrWelcomeSaveDefault">Save as Default Content</button>
+          <button type="submit" class="btn btn-accent btn-sm">Send Welcome SMS</button>
+        </div>
+      </form>
+      <form method="POST" action="{{ route('users.welcome-message') }}" id="welcomeSaveForm" style="display:none">
+        @csrf
+        <input type="hidden" name="welcome_message" id="usrWelcomeSaveDefaultVal" value="">
+      </form>
     </div>
     <div class="drawer-foot">
       <button type="button" class="btn btn-secondary" data-drawer-close>Close</button>
@@ -305,6 +310,18 @@ document.addEventListener('DOMContentLoaded', function(){
           document.getElementById('usrDrawerPhone').textContent = u.phone || '—';
           document.getElementById('usrDrawerLastLogin').textContent = u.last_login ? new Date(u.last_login).toLocaleString() : 'Never';
           document.getElementById('usrDrawerCreated').textContent = u.created || '—';
+
+          var wf = document.getElementById('welcomeSmsForm');
+          wf.action = '{{ url('/users') }}/' + u.id + '/welcome';
+          document.getElementById('usrWelcomePhone').textContent = u.phone || 'No phone recorded';
+          document.getElementById('usrWelcomeMsg').placeholder = u.phone ? undefined : 'This user has no phone number recorded.';
+
+          var saveDefault = document.getElementById('usrWelcomeSaveDefault');
+          saveDefault.onclick = function(){
+            var el = document.getElementById('usrWelcomeSaveDefaultVal');
+            el.value = document.getElementById('usrWelcomeMsg').value;
+            document.getElementById('welcomeSaveForm').submit();
+          };
 
           var av = document.getElementById('usrDrawerAvatar');
           av.textContent = (u.name||'?').split(' ').filter(function(w){ return ['Fr.','Dr.'].indexOf(w)===-1; }).slice(0,2).map(function(w){ return w.charAt(0); }).join('');

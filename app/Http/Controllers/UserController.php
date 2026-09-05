@@ -114,25 +114,38 @@ class UserController extends Controller
         return back()->with('success', 'Welcome message content saved.');
     }
 
-    public function sendWelcome(User $user)
+    public function sendWelcome(Request $request, User $user)
     {
         if (! $user->phone) {
             return back()->with('error', "User {$user->name} has no phone number recorded.");
         }
+
+        $data = $request->validate([
+            'welcome_message' => 'nullable|string|max:2000',
+        ]);
+
+        $template = trim((string) ($data['welcome_message'] ?? ''))
+            ?: (string) Setting::get('users.welcome_message', 'Karibu {name}! Your OpenGate Camp Connect account is ready. Login at https://opengatecamp.iccrtz.org/login with your phone number.');
+
+        $message = str_replace(
+            ['{name}', '{phone}'],
+            [$user->name, $user->phone ?? ''],
+            $template
+        );
 
         $sms = new SmsService();
         if (! $sms->isConfigured()) {
             return back()->with('error', 'SMS API token is not configured. Go to Messaging → Settings to add your API token.');
         }
 
-        $result = $sms->send($user->phone, $this->welcomeMessage($user));
+        $result = $sms->send($user->phone, $message);
 
         Message::create([
             'channel'          => 'sms',
             'recipients'       => $user->name,
             'phone'            => $user->phone,
             'subject'          => null,
-            'message'          => $this->welcomeMessage($user),
+            'message'          => $message,
             'status'           => $result['success'] ? 'sent' : 'failed',
             'api_message_id'   => $result['api_message_id'],
             'api_response'     => $result['raw'],
@@ -171,35 +184,46 @@ class UserController extends Controller
             return back()->with('error', 'SMS API token is not configured. Go to Messaging → Settings to add your API token.');
         }
 
-        $result = $sms->sendBulk(
-            $eligible->pluck('phone')->all(),
-            $this->welcomeMessage($eligible->first())
-        );
+        $sentCount = 0;
+        $failCount = 0;
+        $results = [];
+
+        foreach ($eligible as $user) {
+            $result = $sms->send($user->phone, $this->resolveMessage($user));
+            $result['success'] ? $sentCount++ : $failCount++;
+            $results[] = [
+                'to'        => $user->phone,
+                'name'      => $user->name,
+                'success'   => $result['success'],
+                'status'    => $result['status'],
+                'messageId' => $result['api_message_id'],
+            ];
+        }
 
         Message::create([
             'channel'          => 'sms',
-            'recipients'       => $result['success_count'].' users (bulk welcome)',
+            'recipients'       => $sentCount.' users (bulk welcome)',
             'phone'            => $eligible->pluck('phone')->implode(', '),
             'subject'          => null,
-            'message'          => $this->welcomeMessage($eligible->first()),
-            'status'           => $result['success_count'] > 0 ? 'sent' : 'failed',
-            'api_response'     => $result['results'],
+            'message'          => $this->resolveMessage($eligible->first()),
+            'status'           => $sentCount > 0 ? 'sent' : 'failed',
+            'api_response'     => $results,
             'created_by'       => auth()->user()?->name ?? 'Daniel Mwinuka',
         ]);
 
         AuditLog::record(
             'Sent bulk welcome SMS',
             'Users & Roles',
-            "{$result['success_count']} sent, {$result['fail_count']} failed out of {$eligible->count()} recipients"
+            "{$sentCount} sent, {$failCount} failed out of {$eligible->count()} recipients"
         );
 
         return back()->with(
-            $result['fail_count'] === 0 ? 'success' : 'error',
-            "Bulk welcome SMS: {$result['success_count']} sent, {$result['fail_count']} failed out of {$eligible->count()} users."
+            $failCount === 0 ? 'success' : 'error',
+            "Bulk welcome SMS: {$sentCount} sent, {$failCount} failed out of {$eligible->count()} users."
         );
     }
 
-    private function welcomeMessage(User $user): string
+    private function resolveMessage(User $user): string
     {
         $template = (string) Setting::get('users.welcome_message', 'Karibu {name}! Your OpenGate Camp Connect account is ready. Login at https://opengatecamp.iccrtz.org/login with your phone number.');
 
