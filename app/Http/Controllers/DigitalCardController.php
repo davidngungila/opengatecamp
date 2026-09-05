@@ -24,15 +24,64 @@ class DigitalCardController extends Controller
     {
         $card = $this->currentCard();
 
-        $recipients = $card->recipients()->latest('created_at')->get();
+        $status = $request->query('status');
+        $delivery = $request->query('delivery');
+        $q = trim((string) $request->query('q'));
+
+        $query = $this->applyInviteFilters(
+            $card->recipients(),
+            $status,
+            $delivery,
+            $q
+        );
+
+        $recipients = $query->latest('created_at')->paginate(15)->withQueryString();
+
+        $totals = [
+            'total' => $card->recipients()->count(),
+            'invited' => $card->recipients()->where('status', 'invited')->count(),
+            'failed' => $card->recipients()->where('status', 'failed')->count(),
+            'pending' => $card->recipients()
+                ->where(fn ($w) => $w->whereNull('status')->orWhere('status', 'pending'))
+                ->count(),
+            'delivered' => $card->recipients()->where('delivery_status', 'delivered')->count(),
+        ];
+
+        $filters = ['q' => $q, 'status' => $status, 'delivery' => $delivery];
+
+        $inviteStatuses = DigitalCardRecipient::inviteStatuses();
 
         $currentEventName = (string) Setting::get('event.name', 'Open Gate Camp');
         $currentEventDate = Setting::get('event.start_date');
         $currentEventVenue = (string) Setting::get('event.venue', '');
 
         return view('digital-cards.index', compact(
-            'card', 'recipients', 'currentEventName', 'currentEventDate', 'currentEventVenue',
+            'card', 'recipients', 'totals', 'filters',
+            'inviteStatuses', 'currentEventName', 'currentEventDate', 'currentEventVenue',
         ));
+    }
+
+    private function applyInviteFilters($query, $status, $delivery, $q)
+    {
+        if (in_array($status, ['invited', 'failed', 'pending'], true)) {
+            if ($status === 'pending') {
+                $query->where(fn ($w) => $w->whereNull('status')->orWhere('status', 'pending'));
+            } else {
+                $query->where('status', $status);
+            }
+        }
+
+        if (in_array($delivery, ['delivered', 'undelivered', 'pending', 'unknown'], true)) {
+            $query->where('delivery_status', $delivery);
+        }
+
+        if ($q !== '') {
+            $query->where(fn ($w) => $w
+                ->where('name', 'like', "%{$q}%")
+                ->orWhere('phone', 'like', "%{$q}%"));
+        }
+
+        return $query;
     }
 
     private function currentCard(): DigitalCard
@@ -424,6 +473,109 @@ class DigitalCardController extends Controller
             'pending' => 'warning',
             default => 'neutral',
         };
+    }
+
+    public function resendSms(Request $request, DigitalCardRecipient $recipient)
+    {
+        $card = $recipient->digitalCard;
+
+        $sms = app(SmsService::class);
+        if (! $sms->isConfigured()) {
+            return back()->with('error', 'SMS API token not configured.');
+        }
+
+        $template = $card->sms_text ?: 'You are invited! View your digital card and contribute: {link}';
+        $link = route('cards.show', $card->hash).'?r='.$recipient->token;
+
+        $msg = str_replace(['{link}', '{name}'], [$link, $recipient->name ?? ''], $template);
+        if (($recipient->name ?? '') !== '' && ! str_contains($template, '{name}')) {
+            $msg = 'Shukurani '.$recipient->name.', '.$msg;
+        }
+
+        $result = $sms->send($recipient->phone, $msg);
+
+        $recipient->update([
+            'sent_at' => $result['success'] ? now() : $recipient->sent_at,
+            'status' => $result['success'] ? 'invited' : 'failed',
+            'message_id' => $result['api_message_id'] ?? null,
+            'delivery_status' => null,
+            'delivery_checked_at' => null,
+        ]);
+
+        Message::create([
+            'channel' => 'sms',
+            'recipients' => $recipient->name ?? $recipient->phone,
+            'phone' => $recipient->phone,
+            'subject' => "Digital card SMS — {$card->card_no}",
+            'message' => $template,
+            'status' => $result['success'] ? 'sent' : 'failed',
+            'api_message_id' => $result['api_message_id'] ?? null,
+            'api_response' => $result['raw'],
+            'created_by' => auth()->user()?->name,
+        ]);
+
+        AuditLog::record(
+            'Re-sent digital card SMS invite',
+            'Digital Cards',
+            "{$card->card_no} — {$recipient->name} ({$recipient->phone})"
+        );
+
+        $notice = $result['success']
+            ? "Invitation SMS re-sent to {$recipient->name}."
+            : 'SMS sending failed ('.$result['status'].').';
+
+        return back()->with($result['success'] ? 'success' : 'error', $notice);
+    }
+
+    public function destroyRecipient(Request $request, DigitalCardRecipient $recipient)
+    {
+        AuditLog::record(
+            'Removed digital card invite',
+            'Digital Cards',
+            "{$recipient->digitalCard?->card_no} — {$recipient->name} ({$recipient->phone})"
+        );
+
+        $recipient->delete();
+
+        return redirect()->route('cards.index')->with('success', 'Invite removed.');
+    }
+
+    public function exportCsv(Request $request)
+    {
+        $card = $this->currentCard();
+
+        $query = $this->applyInviteFilters(
+            $card->recipients(),
+            $request->query('status'),
+            $request->query('delivery'),
+            trim((string) $request->query('q'))
+        );
+
+        $rows = $query->latest('created_at')->get();
+
+        $csv = fopen('php://temp', 'r+');
+        fputcsv($csv, ['Name', 'Phone', 'Invite Status', 'Delivery Status', 'Sent At', 'Delivery Checked At', 'Personalised Link']);
+
+        foreach ($rows as $recipient) {
+            fputcsv($csv, [
+                $recipient->name ?? '',
+                $recipient->phone,
+                $recipient->status ?: 'pending',
+                $recipient->delivery_status ?: '',
+                $recipient->sent_at?->format('d M Y H:i') ?: '',
+                $recipient->delivery_checked_at?->format('d M Y H:i') ?: '',
+                route('cards.show', $recipient->digitalCard?->hash).'?r='.$recipient->token,
+            ]);
+        }
+
+        rewind($csv);
+        $content = stream_get_contents($csv);
+        fclose($csv);
+
+        return response($content, 200, [
+            'Content-Type' => 'text/csv; charset=UTF-8',
+            'Content-Disposition' => 'attachment; filename=invitations-'.now()->format('Y-m-d-His').'.csv',
+        ]);
     }
 
     private function parseRecipients(string $raw): array

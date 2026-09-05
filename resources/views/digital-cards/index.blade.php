@@ -5,45 +5,59 @@
 @section('page_title', 'Digital Cards')
 
 @section('content')
+@php
+    $v = fn($f) => old($f, $filters[$f] ?? null);
+    $deliveryOptions = ['delivered' => 'Delivered', 'undelivered' => 'Not delivered', 'pending' => 'Pending', 'unknown' => 'Unknown'];
+@endphp
 <div class="fade-in">
-
   <div class="section-head">
     <div><h2>Digital Cards</h2><div class="sub">
-      {{ $currentEventName }}
-      @if($currentEventDate)<span>· {{ \Carbon\Carbon::parse($currentEventDate)->format('d M Y') }}</span>@endif
-      @if($currentEventVenue)<span>· {{ $currentEventVenue }}</span>@endif
+      {{ $totals['invited'] }} invited · {{ $totals['delivered'] }} delivered · {{ $totals['failed'] }} failed · {{ $totals['pending'] }} pending
     </div></div>
+    @if(!$isCommittee)
+    <button type="button" class="btn btn-accent" data-drawer-open="inviteNewDrawer">+ New Invite</button>
+    @endif
   </div>
 
-  @if(!$isCommittee)
-  <div class="table-card" style="margin-bottom:18px">
-    <div class="table-head">
-      <h3>Invite New Person</h3>
-      <span class="tf-info">Full Name + Phone — the invitation is sent by SMS</span>
-    </div>
-    <form method="POST" action="{{ route('cards.sendSms', $card) }}" id="sendSmsForm" style="padding:16px 18px 18px">
-      @csrf
-      <div style="display:flex;align-items:center;justify-content:space-between;gap:8px;margin-bottom:8px">
-        <div class="text-muted" style="font-size:12px">Each person receives a personalised SMS with their own card link. Invite status changes to <b>Invited</b> once sent.</div>
-        <button type="button" class="btn btn-secondary btn-sm" onclick="addInviteRow()">+ Add Person</button>
-      </div>
-      <div id="smsInviteRows"></div>
-      <div style="display:flex;justify-content:flex-end;margin-top:12px">
-        <button type="submit" class="btn btn-accent">Invite &amp; Send SMS</button>
-      </div>
-    </form>
-  </div>
-  @endif
+  <form class="toolbar" method="GET" action="{{ route('cards.index') }}">
+    <div class="tfield grow"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="7"/><path d="M21 21l-4.3-4.3"/></svg>
+      <input name="q" value="{{ $v('q') }}" placeholder="Search by name or phone..."></div>
+    <select class="filter-select" name="status" onchange="this.form.submit()">
+      <option value="">All Invite Status</option>
+      @foreach($inviteStatuses as $k=>$s)<option value="{{ $k }}" {{ $v('status')===$k ? 'selected' : '' }}>{{ $s }}</option>@endforeach
+    </select>
+    <select class="filter-select" name="delivery" onchange="this.form.submit()">
+      <option value="">All Delivery</option>
+      @foreach($deliveryOptions as $k=>$s)<option value="{{ $k }}" {{ $v('delivery')===$k ? 'selected' : '' }}>{{ $s }}</option>@endforeach
+    </select>
+    <a class="btn btn-secondary btn-sm" href="{{ route('cards.export', array_filter($filters, fn($f) => $f !== '' && $f !== null)) }}">Export</a>
+  </form>
 
   <div class="table-card">
-    <div class="table-head"><h3>Invitations (<span id="inviteCount">{{ number_format($recipients->count()) }}</span>)</h3></div>
     <div class="table-scroll">
       <table class="data-table">
-        <thead><tr><th>Name</th><th>Phone</th><th>Invite Status</th><th>Delivery</th><th>Personalised Link</th><th>Sent At</th></tr></thead>
+        <thead><tr><th>Name</th><th>Phone</th><th>Invite Status</th><th>Delivery</th><th>Sent At</th><th style="width:60px">Actions</th></tr></thead>
         <tbody id="invitesTbody">
           @forelse($recipients as $r)
-          <tr>
-            <td><b>{{ $r->name ?: '—' }}</b></td>
+          <tr style="cursor:pointer" data-view-invite
+            data-id="{{ $r->id }}"
+            data-name="{{ $r->name }}"
+            data-phone="{{ $r->phone }}"
+            data-status="{{ $r->status ?: 'pending' }}"
+            data-status-label="{{ $r->status ? ucfirst($r->status) : 'Pending' }}"
+            data-status-color="{{ $r->getInviteStatusColor() }}"
+            data-delivery-label="{{ $r->delivery_status ? ucfirst(str_replace('_',' ',$r->delivery_status)) : ($r->message_id ? 'Unchecked' : '—') }}"
+            data-delivery-color="{{ $r->getDeliveryStatusColor() }}"
+            data-mid="{{ $r->message_id }}"
+            data-sent-at="{{ $r->sent_at?->format('d M Y H:i') }}"
+            data-checked-at="{{ $r->delivery_checked_at?->format('d M Y H:i') }}"
+            data-link="{{ route('cards.show', $r->digitalCard?->hash).'?r='.$r->token }}">
+            <td>
+              <div class="cell-user">
+                <div class="cell-avatar">{{ collect(explode(' ', $r->name ?? '?'))->map(fn($w) => mb_substr($w,0,1))->take(2)->implode('') }}</div>
+                <div><div class="cu-name">{{ $r->name ?: '—' }}</div></div>
+              </div>
+            </td>
             <td style="font-family:monospace">{{ $r->phone }}</td>
             <td><span class="badge badge-{{ $r->getInviteStatusColor() }} badge-dotted">{{ $r->status ? ucfirst($r->status) : 'Pending' }}</span></td>
             <td>
@@ -57,21 +71,101 @@
               <div style="font-size:10.5px;color:var(--text-tertiary);margin-top:3px">{{ $r->delivery_checked_at->format('d M Y H:i') }}</div>
               @endif
             </td>
-            <td><a href="{{ route('cards.show', $r->digitalCard?->hash).'?r='.$r->token }}" target="_blank" class="link-mono">{{ substr($r->token, 0, 12) }}…</a></td>
             <td>{{ $r->sent_at?->format('d M Y H:i') ?: 'Not sent' }}</td>
+            <td onclick="event.stopPropagation()">
+              <div class="action-menu-wrap">
+                <button type="button" class="action-trigger" onclick="toggleActionMenu('am-invite-{{ $r->id }}')">
+                  <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><circle cx="12" cy="5" r=".6"/><circle cx="12" cy="12" r=".6"/><circle cx="12" cy="19" r=".6"/></svg>
+                </button>
+                <div class="action-menu" id="am-invite-{{ $r->id }}">
+                  @if($r->message_id)
+                  <button type="button" data-check-recipient-delivery data-id="{{ $r->id }}" data-mid="{{ $r->message_id }}">Check Delivery</button>
+                  @endif
+                  <form method="POST" action="{{ route('cards.recipient.resend', $r) }}" style="display:contents">@csrf<button type="submit">Send Again (SMS)</button></form>
+                  <button type="button" onclick="copyInviteLink('{{ $r->id }}')">Copy Link</button>
+                  @if(!$isCommittee)
+                  <form method="POST" action="{{ route('cards.recipient.destroy', $r) }}" data-confirm
+                        data-confirm-title="Remove this invite?"
+                        data-confirm-message="{{ $r->name ?: $r->phone }} will be removed from this campaign's invitations."
+                        data-confirm-label="Remove Invite">@csrf @method('DELETE')
+                    <button type="submit" class="danger">Delete</button>
+                  </form>
+                  @endif
+                </div>
+              </div>
+            </td>
           </tr>
           @empty
-          <tr><td colspan="6"><div class="empty-state"><h3>No invitations yet</h3><p>Enter a person's full name and phone number above to send the first invitation.</p></div></td></tr>
+          <tr><td colspan="6"><div class="empty-state" style="padding:40px 20px"><h3>No invitations yet</h3><p>Send an SMS invite to bring the first person onboard.</p>@if(!$isCommittee)<button type="button" class="btn btn-accent" data-drawer-open="inviteNewDrawer">+ New Invite</button>@endif</div></td></tr>
           @endforelse
         </tbody>
       </table>
     </div>
+    <div class="table-footer">
+      <span class="tf-info">Showing {{ $recipients->firstItem() ?? 0 }}–{{ $recipients->lastItem() ?? 0 }} of {{ $recipients->total() }} invites</span>
+      <div class="pagination">{{ $recipients->links() }}</div>
+    </div>
   </div>
+</div>
 
+@if(!$isCommittee)
+<div class="drawer-overlay" id="inviteNewDrawer">
+  <div class="drawer-panel">
+    <div class="drawer-head">
+      <div><h3>New Invite</h3><p>Sent by SMS to each person with their own personalised card link</p></div>
+      <button type="button" class="modal-close" data-drawer-close><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><path d="M18 6L6 18M6 6l12 12"/></svg></button>
+    </div>
+    <form method="POST" action="{{ route('cards.sendSms', $card) }}" id="sendSmsForm">
+      @csrf
+      <div class="drawer-body">
+        <div style="display:flex;align-items:center;justify-content:space-between;gap:8px;margin-bottom:10px">
+          <div class="text-muted" style="font-size:12px">Invite status changes to <b>Invited</b> once the SMS is sent.</div>
+          <button type="button" class="btn btn-secondary btn-sm" onclick="addInviteRow()">+ Add Person</button>
+        </div>
+        <div id="smsInviteRows"></div>
+      </div>
+      <div class="drawer-foot">
+        <button type="button" class="btn btn-secondary" data-drawer-close>Cancel</button>
+        <button type="submit" class="btn btn-accent">Invite &amp; Send SMS</button>
+      </div>
+    </form>
+  </div>
+</div>
+@endif
+
+<div class="drawer-overlay" id="inviteDetailDrawer">
+  <div class="drawer-panel">
+    <div class="drawer-head">
+      <div><h3>Invite Details</h3><p>Person invitation record</p></div>
+      <button type="button" class="modal-close" data-drawer-close><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><path d="M18 6L6 18M6 6l12 12"/></svg></button>
+    </div>
+    <div class="drawer-body">
+      <div class="profile-detail">
+        <div class="cell-avatar avatar-lg" id="dInviteAvatar">—</div>
+        <div>
+          <div class="cu-name" id="dInviteName" style="font-size:17px">—</div>
+          <span class="badge badge-dotted" id="dInviteStatus">—</span>
+        </div>
+      </div>
+
+      <div class="info-grid">
+        <div class="info-row"><span>Phone</span><b id="dInvitePhone">—</b></div>
+        <div class="info-row"><span>Sent At</span><b id="dInviteSent">—</b></div>
+        <div class="info-row"><span>Delivery Checked</span><b id="dInviteChecked">—</b></div>
+        <div class="info-row"><span>Delivery</span><b style="display:flex;gap:8px;align-items:center;justify-content:flex-end"><span class="badge badge-neutral badge-dotted" id="dDeliveryBadge">—</span>
+          <button type="button" class="btn btn-sm btn-secondary" id="dCheckDelivery" style="height:26px;padding:0 8px;font-size:11px">Check</button></b></div>
+        <div class="info-row full"><span>Personalised Link</span><b style="white-space:normal;text-align:right"><a id="dInviteLink" href="#" target="_blank">—</a></b></div>
+        <div class="info-row full"><span>Message ID</span><b id="dInviteMsg" style="font-family:monospace;font-size:11px;word-break:break-all;text-align:right">—</b></div>
+      </div>
+    </div>
+    <div class="drawer-foot">
+      <button type="button" class="btn btn-secondary" data-drawer-close>Close</button>
+      <button type="button" class="btn btn-accent" id="dCopyLink">Copy Link</button>
+    </div>
+  </div>
 </div>
 
 <style>
-  .table-head{display:flex;align-items:center;justify-content:space-between;gap:12px;padding:16px 18px 0;}
   .invite-row{display:grid;grid-template-columns:1.5fr 1fr auto;gap:8px;margin-bottom:8px;}
   @media (max-width:600px){.invite-row{grid-template-columns:1fr 1fr auto;}}
 </style>
@@ -80,6 +174,8 @@
 @push('scripts')
 <script>
 (function(){
+  var openInviteId = null;
+
   function inviteRowHtml(){
     return '<div class="invite-row">' +
       '<input class="inv-name" placeholder="Full Name">' +
@@ -90,134 +186,270 @@
 
   function resetInviteRows(){
     var box = document.getElementById('smsInviteRows');
+    if (!box) return;
     box.innerHTML = '';
     box.insertAdjacentHTML('beforeend', inviteRowHtml());
   }
   window.addInviteRow = function(){
-    document.getElementById('smsInviteRows').insertAdjacentHTML('beforeend', inviteRowHtml());
+    var box = document.getElementById('smsInviteRows');
+    if (box) box.insertAdjacentHTML('beforeend', inviteRowHtml());
   };
   window.removeInviteRow = function(btn){
     btn.closest('.invite-row').remove();
   };
+  window.copyInviteLink = function(id){
+    var tr = document.querySelector('[data-view-invite][data-id="' + id + '"]');
+    if (tr && tr.dataset.link) {
+      navigator.clipboard.writeText(tr.dataset.link).then(function(){
+        toast('Invite link copied', 'success');
+      }, function(){ toast('Could not copy link', 'error'); });
+    }
+  };
 
-  var sendSmsForm = document.getElementById('sendSmsForm');
-  if (sendSmsForm) {
+  document.addEventListener('DOMContentLoaded', function(){
     resetInviteRows();
-    sendSmsForm.addEventListener('submit', function(event){
-      event.preventDefault();
-      var invitees = [];
-      document.querySelectorAll('#smsInviteRows .invite-row').forEach(function(row){
-        var name = row.querySelector('.inv-name').value.trim();
-        var phone = row.querySelector('.inv-phone').value.replace(/[^+\d]/g, '');
-        if (phone) invitees.push({ name: name, phone: phone });
+
+    var sendSmsForm = document.getElementById('sendSmsForm');
+    if (sendSmsForm) {
+      sendSmsForm.addEventListener('submit', function(event){
+        event.preventDefault();
+        var invitees = [];
+        document.querySelectorAll('#smsInviteRows .invite-row').forEach(function(row){
+          var name = row.querySelector('.inv-name').value.trim();
+          var phone = row.querySelector('.inv-phone').value.replace(/[^+\d]/g, '');
+          if (phone) invitees.push({ name: name, phone: phone });
+        });
+        if (invitees.length === 0) {
+          toast('Enter at least one person\'s full name and phone number', 'error');
+          return;
+        }
+
+        var btn = sendSmsForm.querySelector('button[type="submit"]');
+        btn.disabled = true;
+        btn.textContent = 'Sending...';
+
+        var formData = new FormData();
+        formData.append('invitees', JSON.stringify(invitees));
+        formData.append('_token', document.querySelector('meta[name="csrf-token"]').content);
+
+        fetch(sendSmsForm.action, {
+          method: 'POST',
+          headers: { 'X-Requested-With': 'XMLHttpRequest', 'Accept': 'application/json' },
+          body: formData
+        })
+        .then(function(r){ return r.json(); })
+        .then(function(j){
+          btn.disabled = false;
+          btn.textContent = 'Invite & Send SMS';
+          resetInviteRows();
+          if (j && j.ok) { toast(j.message || 'Invitations sent', 'success'); }
+          else { toast((j && j.message) || 'Invitations could not be sent', 'error'); }
+          if (j && j.recipients && j.recipients.length) {
+            j.recipients.forEach(addInviteRowToTable);
+            updateFooterCount(j.recipients.length);
+          }
+        })
+        .catch(function(){
+          btn.disabled = false;
+          btn.textContent = 'Invite & Send SMS';
+          toast('Could not send invitations. Please try again.', 'error');
+        });
       });
-      if (invitees.length === 0) {
-        toast('Enter at least one person\'s full name and phone number', 'error');
-        return;
+    }
+
+    function updateFooterCount(added){
+      var info = document.querySelector('.table-footer .tf-info');
+      if (!info || added < 1) return;
+      var m = info.textContent.match(/^Showing (\d+)\u2013(\d+) of (\d+)/);
+      if (!m) return;
+      var last = parseInt(m[2], 10) + added;
+      var total = parseInt(m[3], 10) + added;
+      info.textContent = 'Showing ' + (parseInt(m[1], 10) > 0 ? m[1] : 1) + '\u2013' + last + ' of ' + total + ' invites';
+    }
+
+    function addInviteRowToTable(r){
+      var tbody = document.getElementById('invitesTbody');
+      if (!tbody) return;
+
+      var empty = tbody.querySelector('.empty-state');
+      if (empty) empty.closest('tr').remove();
+
+      var delivery = '<span class="badge badge-' + (r.delivery_color || 'neutral') + ' badge-dotted" id="rdel-badge-' + r.id + '">' + esc(r.delivery_label || '—') + '</span>';
+      if (r.message_id) {
+        delivery += '<button type="button" class="btn btn-sm btn-secondary" style="height:26px;padding:0 8px;font-size:11px" data-check-recipient-delivery data-id="' + r.id + '" data-mid="' + r.message_id + '" title="Check delivery via API">Check</button>';
       }
+      var checkedAt = r.checked_at ? '<div style="font-size:10.5px;color:var(--text-tertiary);margin-top:3px">' + esc(r.checked_at) + '</div>' : '';
+      var token = r.token || '';
 
-      var btn = sendSmsForm.querySelector('button[type="submit"]');
-      btn.disabled = true;
-      btn.textContent = 'Sending...';
+      var html =
+        '<tr style="cursor:pointer" data-view-invite' +
+          ' data-id="' + r.id + '"' +
+          ' data-name="' + esc(r.name || '') + '"' +
+          ' data-phone="' + esc(r.phone) + '"' +
+          ' data-status="' + esc(r.status || 'pending') + '"' +
+          ' data-status-label="' + esc(r.status_label || 'Pending') + '"' +
+          ' data-status-color="' + esc(r.status_color || 'neutral') + '"' +
+          ' data-delivery-label="' + esc(r.delivery_label || '—') + '"' +
+          ' data-delivery-color="' + esc(r.delivery_color || 'neutral') + '"' +
+          ' data-mid="' + esc(r.message_id || '') + '"' +
+          ' data-sent-at="' + esc(r.sent_at || '') + '"' +
+          ' data-checked-at="' + esc(r.checked_at || '') + '"' +
+          ' data-link="' + esc(r.link) + '">' +
+          '<td><div class="cell-user"><div class="cell-avatar">' + esc(initials(r.name)) + '</div><div><div class="cu-name">' + esc(r.name || '—') + '</div></div></div></td>' +
+          '<td style="font-family:monospace">' + esc(r.phone) + '</td>' +
+          '<td><span class="badge badge-' + esc(r.status_color || 'neutral') + ' badge-dotted">' + esc(r.status_label || 'Pending') + '</span></td>' +
+          '<td><div style="display:flex;align-items:center;gap:6px;white-space:nowrap">' + delivery + '</div>' + checkedAt + '</td>' +
+          '<td>' + esc(r.sent_at || 'Not sent') + '</td>' +
+          '<td onclick="event.stopPropagation()">' +
+            '<div class="action-menu-wrap">' +
+              '<button type="button" class="action-trigger" onclick="toggleActionMenu(\'am-invite-' + r.id + '\')">' +
+              '<svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><circle cx="12" cy="5" r=".6"/><circle cx="12" cy="12" r=".6"/><circle cx="12" cy="19" r=".6"/></svg></button>' +
+              '<div class="action-menu" id="am-invite-' + r.id + '">' +
+                (r.message_id ? '<button type="button" data-check-recipient-delivery data-id="' + r.id + '" data-mid="' + esc(r.message_id) + '">Check Delivery</button>' : '') +
+                '<form method="POST" action="' + "{{ url('/digital-cards/recipients') }}/" + r.id + '/resend' + '" style="display:contents">' +
+                  '<input type="hidden" name="_token" value="' + document.querySelector('meta[name="csrf-token"]').content + '">' +
+                  '<button type="submit">Send Again (SMS)</button></form>' +
+                '<button type="button" onclick="copyInviteLink(' + r.id + ')">Copy Link</button>' +
+                '@if(!$isCommittee)' +
+                '<form method="POST" action="' + "{{ url('/digital-cards/recipients') }}/" + r.id + '" data-confirm data-confirm-title="Remove this invite?" data-confirm-message="' + esc(r.name || r.phone) + ' will be removed from this campaign\'s invitations." data-confirm-label="Remove Invite">' +
+                  '<input type="hidden" name="_token" value="' + document.querySelector('meta[name="csrf-token"]').content + '">' +
+                  '<input type="hidden" name="_method" value="DELETE">' +
+                  '<button type="submit" class="danger">Delete</button></form>' +
+                '@endif' +
+              '</div>' +
+            '</div>' +
+          '</td>' +
+        '</tr>';
 
-      var formData = new FormData();
-      formData.append('invitees', JSON.stringify(invitees));
-      formData.append('_token', document.querySelector('meta[name="csrf-token"]').content);
+      tbody.insertAdjacentHTML('afterbegin', html);
+      bindInviteRow(tbody.querySelector('[data-view-invite]'));
+    }
 
-      fetch(sendSmsForm.action, {
+    function initials(name){
+      return String(name || '?').trim().split(/\s+/).map(function(w){ return w.charAt(0); }).slice(0, 2).join('').toUpperCase();
+    }
+
+    function bindInviteRow(tr){
+      if (!tr) return;
+      tr.addEventListener('click', function(e){
+        if (e.target.closest('.action-menu-wrap') || e.target.closest('form') || e.target.closest('button') || e.target.closest('a')) return;
+        openInviteDetail(tr);
+      });
+    }
+    document.querySelectorAll('[data-view-invite]').forEach(bindInviteRow);
+
+    function openInviteDetail(tr){
+      var d = tr.dataset;
+      openInviteId = d.id;
+      document.getElementById('dInviteAvatar').textContent = initials(d.name);
+      document.getElementById('dInviteName').textContent = d.name || '—';
+      var st = document.getElementById('dInviteStatus');
+      st.textContent = d.statusLabel || 'Pending';
+      st.className = 'badge badge-' + (d.statusColor || 'neutral') + ' badge-dotted';
+      document.getElementById('dInvitePhone').textContent = d.phone || '—';
+      document.getElementById('dInviteSent').textContent = d.sentAt || 'Not sent';
+      document.getElementById('dInviteChecked').textContent = d.checkedAt || '—';
+
+      var db = document.getElementById('dDeliveryBadge');
+      db.textContent = d.deliveryLabel || '—';
+      db.className = 'badge badge-' + (d.deliveryColor || 'neutral') + ' badge-dotted';
+      document.getElementById('dCheckDelivery').disabled = !d.mid;
+
+      var linkEl = document.getElementById('dInviteLink');
+      linkEl.href = d.link || '#';
+      linkEl.textContent = d.link ? d.link.replace(/^https?:\/\//, '') : '—';
+      document.getElementById('dInviteMsg').textContent = d.mid ? d.mid : '—';
+
+      openDrawerById('inviteDetailDrawer');
+    }
+
+    document.getElementById('dCheckDelivery').addEventListener('click', function(){
+      var tr = document.querySelector('[data-view-invite][data-id="' + openInviteId + '"]');
+      if (!tr || !tr.dataset.mid) return;
+      this.disabled = true;
+      this.textContent = '…';
+      fetch("{{ url('/digital-cards/recipients') }}/" + openInviteId + '/delivery', {
         method: 'POST',
-        headers: { 'X-Requested-With': 'XMLHttpRequest', 'Accept': 'application/json' },
-        body: formData
+        headers: {
+          'X-Requested-With': 'XMLHttpRequest',
+          'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').content
+        }
       })
       .then(function(r){ return r.json(); })
       .then(function(j){
+        var btn = document.getElementById('dCheckDelivery');
         btn.disabled = false;
-        btn.textContent = 'Invite & Send SMS';
-        resetInviteRows();
-        if (j && j.ok) {
-          toast(j.message || 'Invitations sent', 'success');
-        } else {
-          toast((j && j.message) || 'Invitations could not be sent', 'error');
+        btn.textContent = 'Check';
+        var badge = document.getElementById('dDeliveryBadge');
+        if (badge && j.label) {
+          badge.textContent = j.label;
+          badge.className = 'badge badge-' + (j.color || 'neutral') + ' badge-dotted';
         }
-        if (j && j.recipients && j.recipients.length) {
-          j.recipients.forEach(addInviteRowToTable);
+        document.getElementById('dInviteChecked').textContent = j.checked_at || '—';
+        var rowBadge = document.getElementById('rdel-badge-' + openInviteId);
+        if (rowBadge && j.label) {
+          rowBadge.textContent = j.label;
+          rowBadge.className = 'badge badge-' + (j.color || 'neutral') + ' badge-dotted';
         }
+        toast(j.label || 'Status updated', j.color === 'success' ? 'success' : (j.color === 'danger' ? 'error' : 'info'));
       })
       .catch(function(){
+        var btn = document.getElementById('dCheckDelivery');
         btn.disabled = false;
-        btn.textContent = 'Invite & Send SMS';
-        toast('Could not send invitations. Please try again.', 'error');
+        btn.textContent = 'Check';
+        toast('Could not check delivery status', 'error');
       });
     });
-  }
 
-  function addInviteRowToTable(r){
-    var tbody = document.getElementById('invitesTbody');
-    var countEl = document.getElementById('inviteCount');
-
-    var delivery = '<span class="badge badge-' + (r.delivery_color || 'neutral') + ' badge-dotted" id="rdel-badge-' + r.id + '">' + (r.delivery_label || '—') + '</span>';
-    if (r.message_id) {
-      delivery += '<button type="button" class="btn btn-sm btn-secondary" style="height:26px;padding:0 8px;font-size:11px" data-check-recipient-delivery data-id="' + r.id + '" data-mid="' + r.message_id + '" title="Check delivery via API">Check</button>';
-    }
-    var checkedAt = r.checked_at ? '<div style="font-size:10.5px;color:var(--text-tertiary);margin-top:3px">' + r.checked_at + '</div>' : '';
-
-    var html =
-      '<tr>' +
-        '<td><b>' + esc(r.name || '—') + '</b></td>' +
-        '<td style="font-family:monospace">' + esc(r.phone) + '</td>' +
-        '<td><span class="badge badge-' + (r.status_color || 'neutral') + ' badge-dotted">' + esc(r.status_label || 'Pending') + '</span></td>' +
-        '<td><div style="display:flex;align-items:center;gap:6px;white-space:nowrap">' + delivery + '</div>' + checkedAt + '</td>' +
-        '<td><a href="' + r.link + '" target="_blank" class="link-mono">' + esc((r.token || '').substring(0, 12)) + '…</a></td>' +
-        '<td>' + esc(r.sent_at || 'Not sent') + '</td>' +
-      '</tr>';
-
-    if (tbody) {
-      var empty = tbody.querySelector('.empty-state');
-      if (empty) empty.closest('tr').remove();
-      tbody.insertAdjacentHTML('afterbegin', html);
-    }
-    if (countEl) countEl.textContent = (parseInt(countEl.textContent, 10) || 0) + 1;
-  }
-
-  function esc(str){
-    return String(str == null ? '' : str)
-      .replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;')
-      .replace(/"/g, '&quot;').replace(/'/g, '&#39;');
-  }
-
-  document.addEventListener('click', function(e){
-    var btn = e.target.closest('[data-check-recipient-delivery]');
-    if (!btn) return;
-    checkRecipientDelivery(btn.dataset.id, btn.dataset.mid, btn);
-  });
-
-  function checkRecipientDelivery(id, mid, btn){
-    btn.disabled = true;
-    btn.textContent = '…';
-    fetch("{{ url('/digital-cards/recipients') }}/" + id + "/delivery", {
-      method: 'POST',
-      headers: {
-        'X-Requested-With': 'XMLHttpRequest',
-        'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').content
+    document.getElementById('dCopyLink').addEventListener('click', function(){
+      var tr = document.querySelector('[data-view-invite][data-id="' + openInviteId + '"]');
+      if (tr && tr.dataset.link) {
+        navigator.clipboard.writeText(tr.dataset.link).then(function(){
+          toast('Invite link copied', 'success');
+        }, function(){ toast('Could not copy link', 'error'); });
       }
-    })
-    .then(function(r){ return r.json(); })
-    .then(function(j){
-      btn.textContent = 'Check';
-      btn.disabled = false;
-      var badge = document.getElementById('rdel-badge-' + id);
-      if (badge && j.label) {
-        badge.textContent = j.label;
-        badge.className = 'badge badge-' + (j.color || 'neutral') + ' badge-dotted';
-      }
-      toast(j.label || 'Status updated', j.color === 'success' ? 'success' : (j.color === 'danger' ? 'error' : 'info'));
-    })
-    .catch(function(){
-      btn.textContent = 'Check';
-      btn.disabled = false;
-      toast('Could not check delivery status', 'error');
     });
-  }
+
+    document.addEventListener('click', function(e){
+      var btn = e.target.closest('[data-check-recipient-delivery]');
+      if (!btn) return;
+      checkDelivery(btn.dataset.id, btn.dataset.mid, btn);
+    });
+
+    function checkDelivery(id, mid, btn){
+      btn.disabled = true;
+      btn.textContent = '…';
+      fetch("{{ url('/digital-cards/recipients') }}/" + id + "/delivery", {
+        method: 'POST',
+        headers: {
+          'X-Requested-With': 'XMLHttpRequest',
+          'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').content
+        }
+      })
+      .then(function(r){ return r.json(); })
+      .then(function(j){
+        if (btn) { btn.textContent = 'Check'; btn.disabled = false; }
+        var badge = document.getElementById('rdel-badge-' + id);
+        if (badge && j.label) {
+          badge.textContent = j.label;
+          badge.className = 'badge badge-' + (j.color || 'neutral') + ' badge-dotted';
+        }
+        if (String(openInviteId) === String(id)) {
+          var dBadge = document.getElementById('dDeliveryBadge');
+          if (dBadge && j.label) {
+            dBadge.textContent = j.label;
+            dBadge.className = 'badge badge-' + (j.color || 'neutral') + ' badge-dotted';
+          }
+          if (j.checked_at) document.getElementById('dInviteChecked').textContent = j.checked_at;
+        }
+        toast(j.label || 'Status updated', j.color === 'success' ? 'success' : (j.color === 'danger' ? 'error' : 'info'));
+      })
+      .catch(function(){
+        if (btn) { btn.textContent = 'Check'; btn.disabled = false; }
+        toast('Could not check delivery status', 'error');
+      });
+    }
+  });
 })();
 </script>
 @endpush

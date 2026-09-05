@@ -149,6 +149,7 @@ Route::middleware(['auth', 'committee.readonly'])->group(function () {
 
     // ── Digital Cards ────────────────────────────────────
     Route::get('/digital-cards', [DigitalCardController::class, 'index'])->name('cards.index');
+    Route::get('/digital-cards/export', [DigitalCardController::class, 'exportCsv'])->name('cards.export');
     Route::get('/digital-cards/{card}', [DigitalCardController::class, 'details'])->name('cards.details');
     Route::post('/digital-cards', [DigitalCardController::class, 'store'])->name('cards.store');
     Route::put('/digital-cards/{card}', [DigitalCardController::class, 'update'])->name('cards.update');
@@ -157,6 +158,8 @@ Route::middleware(['auth', 'committee.readonly'])->group(function () {
     Route::post('/digital-cards/{card}/add-contribution', [DigitalCardController::class, 'addContribution'])->name('cards.addContribution');
     Route::post('/digital-cards/{card}/send-sms', [DigitalCardController::class, 'sendSms'])->name('cards.sendSms');
     Route::post('/digital-cards/recipients/{recipient}/delivery', [DigitalCardController::class, 'checkRecipientDelivery'])->name('cards.recipient.delivery');
+    Route::post('/digital-cards/recipients/{recipient}/resend', [DigitalCardController::class, 'resendSms'])->name('cards.recipient.resend');
+    Route::delete('/digital-cards/recipients/{recipient}', [DigitalCardController::class, 'destroyRecipient'])->name('cards.recipient.destroy');
     Route::get('/digital-cards/{card}/pdf', [DigitalCardController::class, 'downloadPdf'])->name('cards.pdf');
     Route::get('/digital-cards/{card}/preview', [DigitalCardController::class, 'preview'])->name('cards.preview');
 
