@@ -162,10 +162,24 @@
         <div class="info-row full"><span>Personalised Link</span><b style="white-space:normal;text-align:right"><a id="dInviteLink" href="#" target="_blank">—</a></b></div>
         <div class="info-row full"><span>Message ID</span><b id="dInviteMsg" style="font-family:monospace;font-size:11px;word-break:break-all;text-align:right">—</b></div>
       </div>
+
+      <div class="info-row full" style="margin-top:8px"><span>Actions</span></div>
+      <div style="display:flex;flex-wrap:wrap;gap:8px;margin-top:4px">
+        <a class="btn btn-accent btn-sm" id="dPreviewCard" href="#" target="_blank">Preview Card</a>
+        <button type="button" class="btn btn-secondary btn-sm" id="dSendAgain">Send Again (SMS)</button>
+        <button type="button" class="btn btn-secondary btn-sm" id="dCopyLink">Copy Link</button>
+        @if(!$isCommittee)
+        <form method="POST" action="" id="dDeleteForm" data-confirm
+              data-confirm-title="Remove this invite?"
+              data-confirm-message="This person will be removed from this campaign's invitations."
+              data-confirm-label="Remove Invite">@csrf @method('DELETE')
+          <button type="submit" class="btn btn-sm danger">Delete</button>
+        </form>
+        @endif
+      </div>
     </div>
     <div class="drawer-foot">
       <button type="button" class="btn btn-secondary" data-drawer-close>Close</button>
-      <button type="button" class="btn btn-accent" id="dCopyLink">Copy Link</button>
     </div>
   </div>
 </div>
@@ -374,6 +388,15 @@
       linkEl.textContent = d.link ? d.link.replace(/^https?:\/\//, '') : '—';
       document.getElementById('dInviteMsg').textContent = d.mid ? d.mid : '—';
 
+      var previewEl = document.getElementById('dPreviewCard');
+      if (previewEl) previewEl.href = d.link || '#';
+
+      var delForm = document.getElementById('dDeleteForm');
+      if (delForm && delForm.dataset.confirm) {
+        delForm.dataset.confirmMessage = (d.name || d.phone) + ' will be removed from this campaign\'s invitations.';
+        delForm.action = "{{ url('/digital-cards/recipients') }}/" + d.id;
+      }
+
       openDrawerById('inviteDetailDrawer');
     }
 
@@ -423,6 +446,50 @@
         }, function(){ toast('Could not copy link', 'error'); });
       }
     });
+
+    var sendAgainBtn = document.getElementById('dSendAgain');
+    if (sendAgainBtn) {
+      sendAgainBtn.addEventListener('click', function(){
+        if (!openInviteId) return;
+        var btn = sendAgainBtn;
+        btn.disabled = true;
+        btn.textContent = 'Sending…';
+        fetch("{{ url('/digital-cards/recipients') }}/" + openInviteId + '/resend', {
+          method: 'POST',
+          headers: {
+            'X-Requested-With': 'XMLHttpRequest',
+            'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').content
+          }
+        })
+        .then(function(r){ return r.json(); })
+        .then(function(j){
+          btn.disabled = false;
+          btn.textContent = 'Send Again (SMS)';
+          if (j && j.ok) {
+            toast(j.message || 'SMS re-sent', 'success');
+            var tr = document.querySelector('[data-view-invite][data-id="' + openInviteId + '"]');
+            if (tr) {
+              tr.dataset.status = 'invited';
+              tr.dataset.statusLabel = j.recipient && j.recipient.status_label ? j.recipient.status_label : 'Invited';
+              tr.dataset.statusColor = j.recipient && j.recipient.status_color ? j.recipient.status_color : 'success';
+              tr.dataset.sentAt = j.recipient && j.recipient.sent_at ? j.recipient.sent_at : 'Not sent';
+              tr.dataset.mid = (j.recipient && j.recipient.message_id) ? j.recipient.message_id : '';
+              document.getElementById('dInviteStatus').textContent = tr.dataset.statusLabel;
+              document.getElementById('dInviteStatus').className = 'badge badge-' + (tr.dataset.statusColor || 'neutral') + ' badge-dotted';
+              document.getElementById('dInviteSent').textContent = tr.dataset.sentAt;
+              document.getElementById('dCheckDelivery').disabled = !tr.dataset.mid;
+            }
+          } else {
+            toast((j && j.message) || 'SMS could not be sent', 'error');
+          }
+        })
+        .catch(function(){
+          btn.disabled = false;
+          btn.textContent = 'Send Again (SMS)';
+          toast('Could not send SMS. Please try again.', 'error');
+        });
+      });
+    }
 
     document.addEventListener('click', function(e){
       var btn = e.target.closest('[data-check-recipient-delivery]');

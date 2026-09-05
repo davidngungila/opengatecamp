@@ -717,6 +717,14 @@ class DigitalCardController extends Controller
             ? "Invitation SMS re-sent to {$recipient->name}."
             : 'SMS sending failed ('.$result['status'].').';
 
+        if ($request->ajax() || $request->wantsJson()) {
+            return response()->json([
+                'ok' => $result['success'],
+                'message' => $notice,
+                'recipient' => $this->recipientJson($recipient->fresh()),
+            ]);
+        }
+
         return back()->with($result['success'] ? 'success' : 'error', $notice);
     }
 
