@@ -10,7 +10,6 @@
       <div class="tp-overlay" id="tpLoading"><span class="tp-spinner"></span><b>Loading ticket…</b></div>
     </div>
     <div class="drawer-foot">
-      <a id="tpNewTab" class="btn btn-secondary" href="#" target="_blank">Open in New Tab</a>
       <a id="tpDownload" class="btn btn-secondary" href="#" style="display:none">Download PDF</a>
       <button type="button" class="btn btn-secondary" data-drawer-close>Close</button>
       <button type="button" class="btn btn-accent" onclick="tpPrint()">Print</button>
@@ -35,7 +34,6 @@ function openPdfPreview(url, label, title, downloadUrl){
   var overlay = document.getElementById('tpLoading');
   document.getElementById('tpTitle').textContent = title || 'Preview';
   document.getElementById('tpMeta').textContent = label || '';
-  document.getElementById('tpNewTab').href = url;
   var dl = document.getElementById('tpDownload');
   if(downloadUrl){ dl.href = downloadUrl; dl.style.display = 'inline-flex'; }
   else { dl.style.display = 'none'; }
