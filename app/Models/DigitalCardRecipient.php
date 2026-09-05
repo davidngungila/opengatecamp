@@ -8,7 +8,7 @@ class DigitalCardRecipient extends Model
 {
     protected $fillable = [
         'digital_card_id', 'name', 'phone', 'token', 'short_code',
-        'sent_at', 'status', 'message_id', 'delivery_status',
+        'sent_at', 'status', 'message_id', 'message', 'delivery_status',
         'delivery_checked_at',
     ];
 

@@ -57,6 +57,7 @@
             data-delivery-label="{{ $r->delivery_status ? ucfirst(str_replace('_',' ',$r->delivery_status)) : ($r->message_id ? 'Unchecked' : '—') }}"
             data-delivery-color="{{ $r->getDeliveryStatusColor() }}"
             data-mid="{{ $r->message_id }}"
+            data-message="{{ e($r->message) }}"
             data-sent-at="{{ $r->sent_at?->format('d M Y H:i') }}"
             data-checked-at="{{ $r->delivery_checked_at?->format('d M Y H:i') }}"
             data-link="{{ $r->short_link }}">
@@ -155,17 +156,21 @@
 
       <div class="info-grid">
         <div class="info-row"><span>Phone</span><b id="dInvitePhone">—</b></div>
+        <div class="info-row"><span>Invite Status</span><b id="dInviteStatusText">—</b></div>
         <div class="info-row"><span>Sent At</span><b id="dInviteSent">—</b></div>
         <div class="info-row"><span>Delivery Checked</span><b id="dInviteChecked">—</b></div>
         <div class="info-row"><span>Delivery</span><b style="display:flex;gap:8px;align-items:center;justify-content:flex-end"><span class="badge badge-neutral badge-dotted" id="dDeliveryBadge">—</span>
           <button type="button" class="btn btn-sm btn-secondary" id="dCheckDelivery" style="height:26px;padding:0 8px;font-size:11px">Check</button></b></div>
         <div class="info-row full"><span>Personalised Link</span><b style="white-space:normal;text-align:right"><a id="dInviteLink" href="#" target="_blank">—</a></b></div>
-        <div class="info-row full"><span>Message ID</span><b id="dInviteMsg" style="font-family:monospace;font-size:11px;word-break:break-all;text-align:right">—</b></div>
+        <div class="info-row full"><span>Message ID (Technical)</span><b id="dInviteMsg" style="font-family:monospace;font-size:11px;word-break:break-all;text-align:right">—</b></div>
       </div>
 
-      <div class="info-row full" style="margin-top:8px"><span>Actions</span></div>
+      <div class="info-row full" style="margin-top:10px"><span>Message Sent</span></div>
+      <div id="dInviteMessage" style="margin-top:4px;background:#f8fafc;border:1px solid #e2e8f0;border-radius:10px;padding:12px 14px;font-size:12.5px;color:#334155;line-height:1.6;white-space:pre-wrap;word-break:break-word">—</div>
+
+      <div class="info-row full" style="margin-top:10px"><span>Actions</span></div>
       <div style="display:flex;flex-wrap:wrap;gap:8px;margin-top:4px">
-        <a class="btn btn-accent btn-sm" id="dPreviewCard" href="#" target="_blank">Preview Card</a>
+        <button type="button" class="btn btn-accent btn-sm" id="dPreviewCard">Preview Card</button>
         <button type="button" class="btn btn-secondary btn-sm" id="dSendAgain">Send Again (SMS)</button>
         <button type="button" class="btn btn-secondary btn-sm" id="dCopyLink">Copy Link</button>
         @if(!$isCommittee)
@@ -184,9 +189,28 @@
   </div>
 </div>
 
+<div class="drawer-overlay" id="cardPreviewDrawer">
+  <div class="drawer-panel drawer-panel-lg">
+    <div class="drawer-head">
+      <div><h3>Preview Card</h3><p id="dPreviewSub">Personalised digital card</p></div>
+      <button type="button" class="modal-close" data-drawer-close><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><path d="M18 6L6 18M6 6l12 12"/></svg></button>
+    </div>
+    <div class="drawer-body" style="padding:0">
+      <iframe id="dPreviewFrame" src="about:blank" style="width:100%;height:calc(100vh - 130px);border:0;display:block" title="Card preview"></iframe>
+    </div>
+    <div class="drawer-foot">
+      <button type="button" class="btn btn-secondary" data-drawer-close>Close</button>
+      <a class="btn btn-accent" id="dPreviewOpen" href="#" target="_blank">Open in Tab</a>
+    </div>
+  </div>
+</div>
+
 <style>
   .invite-row{display:grid;grid-template-columns:1.5fr 1fr auto;gap:8px;margin-bottom:8px;}
   @media (max-width:600px){.invite-row{grid-template-columns:1fr 1fr auto;}}
+  .drawer-panel-lg{max-width:860px!important;width:100%;}
+  .drawer-panel-lg .drawer-body{display:flex;flex-direction:column;background:#0b1120;padding:0;}
+  .drawer-panel-lg iframe{flex:1;}
 </style>
 @endsection
 
@@ -320,6 +344,7 @@
           ' data-delivery-label="' + esc(r.delivery_label || '—') + '"' +
           ' data-delivery-color="' + esc(r.delivery_color || 'neutral') + '"' +
           ' data-mid="' + esc(r.message_id || '') + '"' +
+          ' data-message="' + esc(r.message || '') + '"' +
           ' data-sent-at="' + esc(r.sent_at || '') + '"' +
           ' data-checked-at="' + esc(r.checked_at || '') + '"' +
           ' data-link="' + esc(r.link) + '">' +
@@ -388,8 +413,20 @@
       linkEl.textContent = d.link ? d.link.replace(/^https?:\/\//, '') : '—';
       document.getElementById('dInviteMsg').textContent = d.mid ? d.mid : '—';
 
-      var previewEl = document.getElementById('dPreviewCard');
-      if (previewEl) previewEl.href = d.link || '#';
+      var stText = document.getElementById('dInviteStatusText');
+      if (stText) {
+        stText.textContent = d.statusLabel || 'Pending';
+        stText.style.color = d.statusColor === 'success' ? 'var(--success)' : (d.statusColor === 'danger' ? 'var(--danger)' : 'var(--text-primary)');
+      }
+
+      var msgEl = document.getElementById('dInviteMessage');
+      if (msgEl) {
+        msgEl.textContent = d.message || 'No message recorded for this invite.';
+        msgEl.style.display = d.message ? '' : 'none';
+      }
+
+      document.getElementById('dPreviewCard').dataset.id = d.id;
+      document.getElementById('dPreviewSub').textContent = (d.name || 'Person') + ' — ' + (d.phone || '');
 
       var delForm = document.getElementById('dDeleteForm');
       if (delForm && delForm.dataset.confirm) {
@@ -445,6 +482,16 @@
           toast('Invite link copied', 'success');
         }, function(){ toast('Could not copy link', 'error'); });
       }
+    });
+
+    document.getElementById('dPreviewCard').addEventListener('click', function(){
+      var id = this.dataset.id;
+      if (!id) return;
+      openDrawerById('cardPreviewDrawer');
+      var frame = document.getElementById('dPreviewFrame');
+      var openLink = document.getElementById('dPreviewOpen');
+      frame.src = "{{ url('/digital-cards/recipients') }}/" + id + '/preview';
+      openLink.href = frame.src;
     });
 
     var sendAgainBtn = document.getElementById('dSendAgain');

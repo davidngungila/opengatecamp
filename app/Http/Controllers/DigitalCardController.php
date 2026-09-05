@@ -420,6 +420,7 @@ class DigitalCardController extends Controller
             'sent_at' => $result['success'] ? now() : null,
             'status' => $result['success'] ? 'invited' : 'failed',
             'message_id' => $result['api_message_id'] ?? null,
+            'message' => $msg,
             'delivery_status' => null,
             'delivery_checked_at' => null,
         ]);
@@ -437,6 +438,7 @@ class DigitalCardController extends Controller
             'status_label' => ucfirst((string) $r->status),
             'status_color' => $r->getInviteStatusColor(),
             'message_id' => $r->message_id,
+            'message' => $r->message,
             'delivery_label' => $r->delivery_status ? ucfirst(str_replace('_', ' ', $r->delivery_status)) : ($r->message_id ? 'Unchecked' : '—'),
             'delivery_color' => $r->getDeliveryStatusColor(),
             'checked_at' => $r->delivery_checked_at?->format('d M Y H:i'),
@@ -691,6 +693,7 @@ class DigitalCardController extends Controller
             'sent_at' => $result['success'] ? now() : $recipient->sent_at,
             'status' => $result['success'] ? 'invited' : 'failed',
             'message_id' => $result['api_message_id'] ?? null,
+            'message' => $msg,
             'delivery_status' => null,
             'delivery_checked_at' => null,
         ]);
@@ -860,11 +863,21 @@ class DigitalCardController extends Controller
         $mpdf->Output("DigitalCard-{$fileName}.pdf", $dest);
     }
 
-    public function preview(DigitalCard $card)
+    public function preview(DigitalCard $card, ?DigitalCardRecipient $recipient = null)
     {
-        $qrData = app(QrCodeService::class)->pngDataUri($card->public_url);
+        $recipientName = $recipient?->name;
+        $publicUrl = $recipient
+            ? route('cards.show', $card->hash).'?r='.$recipient->token
+            : $card->public_url;
 
-        return view('digital-cards.preview', compact('card', 'qrData'));
+        $qrData = app(QrCodeService::class)->pngDataUri($publicUrl);
+
+        return view('digital-cards.preview', compact('card', 'qrData', 'recipientName', 'publicUrl'));
+    }
+
+    public function recipientPreview(DigitalCardRecipient $recipient)
+    {
+        return $this->preview($recipient->digitalCard, $recipient);
     }
 
     public function show(Request $request, string $hash)

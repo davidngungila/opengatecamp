@@ -60,7 +60,7 @@
   </div>
   <div class="pv-actions">
     <label class="pv-check"><input type="checkbox" id="pvActual"> Actual size</label>
-    <a class="pv-link" href="{{ route('cards.show', $card->hash) }}" target="_blank">Fungua Ukurasa</a>
+    <a class="pv-link" href="{{ $publicUrl ?? route('cards.show', $card->hash) }}" target="_blank">Fungua Ukurasa</a>
     <a class="pv-link" href="{{ route('cards.index') }}">Rudi</a>
     <a class="pv-link" style="background:{{ $card->accent_color }};color:#0a0f1e;border-color:transparent" href="{{ route('cards.pdf', $card) }}">Pakua PDF</a>
   </div>
@@ -69,7 +69,7 @@
 <main class="pv-stage" id="pvStage">
   <div id="pvWrap">
     <div class="ticket-sheet" id="pvSheet">
-      @include('digital-cards.pdf-body', ['card' => $card, 'qrData' => $qrData, 'web' => true])
+      @include('digital-cards.pdf-body', ['card' => $card, 'qrData' => $qrData, 'recipientName' => $recipientName ?? null, 'publicUrl' => $publicUrl ?? null, 'web' => true])
     </div>
   </div>
 </main>

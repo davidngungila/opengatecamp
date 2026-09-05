@@ -164,6 +164,7 @@ Route::middleware(['auth', 'committee.readonly'])->group(function () {
     Route::post('/digital-cards/{card}/send-pending', [DigitalCardController::class, 'sendPending'])->name('cards.sendPending');
     Route::post('/digital-cards/recipients/{recipient}/delivery', [DigitalCardController::class, 'checkRecipientDelivery'])->name('cards.recipient.delivery');
     Route::post('/digital-cards/recipients/{recipient}/resend', [DigitalCardController::class, 'resendSms'])->name('cards.recipient.resend');
+    Route::get('/digital-cards/recipients/{recipient}/preview', [DigitalCardController::class, 'recipientPreview'])->name('cards.recipient.preview');
     Route::delete('/digital-cards/recipients/{recipient}', [DigitalCardController::class, 'destroyRecipient'])->name('cards.recipient.destroy');
     Route::get('/digital-cards/{card}/pdf', [DigitalCardController::class, 'downloadPdf'])->name('cards.pdf');
     Route::get('/digital-cards/{card}/preview', [DigitalCardController::class, 'preview'])->name('cards.preview');
