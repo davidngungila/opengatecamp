@@ -47,7 +47,7 @@ class MessageTemplateSeeder extends Seeder
             ],
             'member_welcome' => [
                 'name' => 'Member — Portal Welcome',
-                'message' => 'Shaloom {name}! Karibu kwenye mfumo wa Open Gate Camp Connect. Tumia mfumo huu kupata taarifa muhimu na kushiriki katika shughuli za Open Gate Camp Season Three 2026. Ili kuingia kwenye mfumo, tumia namba yako ya simu na nywila (password). Karibu sana na Mungu akubariki!',
+                'message' => 'Shaloom {name}! Karibu kwenye mfumo wa Open Gate Camp Connect. Tumia mfumo huu kupata taarifa muhimu na kushiriki katika shughuli za Open Gate Camp Season Three 2026. Ili kuingia kwenye mfumo, tumia namba yako ya simu na nywila (password) kupitia https://opengatecamp.iccrtz.org/. Karibu sana na Mungu akubariki!',
             ],
             'task_assignment' => [
                 'name' => 'Activity — Assignment Notification',
