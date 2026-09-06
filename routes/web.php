@@ -2,6 +2,7 @@
 
 use App\Http\Controllers\AccountController;
 use App\Http\Controllers\AccountingController;
+use App\Http\Controllers\ActivityTaskController;
 use App\Http\Controllers\AuthController;
 use App\Http\Controllers\CheckInController;
 use App\Http\Controllers\DashboardController;
@@ -155,6 +156,16 @@ Route::middleware(['auth', 'committee.readonly'])->group(function () {
     Route::get('/pledges/payments/{payment}/receipt', [PledgeController::class, 'paymentReceipt'])->name('pledges.payments.receipt');
     Route::post('/pledges/{pledge}/remind', [PledgeController::class, 'remind'])->name('pledges.remind');
     Route::post('/pledges/{pledge}/thanks', [PledgeController::class, 'sendThanks'])->name('pledges.thanks');
+
+    // ── Activities & Tasks ───────────────────────────────
+    Route::get('/activities-tasks', [ActivityTaskController::class, 'index'])->name('activities.index');
+    Route::get('/activities-tasks/export', [ActivityTaskController::class, 'exportCsv'])->name('activities.export');
+    Route::post('/activities-tasks', [ActivityTaskController::class, 'store'])->name('activities.store');
+    Route::put('/activities-tasks/{task}', [ActivityTaskController::class, 'update'])->name('activities.update');
+    Route::delete('/activities-tasks/{task}', [ActivityTaskController::class, 'destroy'])->name('activities.destroy');
+    Route::post('/activities-tasks/{task}/report', [ActivityTaskController::class, 'submitReport'])->name('activities.report');
+    Route::post('/activities-tasks/{task}/status', [ActivityTaskController::class, 'updateStatus'])->name('activities.status');
+    Route::post('/activities-tasks/{task}/reassign', [ActivityTaskController::class, 'reassign'])->name('activities.reassign');
 
     // ── Digital Cards ────────────────────────────────────
     Route::get('/digital-cards', [DigitalCardController::class, 'index'])->name('cards.index');

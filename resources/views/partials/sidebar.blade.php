@@ -95,6 +95,20 @@
             <span class="tt">Pledges</span>
         </div>
 
+        <!-- Activities & Tasks -->
+        <div class="tooltip-wrap">
+            <a href="{{ route('activities.index') }}" class="nav-single {{ $base === 'activities-tasks' ? 'active' : '' }}">
+                <span class="nav-icon">
+                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round">
+                        <rect x="3" y="3" width="18" height="18" rx="2"/>
+                        <path d="M9 8h6M9 12h6M9 16h3"/>
+                    </svg>
+                </span>
+                <span class="nav-label">Activities &amp; Tasks ⭐</span>
+            </a>
+            <span class="tt">Activities &amp; Tasks</span>
+        </div>
+
         <!-- Digital Cards -->
         <div class="tooltip-wrap">
             <a href="{{ route('cards.index') }}" class="nav-single {{ $base === 'digital-cards' ? 'active' : '' }}">
