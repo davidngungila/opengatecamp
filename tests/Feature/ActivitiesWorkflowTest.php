@@ -135,6 +135,19 @@ class ActivitiesWorkflowTest extends TestCase
         });
     }
 
+    public function test_assignee_picker_lists_all_active_users_and_skips_suspended(): void
+    {
+        $this->adminUser();
+        User::factory()->create(['name' => 'Plain Volunteer']);
+        User::factory()->create(['name' => 'Gone Away', 'status' => 'Suspended']);
+
+        $res = $this->get(route('activities.index'));
+        $res->assertOk();
+        $res->assertSee('name="assignee_ids[]"', false);
+        $res->assertSee('Plain Volunteer');
+        $res->assertDontSee('Gone Away');
+    }
+
     public function test_reject_progress_on_closed_task(): void
     {
         $this->adminUser();

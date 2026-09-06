@@ -13,11 +13,11 @@ use Illuminate\Http\Request;
 
 class ActivityTaskController extends Controller
 {
-    private function committeeUsers()
+    private function assignableUsers()
     {
-        return User::whereHas('role', function ($q) {
-            $q->whereIn('name', ['Super Administrator', 'Chairperson', 'Secretary', 'Treasurer', 'Committee Member']);
-        })->orderBy('name')->get();
+        return User::where(fn ($q) => $q->where('status', '!=', 'Suspended')->orWhereNull('status'))
+            ->orderBy('name')
+            ->get();
     }
 
     public function index(Request $request)
@@ -70,7 +70,7 @@ class ActivityTaskController extends Controller
             'statuses' => ActivityTask::statuses(),
             'priorities' => ActivityTask::priorities(),
             'categories' => ActivityTask::categories(),
-            'assignees' => $this->committeeUsers(),
+            'assignees' => $this->assignableUsers(),
             'campEvent' => Event::currentCamp(),
             'stats' => $stats,
             'filters' => compact('status', 'priority', 'category', 'assignee', 'q'),

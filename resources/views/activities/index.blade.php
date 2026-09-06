@@ -187,9 +187,12 @@
             <option value="">Select category…</option>
             @foreach($categories as $k=>$c)<option value="{{ $k }}" {{ old('category')===$k ? 'selected' : '' }}>{{ $c }}</option>@endforeach
           </select></div>
-          <div class="field full"><label>Assign To</label><select name="assignee_ids[]" multiple size="6">
-            @foreach($assignees as $u)<option value="{{ $u->id }}" {{ is_array(old('assignee_ids')) && in_array($u->id, old('assignee_ids')) ? 'selected' : '' }}>{{ $u->name }} ({{ $u->role?->name ?? 'User' }})</option>@endforeach
-          </select><div class="field-hint">Hold <b>Ctrl</b> (or <b>Cmd</b> on Mac) to select more than one. Every selected member receives the assignment SMS and can report progress.</div></div>
+          <div class="field full"><label>Assign To</label>
+            @include('activities._assignee_picker', [
+                'pickerId' => 'new',
+                'pickerSelected' => is_array(old('assignee_ids')) ? old('assignee_ids') : [],
+                'pickerHint' => 'Click to select one or more members. Every selected member receives the assignment SMS and can report progress.',
+            ])</div>
           <div class="field"><label>Deadline</label><input type="date" name="deadline" value="{{ old('deadline') }}"></div>
           <div class="field"><label>Priority</label><select name="priority">
             @foreach($priorities as $k=>$p)<option value="{{ $k }}" {{ old('priority', 'medium')===$k ? 'selected' : '' }}>{{ $p }}</option>@endforeach
@@ -248,9 +251,11 @@
             <option value="">Select category…</option>
             @foreach($categories as $k=>$c)<option value="{{ $k }}">{{ $c }}</option>@endforeach
           </select></div>
-          <div class="field full"><label>Assign To</label><select name="assignee_ids[]" id="editTaskAssignee" multiple size="6">
-            @foreach($assignees as $u)<option value="{{ $u->id }}">{{ $u->name }} ({{ $u->role?->name ?? 'User' }})</option>@endforeach
-          </select><div class="field-hint">Select one or more members. Only newly-added members receive the SMS.</div></div>
+          <div class="field full"><label>Assign To</label>
+            @include('activities._assignee_picker', [
+                'pickerId' => 'edit',
+                'pickerHint' => 'Click to select one or more members. Only newly-added members receive the SMS.',
+            ])</div>
           <div class="field"><label>Deadline</label><input type="date" name="deadline" id="editTaskDeadline"></div>
           <div class="field"><label>Priority</label><select name="priority" id="editTaskPriority">
             @foreach($priorities as $k=>$p)<option value="{{ $k }}">{{ $p }}</option>@endforeach
@@ -277,9 +282,12 @@
       @csrf
       <div class="drawer-body">
         <div class="form-grid">
-          <div class="field full"><label>Assign To (Committee Members) *</label><select name="assignee_ids[]" id="reassignAssignee" multiple size="6" required>
-            @foreach($assignees as $u)<option value="{{ $u->id }}">{{ $u->name }} ({{ $u->role?->name ?? 'User' }})</option>@endforeach
-          </select><div class="field-hint">Hold <b>Ctrl</b>/<b>Cmd</b> to select more than one. An SMS is sent to every selected member.</div></div>
+          <div class="field full"><label>Assign To *</label>
+            @include('activities._assignee_picker', [
+                'pickerId' => 'reassign',
+                'pickerRequired' => true,
+                'pickerHint' => 'Click to select one or more members. An SMS is sent to every selected member.',
+            ])</div>
           <div class="field full"><label>Note (optional)</label><textarea name="note" rows="2" placeholder="Reason for reassignment"></textarea></div>
         </div>
       </div>
@@ -354,6 +362,30 @@
 .drawer-status-actions button.st-primary{background:var(--accent);border-color:var(--accent);color:#fff;}
 .drawer-status-actions button.st-primary:hover{background:var(--accent-dark);color:#fff;}
 .drawer-status-actions button.st-danger{background:var(--danger-bg);border-color:var(--danger);color:var(--danger);}
+
+.asg-picker{position:relative;}
+.asg-trigger{width:100%;display:flex;align-items:center;justify-content:space-between;gap:10px;padding:10px 12px;background:var(--field-bg,#fff);border:1px solid var(--border,#e2e8f0);border-radius:10px;font-size:13.5px;color:var(--text-primary);cursor:pointer;text-align:left;min-height:44px;transition:border-color .15s;}
+.asg-trigger:hover{border-color:var(--border-strong,#94a3b8);}
+.asg-picker.open .asg-trigger{border-color:var(--accent,#2563eb);box-shadow:0 0 0 3px rgba(37,99,235,.12);}
+.asg-values{flex:1;min-width:0;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+.asg-values.muted{color:var(--text-tertiary,#94a3b8);}
+.asg-chev{flex:0 0 auto;width:8px;height:8px;border-right:2px solid var(--text-tertiary);border-bottom:2px solid var(--text-tertiary);transform:rotate(45deg) translateY(-3px);transition:transform .15s;}
+.asg-picker.open .asg-chev{transform:rotate(225deg) translateY(0);}
+.asg-menu{display:none;position:absolute;top:calc(100% + 6px);left:0;right:0;z-index:60;background:var(--card-bg,#fff);border:1px solid var(--border,#e2e8f0);border-radius:12px;box-shadow:0 16px 40px rgba(15,23,42,.16);padding:8px;}
+.asg-picker.open .asg-menu{display:block;}
+.asg-search{width:100%;padding:9px 11px;border:1px solid var(--border,#e2e8f0);border-radius:9px;font-size:13px;margin-bottom:6px;background:var(--bg,#f8fafc);color:var(--text-primary);outline:none;}
+.asg-search:focus{border-color:var(--accent,#2563eb);}
+.asg-options{overflow-y:auto;max-height:230px;}
+.asg-option{display:flex;align-items:center;gap:9px;padding:8px 9px;border-radius:8px;cursor:pointer;font-size:13.5px;color:var(--text-primary);}
+.asg-option:hover{background:var(--bg-muted,#f1f5f9);}
+.asg-option input[type=checkbox]{width:16px;height:16px;accent-color:var(--accent,#2563eb);flex:0 0 auto;cursor:pointer;}
+.asg-opt-name{font-weight:600;min-width:0;}
+.asg-opt-role{margin-left:auto;flex:0 0 auto;font-size:11px;color:var(--text-tertiary);background:var(--bg-muted,#f1f5f9);border-radius:99px;padding:2px 8px;white-space:nowrap;}
+.asg-empty{padding:14px;text-align:center;color:var(--text-tertiary);font-size:13px;}
+@media (max-width:640px){
+  .asg-trigger{min-height:46px;font-size:14px;}
+  .asg-options{max-height:200px;}
+}
 </style>
 @endsection
 
@@ -365,7 +397,69 @@ function decodeEntities(s){
   ta.innerHTML = s;
   return ta.value;
 }
-document.addEventListener('DOMContentLoaded', function(){
+function setPickerSelection(pickerEl, ids){
+    pickerEl.querySelectorAll('input[type=checkbox]').forEach(function(box){
+      box.checked = ids.indexOf(Number(box.value)) !== -1;
+    });
+    pickerEl.querySelector('[data-asg-options]').dispatchEvent(new Event('change'));
+  }
+
+  function initAssignPickers(){
+    document.querySelectorAll('[data-asg-picker]').forEach(function(picker){
+      var toggle = picker.querySelector('[data-asg-toggle]');
+      var menu = picker.querySelector('[data-asg-menu]');
+      var search = picker.querySelector('[data-asg-search]');
+      var options = picker.querySelector('[data-asg-options]');
+      var empty = picker.querySelector('[data-asg-empty]');
+      var valuesEl = picker.querySelector('[data-asg-values]');
+
+      function label(){
+        var names = [];
+        options.querySelectorAll('input[type=checkbox]:checked').forEach(function(b){
+          names.push(b.getAttribute('data-name'));
+        });
+        valuesEl.textContent = names.length ? names.join(', ') : 'Select member(s)…';
+        valuesEl.classList.toggle('muted', !names.length);
+      }
+
+      toggle.addEventListener('click', function(e){
+        e.stopPropagation();
+        var wasOpen = picker.classList.contains('open');
+        document.querySelectorAll('[data-asg-picker].open').forEach(function(p){ p.classList.remove('open'); });
+        if(!wasOpen) picker.classList.add('open');
+        toggle.setAttribute('aria-expanded', wasOpen ? 'false' : 'true');
+        if(wasOpen) return;
+        setTimeout(function(){ if(search) search.focus(); }, 30);
+      });
+
+      menu.addEventListener('click', function(e){ e.stopPropagation(); });
+
+      if(search){
+        search.addEventListener('input', function(){
+          var q = search.value.trim().toLowerCase();
+          var shown = 0;
+          options.querySelectorAll('.asg-option').forEach(function(opt){
+            var match = opt.textContent.toLowerCase().indexOf(q) !== -1;
+            opt.style.display = match ? '' : 'none';
+            if(match) shown++;
+          });
+          empty.style.display = shown ? 'none' : '';
+        });
+      }
+
+      options.addEventListener('change', label);
+
+      label();
+    });
+
+    document.addEventListener('click', function(e){
+      if(e.target.closest('[data-asg-picker]')) return;
+      document.querySelectorAll('[data-asg-picker].open').forEach(function(p){ p.classList.remove('open'); });
+    });
+  }
+
+  document.addEventListener('DOMContentLoaded', function(){
+  initAssignPickers();
   var statusColor = {open:'neutral', in_progress:'info', pending_review:'warning', completed:'success', closed:'purple', cancelled:'danger'};
   var priorityColor = {low:'neutral', medium:'info', high:'warning', urgent:'danger'};
   var statusActions = {
@@ -495,10 +589,9 @@ document.addEventListener('DOMContentLoaded', function(){
 
   function openReassign(d){
     document.getElementById('reassignTaskTitle').textContent = d.title || '—';
-    var sel = document.getElementById('reassignAssignee');
     var ids = [];
     try { ids = JSON.parse(d.assigneeIds || '[]'); } catch(err){ ids = []; }
-    Array.prototype.forEach.call(sel.options, function(opt){ opt.selected = ids.indexOf(Number(opt.value)) !== -1; });
+    setPickerSelection(document.getElementById('reassignPicker'), ids);
     document.getElementById('reassignForm').action = "{{ url('/activities-tasks') }}/" + d.id + "/reassign";
     if(document.getElementById('taskDetailDrawer').classList.contains('open')) closeDrawerById('taskDetailDrawer');
     openDrawerById('taskReassignDrawer');
@@ -516,7 +609,12 @@ document.addEventListener('DOMContentLoaded', function(){
       var d = btn.dataset;
       document.getElementById('editTaskTitle').value = d.title || '';
       document.getElementById('editTaskCategory').value = d.category || '';
-      document.getElementById('editTaskAssignee').value = d.assignee || '';
+      var ids = [], row = btn.closest('tr');
+      if(row){
+        try { ids = (JSON.parse(decodeEntities(row.dataset.assignees || '[]'))||[]).map(function(a){ return Number(a.id); }); }
+        catch(err){ ids = []; }
+      }
+      setPickerSelection(document.getElementById('editPicker'), ids);
       document.getElementById('editTaskDeadline').value = d.deadline || '';
       document.getElementById('editTaskPriority').value = d.priority || 'medium';
       document.getElementById('editTaskDescription').value = decodeEntities(d.description || '');
