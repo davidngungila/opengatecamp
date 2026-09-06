@@ -21,7 +21,11 @@ class SettingsController extends Controller
 
     public function generalPage()
     {
-        return view('settings.pages.general');
+        $organizerUsers = User::whereHas('role', function ($q) {
+            $q->whereIn('name', ['Chairperson', 'Secretary', 'Treasurer']);
+        })->orderBy('name')->get();
+
+        return view('settings.pages.general', compact('organizerUsers'));
     }
 
     public function notificationsPage()

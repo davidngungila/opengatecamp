@@ -42,6 +42,45 @@ class Event extends Model
     public function pledges() { return $this->hasMany(Pledge::class); }
     public function budget() { return $this->belongsTo(Budget::class); }
 
+    public static function currentCamp(): ?self
+    {
+        $configured = (string) Setting::get('event.name');
+
+        if ($configured !== '') {
+            return static::fromSettings($configured);
+        }
+
+        return static::where('event_type', 'camp')->orderByDesc('start_date')->first()
+            ?? static::orderByDesc('start_date')->first();
+    }
+
+    public static function fromSettings(string $title): self
+    {
+        $attributes = [
+            'description' => Setting::get('event.description'),
+            'venue' => Setting::get('event.venue'),
+            'location' => Setting::get('event.location'),
+            'start_date' => Setting::get('event.start_date'),
+            'end_date' => Setting::get('event.end_date'),
+            'start_time' => Setting::get('event.start_time'),
+            'end_time' => Setting::get('event.end_time'),
+            'capacity' => (int) Setting::get('event.capacity', 0),
+            'registration_fee' => (float) Setting::get('event.registration_fee', 0),
+            'organizer' => Setting::get('event.organizer'),
+            'created_by' => Setting::get('church.chaplain'),
+        ];
+
+        $status = strtolower((string) Setting::get('event.status', 'planned'));
+        if (array_key_exists($status, static::statuses())) {
+            $attributes['status'] = $status;
+        }
+
+        return static::updateOrCreate(
+            ['event_type' => 'camp', 'title' => $title],
+            $attributes + ['featured' => true],
+        );
+    }
+
     public static function types(): array
     {
         return [

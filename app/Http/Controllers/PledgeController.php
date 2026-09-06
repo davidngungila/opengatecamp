@@ -53,8 +53,7 @@ class PledgeController extends Controller
                 ->get()->sum(fn ($p) => $p->getRemainingAttribute()),
         ];
 
-        $campEvent = Event::where('event_type', 'camp')->orderByDesc('start_date')->first()
-            ?? Event::orderByDesc('start_date')->first();
+        $campEvent = Event::currentCamp();
 
         return view('pledges.index', [
             'pledges' => $pledges,
@@ -80,8 +79,11 @@ class PledgeController extends Controller
             'due_date' => 'nullable|date|after_or_equal:pledge_date',
         ]);
 
-        $data['event_id'] = $data['event_id'] ?? (Event::where('event_type', 'camp')->orderByDesc('start_date')->first()
-            ?? Event::orderByDesc('start_date')->first())?->id;
+        $data['event_id'] = $data['event_id'] ?? Event::currentCamp()?->id;
+
+        if (empty($data['event_id'])) {
+            return back()->with('error', 'No event configured. Set the current event under Settings → General → Event Settings.');
+        }
 
         $data['pledge_no'] = Pledge::nextPledgeNo();
         $data['paid_amount'] = 0;

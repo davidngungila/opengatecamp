@@ -12,8 +12,7 @@ class DashboardController extends Controller
 {
     public function index()
     {
-        $event = Event::where('event_type', 'camp')->orderByDesc('start_date')->first()
-            ?? Event::orderByDesc('start_date')->first();
+        $event = Event::currentCamp();
 
         if (! $event) {
             return view('dashboard.index', ['event' => null]);

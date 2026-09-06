@@ -49,7 +49,18 @@
         <div class="field"><label>End Time</label><input type="time" name="event_end_time" value="{{ $s('event.end_time') }}"></div>
         <div class="field"><label>Capacity</label><input type="number" min="0" name="event_capacity" value="{{ $s('event.capacity') }}" placeholder="e.g. 500"></div>
         <div class="field"><label>Registration Fee</label><input type="number" min="0" step="0.01" name="event_registration_fee" value="{{ $s('event.registration_fee', '0') }}" placeholder="e.g. 10000"></div>
-        <div class="field"><label>Organizer</label><input name="event_organizer" value="{{ $s('event.organizer') }}" placeholder="e.g. Daniel Mwinuka"></div>
+        <div class="field"><label>Organizer</label>
+          <select name="event_organizer">
+            @php $currentOrg = $s('event.organizer'); @endphp
+            <option value="" @if(!$currentOrg) selected @endif>— Select a leader —</option>
+            @if($currentOrg && ! $organizerUsers->contains('name', $currentOrg))
+            <option value="{{ $currentOrg }}" selected>{{ $currentOrg }}</option>
+            @endif
+            @foreach($organizerUsers as $u)
+            <option value="{{ $u->name }}" @if($currentOrg === $u->name) selected @endif>{{ $u->name }} ({{ $u->role?->name ?? 'User' }})</option>
+            @endforeach
+          </select>
+        </div>
         <div class="field full"><label>Description</label><textarea name="event_description" rows="3" placeholder="Short description of the event">{{ $s('event.description') }}</textarea></div>
       </div>
       <div class="flex" style="justify-content:flex-end;margin-top:16px">

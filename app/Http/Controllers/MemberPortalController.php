@@ -50,7 +50,7 @@ class MemberPortalController extends Controller
         $pledgeOutstanding = $member->pledges()->whereIn('status', ['pending', 'partial'])
             ->get()->sum(fn($p) => (float) $p->getRemainingAttribute());
 
-        $currentCamp = Event::where('event_type', 'camp')->orderByDesc('start_date')->first();
+        $currentCamp = Event::currentCamp();
 
         return view('portal.dashboard', compact(
             'member', 'fy', 'activated', 'family', 'group', 'ministry',
@@ -139,7 +139,7 @@ class MemberPortalController extends Controller
         $registrations = $member->eventAttendees()->with('event')->latest()->paginate(15);
         $totalPaid = $member->eventAttendees()->sum('amount_paid');
 
-        $currentCamp = Event::where('event_type', 'camp')->orderByDesc('start_date')->first();
+        $currentCamp = Event::currentCamp();
 
         return view('portal.registrations', compact(
             'member', 'registrations', 'totalPaid', 'currentCamp'
@@ -161,8 +161,11 @@ class MemberPortalController extends Controller
             'notes' => 'nullable|string',
         ]);
 
-        $event = Event::where('event_type', 'camp')->orderByDesc('start_date')->first()
-            ?? Event::latest()->first();
+        $event = Event::currentCamp();
+
+        if (! $event) {
+            return back()->with('error', 'No event configured yet. Registration is currently closed.');
+        }
 
         $attendee = $event->attendees()->create([
             'member_id' => $member->id,
@@ -199,7 +202,7 @@ class MemberPortalController extends Controller
                 ->get()->sum(fn($p) => (float) $p->getRemainingAttribute()),
         ];
 
-        $currentCamp = Event::where('event_type', 'camp')->orderByDesc('start_date')->first();
+        $currentCamp = Event::currentCamp();
 
         return view('portal.pledges', compact('member', 'pledges', 'totals', 'currentCamp'));
     }
@@ -219,8 +222,11 @@ class MemberPortalController extends Controller
             'notes' => 'nullable|string',
         ]);
 
-        $event = Event::where('event_type', 'camp')->orderByDesc('start_date')->first()
-            ?? Event::latest()->first();
+        $event = Event::currentCamp();
+
+        if (! $event) {
+            return back()->with('error', 'No event configured yet. Pledges are currently closed.');
+        }
 
         $pledge = Pledge::create([
             'event_id' => $event->id,

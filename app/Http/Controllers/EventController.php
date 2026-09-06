@@ -190,13 +190,10 @@ class EventController extends Controller
             return back()->with('error', 'Attendee name is required.');
         }
 
-        $event = null;
-        if (! empty($data['event_id'])) {
-            $event = Event::find($data['event_id']);
-        }
+        $event = Event::find($data['event_id'] ?? null) ?? Event::currentCamp();
+
         if (! $event) {
-            $event = Event::where('event_type', 'camp')->orderByDesc('start_date')->first()
-                ?? Event::latest()->first();
+            return back()->with('error', 'No event configured. Set the current event under Settings → General → Event Settings.');
         }
 
         $data['event_id'] = $event->id;
@@ -612,7 +609,7 @@ class EventController extends Controller
             'description'    => 'nullable|string',
         ]);
 
-        $event = Event::where('event_type', 'camp')->latest('id')->first() ?? Event::latest('id')->first();
+        $event = Event::currentCamp();
 
         $data['event_id'] = $event?->id;
         $data['sort_order'] = (((int) EventSession::where('event_id', $event?->id)->max('sort_order')) + 1);

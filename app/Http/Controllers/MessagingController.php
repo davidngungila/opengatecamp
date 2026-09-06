@@ -379,8 +379,7 @@ class MessagingController extends Controller
 
     private function currentEvent(): ?\App\Models\Event
     {
-        return \App\Models\Event::where('event_type', 'camp')->orderByDesc('start_date')->first()
-            ?? \App\Models\Event::orderByDesc('start_date')->first();
+        return \App\Models\Event::currentCamp();
     }
 
     private function moduleRecipients(string $module, ?string $status): \Illuminate\Http\JsonResponse
