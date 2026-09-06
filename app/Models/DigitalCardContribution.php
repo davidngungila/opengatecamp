@@ -9,6 +9,7 @@ class DigitalCardContribution extends Model
     protected $fillable = [
         'digital_card_id', 'contributor_name', 'contributor_phone', 'contributor_email',
         'amount', 'method', 'reference_no', 'note', 'status', 'journal_entry_id',
+        'recorded_by',
     ];
 
     protected $casts = [

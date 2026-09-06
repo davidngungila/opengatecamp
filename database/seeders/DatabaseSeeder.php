@@ -248,6 +248,7 @@ $eventsData = [
                         'amount_paid' => $status === 'attended' ? 20000 : ($status === 'confirmed' ? 10000 : 0),
                         'payment_method' => $status === 'attended' ? 'mobile' : null,
                         'registered_on' => $evt->start_date->subDays(rand(5, 30))->toDateString(),
+                        'registered_by' => Setting::get('church.chaplain'),
                         'checked_in_at' => $status === 'attended' ? $evt->start_date->addHours(1) : null,
                         'checked_in_by' => $status === 'attended' ? Setting::get('church.chaplain') : null,
                     ]

@@ -14,9 +14,7 @@
     <div><h2>Digital Cards</h2><div class="sub">
       {{ $totals['invited'] }} invited · {{ $totals['delivered'] }} delivered · {{ $totals['failed'] }} failed · {{ $totals['pending'] }} pending
     </div></div>
-    @if(!$isCommittee)
     <button type="button" class="btn btn-accent" data-drawer-open="inviteNewDrawer">Add List</button>
-    @endif
   </div>
 
   <form class="toolbar" method="GET" action="{{ route('cards.index') }}">
@@ -59,6 +57,7 @@
             data-mid="{{ $r->message_id }}"
             data-message="{{ e($r->message) }}"
             data-sent-at="{{ $r->sent_at?->format('d M Y H:i') }}"
+            data-added-by="{{ $r->added_by ?? '—' }}"
             data-checked-at="{{ $r->delivery_checked_at?->format('d M Y H:i') }}"
             data-link="{{ $r->short_link }}">
             <td>
@@ -105,7 +104,7 @@
             </td>
           </tr>
           @empty
-          <tr><td colspan="6"><div class="empty-state" style="padding:40px 20px"><h3>No invitations yet</h3><p>Add a list first, then send SMS invites with each person's short card link.</p>@if(!$isCommittee)<button type="button" class="btn btn-accent" data-drawer-open="inviteNewDrawer">Add List</button>@endif</div></td></tr>
+          <tr><td colspan="6"><div class="empty-state" style="padding:40px 20px"><h3>No invitations yet</h3><p>Add a list first, then send SMS invites with each person's short card link.</p><button type="button" class="btn btn-accent" data-drawer-open="inviteNewDrawer">Add List</button></div></td></tr>
           @endforelse
         </tbody>
       </table>
@@ -117,7 +116,6 @@
   </div>
 </div>
 
-@if(!$isCommittee)
 <div class="drawer-overlay" id="inviteNewDrawer">
   <div class="drawer-panel">
     <div class="drawer-head">
@@ -137,7 +135,6 @@
     </div>
   </div>
 </div>
-@endif
 
 <div class="drawer-overlay" id="inviteDetailDrawer">
   <div class="drawer-panel">
@@ -158,6 +155,7 @@
         <div class="info-row"><span>Phone</span><b id="dInvitePhone">—</b></div>
         <div class="info-row"><span>Invite Status</span><b id="dInviteStatusText">—</b></div>
         <div class="info-row"><span>Sent At</span><b id="dInviteSent">—</b></div>
+        <div class="info-row"><span>Added By</span><b id="dInviteAddedBy">—</b></div>
         <div class="info-row"><span>Delivery Checked</span><b id="dInviteChecked">—</b></div>
         <div class="info-row"><span>Delivery</span><b style="display:flex;gap:8px;align-items:center;justify-content:flex-end"><span class="badge badge-neutral badge-dotted" id="dDeliveryBadge">—</span>
           <button type="button" class="btn btn-sm btn-secondary" id="dCheckDelivery" style="height:26px;padding:0 8px;font-size:11px">Check</button></b></div>
@@ -346,6 +344,7 @@
           ' data-mid="' + esc(r.message_id || '') + '"' +
           ' data-message="' + esc(r.message || '') + '"' +
           ' data-sent-at="' + esc(r.sent_at || '') + '"' +
+          ' data-added-by="' + esc(r.added_by || '') + '"' +
           ' data-checked-at="' + esc(r.checked_at || '') + '"' +
           ' data-link="' + esc(r.link) + '">' +
           '<td><div class="cell-user"><div class="cell-avatar">' + esc(initials(r.name)) + '</div><div><div class="cu-name">' + esc(r.name || '—') + '</div></div></div></td>' +
@@ -401,6 +400,7 @@
       st.className = 'badge badge-' + (d.statusColor || 'neutral') + ' badge-dotted';
       document.getElementById('dInvitePhone').textContent = d.phone || '—';
       document.getElementById('dInviteSent').textContent = d.sentAt || 'Not sent';
+      document.getElementById('dInviteAddedBy').textContent = d.addedBy || '—';
       document.getElementById('dInviteChecked').textContent = d.checkedAt || '—';
 
       var db = document.getElementById('dDeliveryBadge');

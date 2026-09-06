@@ -21,15 +21,23 @@ class EventController extends Controller
     {
         $event->load(['sessions', 'attendees', 'pledges']);
 
-        $attendees = $event->attendees()->with('member')->latest()->paginate(15);
-        $pledges = $event->pledges()->latest()->take(10)->get();
+        $attendeeQuery = $event->attendees()->getQuery();
+        $pledgeQuery = $event->pledges()->getQuery();
+
+        if (auth()->user()?->isCommitteeMember()) {
+            $attendeeQuery->where('registered_by', auth()->user()->name);
+            $pledgeQuery->where('created_by', auth()->user()->name);
+        }
+
+        $attendees = (clone $attendeeQuery)->with('member')->latest()->paginate(15);
+        $pledges = (clone $pledgeQuery)->latest()->take(10)->get();
 
         $stats = [
-            'registered' => $event->attendees()->count(),
-            'confirmed' => $event->attendees()->whereIn('status', ['confirmed', 'attended'])->count(),
-            'attended' => $event->attendees()->where('status', 'attended')->count(),
-            'pledged' => $event->pledges()->whereIn('status', ['pending', 'partial', 'fulfilled'])->sum('amount'),
-            'pledgedPaid' => $event->pledges()->whereIn('status', ['pending', 'partial', 'fulfilled'])->sum('paid_amount'),
+            'registered' => (clone $attendeeQuery)->count(),
+            'confirmed' => (clone $attendeeQuery)->whereIn('status', ['confirmed', 'attended'])->count(),
+            'attended' => (clone $attendeeQuery)->where('status', 'attended')->count(),
+            'pledged' => (clone $pledgeQuery)->whereIn('status', ['pending', 'partial', 'fulfilled'])->sum('amount'),
+            'pledgedPaid' => (clone $pledgeQuery)->whereIn('status', ['pending', 'partial', 'fulfilled'])->sum('paid_amount'),
         ];
 
         return view('events.show', [
@@ -120,6 +128,11 @@ class EventController extends Controller
 
         $query = EventAttendee::with(['event', 'member']);
 
+        $user = auth()->user();
+        if ($user?->isCommitteeMember()) {
+            $query->where('registered_by', $user->name);
+        }
+
         $query->when($eventId, fn ($qr) => $qr->where('event_id', $eventId))
             ->when($status, fn ($qr) => $qr->where('status', $status))
             ->when($q !== '', fn ($qr) => $qr->where(fn ($w) => $w
@@ -128,6 +141,11 @@ class EventController extends Controller
                 ->orWhere('email', 'like', "%{$q}%")));
 
         $attendees = $query->orderByDesc('created_at')->paginate(15)->withQueryString();
+
+        $totalsQuery = EventAttendee::query();
+        if ($user?->isCommitteeMember()) {
+            $totalsQuery->where('registered_by', $user->name);
+        }
 
         return view('attendees.index', [
             'attendees' => $attendees,
@@ -139,9 +157,9 @@ class EventController extends Controller
             'fellowships' => $this->fellowshipList(),
             'filters' => compact('eventSlug', 'status', 'q'),
             'totals' => [
-                'registered' => EventAttendee::count(),
-                'confirmed' => EventAttendee::whereIn('status', ['confirmed', 'attended'])->count(),
-                'attended' => EventAttendee::where('status', 'attended')->count(),
+                'registered' => (clone $totalsQuery)->count(),
+                'confirmed' => (clone $totalsQuery)->whereIn('status', ['confirmed', 'attended'])->count(),
+                'attended' => (clone $totalsQuery)->where('status', 'attended')->count(),
             ],
         ]);
     }
@@ -182,6 +200,7 @@ class EventController extends Controller
 
         $data['event_id'] = $event->id;
         $data['registered_on'] = now()->toDateString();
+        $data['registered_by'] = auth()->user()?->name;
 
         if (empty($data['fee_amount'])) {
             $data['fee_amount'] = (float) $event->registration_fee > 0 ? $event->registration_fee : 10000;
@@ -394,6 +413,7 @@ class EventController extends Controller
 
         $data['event_id'] = $event->id;
         $data['registered_on'] = now()->toDateString();
+        $data['registered_by'] = auth()->user()?->name;
 
         if (empty($data['fee_amount'])) {
             $data['fee_amount'] = (float) $event->registration_fee > 0 ? $event->registration_fee : 10000;

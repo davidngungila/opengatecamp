@@ -12,7 +12,7 @@ class EventAttendee extends Model
     protected $fillable = [
         'event_id', 'member_id', 'name', 'phone', 'email', 'fellowship', 'status',
         'amount_paid', 'fee_amount', 'payment_method', 'pickup_location', 'notes', 'registered_on',
-        'checked_in_by', 'checked_in_at', 'ticket_no', 'ticket_sent_at', 'journal_entry_id',
+        'registered_by', 'checked_in_by', 'checked_in_at', 'ticket_no', 'ticket_sent_at', 'journal_entry_id',
     ];
 
     protected $casts = [

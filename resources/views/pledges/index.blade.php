@@ -57,7 +57,6 @@
             data-amount="{{ $pl->amount }}"
             data-paid="{{ $pl->paid_amount }}"
             data-remaining="{{ $pl->getRemainingAttribute() }}"
-            data-frequency="{{ ucfirst(str_replace('_',' ',$pl->frequency)) }}"
             data-pledge-date="{{ $pl->pledge_date?->format('d M Y') }}"
             data-due-date="{{ $pl->due_date?->format('d M Y') ?? '—' }}"
             data-status="{{ $pl->getStatusLabel() }}"
@@ -129,9 +128,6 @@
           <div class="field"><label>Phone</label><input name="phone" placeholder="+255 7XX XXX XXX" value="{{ old('phone') }}"></div>
           <div class="field full"><label>Email</label><input name="email" placeholder="email@example.com" value="{{ old('email') }}"></div>
           <div class="field"><label>Amount (TZS)</label><input type="number" step="0.01" name="amount" value="{{ old('amount') }}" required></div>
-          <div class="field"><label>Frequency</label><select name="frequency">
-            @foreach($frequencies as $k=>$f)<option value="{{ $k }}" @if(old('frequency')==$k) selected @endif>{{ $f }}</option>@endforeach
-          </select></div>
           <div class="field"><label>Pledge Date</label><input type="date" name="pledge_date" value="{{ old('pledge_date', now()->format('Y-m-d')) }}"></div>
           <div class="field"><label>Due Date</label><input type="date" name="due_date" value="{{ old('due_date') }}"></div>
           <div class="field full"><label>Notes</label><textarea name="notes" placeholder="Any notes about this pledge"></textarea></div>
@@ -224,7 +220,6 @@
         <div class="info-row"><span>Event</span><b id="drawerEvent">—</b></div>
         <div class="info-row"><span>Phone</span><b id="drawerPhone">—</b></div>
         <div class="info-row"><span>Email</span><b id="drawerEmail">—</b></div>
-        <div class="info-row"><span>Frequency</span><b id="drawerFrequency">—</b></div>
         <div class="info-row"><span>Pledge Date</span><b id="drawerPledgeDate">—</b></div>
         <div class="info-row"><span>Due Date</span><b id="drawerDueDate">—</b></div>
         <div class="info-row"><span>Recorded By</span><b id="drawerCreated">—</b></div>
@@ -286,7 +281,6 @@ document.addEventListener('DOMContentLoaded', function(){
       document.getElementById('drawerEvent').textContent = d.event || '—';
       document.getElementById('drawerPhone').textContent = d.phone || '—';
       document.getElementById('drawerEmail').textContent = d.email || '—';
-      document.getElementById('drawerFrequency').textContent = d.frequency || '—';
       document.getElementById('drawerPledgeDate').textContent = d.pledgeDate || '—';
       document.getElementById('drawerDueDate').textContent = d.dueDate || '—';
       document.getElementById('drawerCreated').textContent = d.created || '—';

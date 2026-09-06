@@ -52,6 +52,7 @@
             data-status="{{ $a->getStatusLabel() }}"
             data-status-key="{{ $a->status }}"
             data-registered="{{ $a->registered_on?->format('d M Y') }}"
+            data-registered-by="{{ $a->registered_by ?? '—' }}"
             data-checked-in="{{ $a->checked_in_at ? 'Yes' : 'No' }}"
             data-fellowship="{{ $a->fellowship ?? '—' }}"
             data-pickup="{{ $a->pickupLocation?->name ?? '—' }}"
@@ -80,6 +81,7 @@
               @if($a->status==='pending')<span class="badge badge-warning badge-dotted" style="margin-left:4px">Needs confirmation</span>@endif
             </td>
             <td>{{ $a->registered_on?->format('d M Y') }}
+              @if($a->registered_by)<div class="badge badge-neutral badge-dotted" style="margin-top:3px">by {{ $a->registered_by }}</div>@endif
               @if($a->checked_in_at)
                 <div class="badge badge-success badge-dotted">Checked in</div>
               @endif
@@ -97,6 +99,7 @@
                           data-method="{{ $a->payment_method }}"
                           data-status="{{ $a->getStatusLabel() }}" data-status-key="{{ $a->status }}"
                           data-registered="{{ $a->registered_on?->format('d M Y') }}"
+                          data-registered-by="{{ $a->registered_by ?? '—' }}"
                           data-checked-in="{{ $a->checked_in_at ? 'Yes' : 'No' }}"
                           data-fellowship="{{ $a->fellowship ?? '—' }}"
                           data-pickup="{{ $a->pickupLocation?->name ?? '—' }}"
@@ -193,6 +196,7 @@
         <div class="info-row"><span>Fellowship</span><b id="attDetailsFellowship">—</b></div>
         <div class="info-row"><span>Coming From</span><b id="attDetailsPickup">—</b></div>
         <div class="info-row"><span>Registered</span><b id="attDetailsRegistered">—</b></div>
+        <div class="info-row"><span>Registered By</span><b id="attDetailsRegisteredBy">—</b></div>
         <div class="info-row"><span>Checked In</span><b id="attDetailsCheckedIn">—</b></div>
         <div class="info-row full"><span>Notes</span><b id="attDetailsNotes" style="white-space:normal">—</b></div>
       </div>
@@ -355,6 +359,7 @@ document.addEventListener('DOMContentLoaded', function(){
     document.getElementById('attDetailsFellowship').textContent = d.fellowship || '—';
     document.getElementById('attDetailsPickup').textContent = d.pickup || '—';
     document.getElementById('attDetailsRegistered').textContent = d.registered || '—';
+    document.getElementById('attDetailsRegisteredBy').textContent = d.registeredBy || '—';
     document.getElementById('attDetailsCheckedIn').textContent = d.checkedIn || '—';
     document.getElementById('attDetailsNotes').textContent = d.notes || '—';
 

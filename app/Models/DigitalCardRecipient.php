@@ -9,7 +9,7 @@ class DigitalCardRecipient extends Model
     protected $fillable = [
         'digital_card_id', 'name', 'phone', 'token', 'short_code',
         'sent_at', 'status', 'message_id', 'message', 'delivery_status',
-        'delivery_checked_at',
+        'delivery_checked_at', 'added_by',
     ];
 
     protected $casts = [

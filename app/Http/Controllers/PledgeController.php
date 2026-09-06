@@ -26,6 +26,11 @@ class PledgeController extends Controller
 
         $query = Pledge::with(['event', 'member', 'payments']);
 
+        $user = auth()->user();
+        if ($user?->isCommitteeMember()) {
+            $query->where('created_by', $user->name);
+        }
+
         $query->when($eventId, fn ($qr) => $qr->where('event_id', $eventId))
             ->when($status, fn ($qr) => $qr->where('status', $status))
             ->when($q !== '', fn ($qr) => $qr->where(fn ($w) => $w
@@ -35,10 +40,15 @@ class PledgeController extends Controller
 
         $pledges = $query->orderByDesc('pledge_date')->paginate(15)->withQueryString();
 
+        $totalsQuery = Pledge::query();
+        if ($user?->isCommitteeMember()) {
+            $totalsQuery->where('created_by', $user->name);
+        }
+
         $totals = [
-            'pledged' => (clone $query)->whereIn('status', ['pending', 'partial', 'fulfilled'])->sum('amount'),
-            'paid' => (clone $query)->whereIn('status', ['pending', 'partial', 'fulfilled'])->sum('paid_amount'),
-            'outstanding' => Pledge::whereIn('status', ['pending', 'partial'])
+            'pledged' => (clone $totalsQuery)->whereIn('status', ['pending', 'partial', 'fulfilled'])->sum('amount'),
+            'paid' => (clone $totalsQuery)->whereIn('status', ['pending', 'partial', 'fulfilled'])->sum('paid_amount'),
+            'outstanding' => (clone $totalsQuery)->whereIn('status', ['pending', 'partial'])
                 ->get()->sum(fn ($p) => $p->getRemainingAttribute()),
         ];
 
@@ -51,7 +61,6 @@ class PledgeController extends Controller
             'campEvent' => $campEvent,
             'members' => Member::active()->orderBy('name')->get(),
             'statuses' => Pledge::statuses(),
-            'frequencies' => Pledge::frequencies(),
             'filters' => compact('eventSlug', 'status', 'q'),
             'totals' => $totals,
         ]);
@@ -65,7 +74,6 @@ class PledgeController extends Controller
             'email' => 'nullable|email',
             'phone' => 'nullable|string|max:20',
             'amount' => 'required|numeric|min:1',
-            'frequency' => 'required|in:one_time,monthly,weekly',
             'notes' => 'nullable|string',
             'pledge_date' => 'required|date',
             'due_date' => 'nullable|date|after_or_equal:pledge_date',
@@ -77,6 +85,7 @@ class PledgeController extends Controller
         $data['pledge_no'] = Pledge::nextPledgeNo();
         $data['paid_amount'] = 0;
         $data['status'] = 'pending';
+        $data['frequency'] = $data['frequency'] ?? 'one_time';
         $data['created_by'] = auth()->user()?->name;
 
         $pledge = Pledge::create($data);

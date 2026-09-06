@@ -28,8 +28,15 @@ class DigitalCardController extends Controller
         $delivery = $request->query('delivery');
         $q = trim((string) $request->query('q'));
 
+        $user = auth()->user();
+        $recipientsBase = $card->recipients()->getQuery();
+
+        if ($user?->isCommitteeMember()) {
+            $recipientsBase->where('added_by', $user->name);
+        }
+
         $query = $this->applyInviteFilters(
-            $card->recipients(),
+            clone $recipientsBase,
             $status,
             $delivery,
             $q
@@ -38,13 +45,13 @@ class DigitalCardController extends Controller
         $recipients = $query->latest('created_at')->paginate(15)->withQueryString();
 
         $totals = [
-            'total' => $card->recipients()->count(),
-            'invited' => $card->recipients()->where('status', 'invited')->count(),
-            'failed' => $card->recipients()->where('status', 'failed')->count(),
-            'pending' => $card->recipients()
+            'total' => (clone $recipientsBase)->count(),
+            'invited' => (clone $recipientsBase)->where('status', 'invited')->count(),
+            'failed' => (clone $recipientsBase)->where('status', 'failed')->count(),
+            'pending' => (clone $recipientsBase)
                 ->where(fn ($w) => $w->whereNull('status')->orWhere('status', 'pending'))
                 ->count(),
-            'delivered' => $card->recipients()->where('delivery_status', 'delivered')->count(),
+            'delivered' => (clone $recipientsBase)->where('delivery_status', 'delivered')->count(),
         ];
 
         $filters = ['q' => $q, 'status' => $status, 'delivery' => $delivery];
@@ -154,6 +161,7 @@ class DigitalCardController extends Controller
                 ...$data,
                 'digital_card_id' => $card->id,
                 'journal_entry_id' => $entry->id,
+                'recorded_by' => auth()->user()?->name,
                 'status' => 'confirmed',
             ]);
 
@@ -445,6 +453,7 @@ class DigitalCardController extends Controller
             'sent_at' => $r->sent_at?->format('d M Y H:i') ?: 'Not sent',
             'link' => $r->short_link,
             'token' => $r->token,
+            'added_by' => $r->added_by,
         ];
     }
 
@@ -481,6 +490,7 @@ class DigitalCardController extends Controller
                 'name' => ($invitee['name'] ?? '') !== '' ? $invitee['name'] : null,
                 'phone' => $invitee['phone'],
                 'status' => 'pending',
+                'added_by' => auth()->user()?->name,
             ]);
 
             $existingPhones[$invitee['phone']] = true;
@@ -748,8 +758,13 @@ class DigitalCardController extends Controller
     {
         $card = $this->currentCard();
 
+        $query = $card->recipients()->getQuery();
+        if (auth()->user()?->isCommitteeMember()) {
+            $query->where('added_by', auth()->user()->name);
+        }
+
         $query = $this->applyInviteFilters(
-            $card->recipients(),
+            $query,
             $request->query('status'),
             $request->query('delivery'),
             trim((string) $request->query('q'))
@@ -984,6 +999,7 @@ class DigitalCardController extends Controller
                 ...$data,
                 'digital_card_id' => $card->id,
                 'journal_entry_id' => $entry->id,
+                'recorded_by' => auth()->user()?->name ?? 'Public',
                 'status' => 'confirmed',
             ]);
 

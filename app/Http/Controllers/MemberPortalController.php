@@ -175,6 +175,7 @@ class MemberPortalController extends Controller
             'amount_paid' => 0,
             'fee_amount' => 10000,
             'registered_on' => now()->toDateString(),
+            'registered_by' => $member->name,
         ]);
 
         AuditLog::record('Registered attendee via portal', 'Member Portal', "{$attendee->name} ({$event->title})");
