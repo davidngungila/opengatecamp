@@ -40,6 +40,15 @@
         <div class="field full"><label>Recipients Label *</label>
           <input name="recipients" required value="{{ old('recipients', session('templateName', 'All Active Members')) }}" placeholder="e.g. Youth Group, Payment Reminders" id="recipientsLabel">
         </div>
+        <div class="field full">
+          <label>Template <span style="font-weight:400;color:var(--text-tertiary)">(optional — loads a saved template)</span></label>
+          <select id="templateSelect" style="width:100%" onchange="onTemplateSelect(this)">
+            <option value="">— Choose a template —</option>
+            @foreach($templates as $tpl)
+            <option value="{{ $tpl->id }}">{{ $tpl->name }}</option>
+            @endforeach
+          </select>
+        </div>
         <div class="field full"><label>Message *</label>
           <textarea name="message" required placeholder="Type your message here..." style="min-height:140px" id="smsMessage" oninput="updateSmsCount()">{{ old('message', session('template', '')) }}</textarea>
           <div style="display:flex;justify-content:space-between;margin-top:4px">
@@ -120,7 +129,24 @@
 var recipientsData = [];
 var groupOptions = @json($groups->map(fn($g) => ['id'=>$g->id,'name'=>$g->name])->toArray());
 var ministryOptions = @json($ministries->map(fn($m) => ['id'=>$m->id,'name'=>$m->name])->toArray());
+var smsTemplates = @json($templates->map(fn($t) => ['id'=>$t->id,'name'=>$t->name,'message'=>$t->message])->values()->toArray());
 var recipientDrawer = document.getElementById('recipientDrawer');
+
+function onTemplateSelect(sel) {
+  var id = sel.value;
+  if (!id) return;
+  var tpl = smsTemplates.find(function(t){ return String(t.id) === String(id); });
+  if (!tpl) return;
+  var msg = document.getElementById('smsMessage');
+  var lbl = document.getElementById('recipientsLabel');
+  msg.value = tpl.message;
+  if (lbl && tpl.name && String(lbl.value).trim() === '') {
+    lbl.value = tpl.name;
+  }
+  sel.value = '';
+  updateSmsCount();
+  toast('Template loaded — review and edit before sending', 'info');
+}
 
 function onRecipientTypeChange(sel) {
   var wrap = document.getElementById('filterValueWrap');

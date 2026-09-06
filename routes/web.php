@@ -181,7 +181,6 @@ Route::middleware(['auth', 'committee.readonly'])->group(function () {
     Route::middleware('not.committee')->group(function () {
         Route::get('/messaging', fn () => redirect()->route('messaging.sms'))->name('messaging.index');
         Route::get('/messaging/sms', [MessagingController::class, 'sms'])->name('messaging.sms');
-        Route::get('/messaging/email', [MessagingController::class, 'email'])->name('messaging.email');
         Route::get('/messaging/notifications', [MessagingController::class, 'notifications'])->name('messaging.notifications');
         Route::post('/messaging/notifications/mark-all-read', [MessagingController::class, 'markAllNotificationsRead'])->name('messaging.notifications.mark-all-read');
         Route::get('/messaging/history', [MessagingController::class, 'history'])->name('messaging.history');

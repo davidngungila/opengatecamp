@@ -29,12 +29,9 @@ class MessagingController extends Controller
 
     public function sms()
     {
-        return view('messaging.sms', $this->sharedData());
-    }
-
-    public function email()
-    {
-        return view('messaging.email', $this->sharedData());
+        return view('messaging.sms', $this->sharedData() + [
+            'templates' => MessageTemplate::latest()->get(),
+        ]);
     }
 
     public function notifications()
