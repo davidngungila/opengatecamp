@@ -14,7 +14,7 @@
     <div><h2>Digital Cards</h2><div class="sub">
       {{ $totals['invited'] }} invited · {{ $totals['delivered'] }} delivered · {{ $totals['failed'] }} failed · {{ $totals['pending'] }} pending
     </div></div>
-    <button type="button" class="btn btn-accent" data-drawer-open="inviteNewDrawer">Add List</button>
+<button type="button" class="btn btn-accent" data-drawer-open="inviteNewDrawer">Invite New</button>
   </div>
 
   <form class="toolbar" method="GET" action="{{ route('cards.index') }}">
@@ -104,7 +104,7 @@
             </td>
           </tr>
           @empty
-          <tr><td colspan="6"><div class="empty-state" style="padding:40px 20px"><h3>No invitations yet</h3><p>Add a list first, then send SMS invites with each person's short card link.</p><button type="button" class="btn btn-accent" data-drawer-open="inviteNewDrawer">Add List</button></div></td></tr>
+          <tr><td colspan="6"><div class="empty-state" style="padding:40px 20px"><h3>No invitations yet</h3><p>Add a list first, then send SMS invites with each person's short card link.</p><button type="button" class="btn btn-accent" data-drawer-open="inviteNewDrawer">Invite New</button></div></td></tr>
           @endforelse
         </tbody>
       </table>
@@ -119,16 +119,22 @@
 <div class="drawer-overlay" id="inviteNewDrawer">
   <div class="drawer-panel">
     <div class="drawer-head">
-      <div><h3>Add List</h3><p>Add people to the pending list. Send the SMS invites afterwards in bulk (below) or from the card details page.</p></div>
+      <div><h3>Invite New</h3><p>Captured automatically against {{ $currentEventName }}</p></div>
       <button type="button" class="modal-close" data-drawer-close><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><path d="M18 6L6 18M6 6l12 12"/></svg></button>
     </div>
     <div class="drawer-body">
-      <div class="text-muted" style="font-size:12px;margin-bottom:10px">Records one person at a time. Each phone number can only have one card — duplicates will be skipped. SMS is sent later in bulk.</div>
-      <div id="smsInviteRows"></div>
+      <div style="font-size:12.5px;color:var(--text-secondary);line-height:1.55;margin-bottom:14px">
+        <div>Add people to the pending list. Send the SMS invites afterwards in bulk (below) or from the card details page.</div>
+        <div style="margin-top:4px">Records one person at a time. Each phone number can only have one card — duplicates will be skipped. SMS is sent later in bulk.</div>
+      </div>
+      <div class="form-grid">
+        <div class="field"><label>Full Name</label><input class="inv-name" id="invNewName" placeholder="Full name"></div>
+        <div class="field"><label>Phone</label><input class="inv-phone" id="invNewPhone" placeholder="+255 7XX XXX XXX"></div>
+      </div>
     </div>
     <div class="drawer-foot">
       <button type="button" class="btn btn-secondary" data-drawer-close>Cancel</button>
-      <button type="submit" class="btn btn-accent" id="addListBtn">Save List</button>
+      <button type="submit" class="btn btn-accent" id="addListBtn">Add to List</button>
     </div>
   </div>
 </div>
@@ -201,8 +207,6 @@
 </div>
 
 <style>
-  .invite-row{display:grid;grid-template-columns:1.5fr 1fr auto;gap:8px;margin-bottom:8px;}
-  @media (max-width:600px){.invite-row{grid-template-columns:1fr 1fr auto;}}
   .drawer-panel-lg{max-width:860px!important;width:100%;}
   .drawer-panel-lg .drawer-body{display:flex;flex-direction:column;background:#0b1120;padding:0;}
   .drawer-panel-lg iframe{flex:1;}
@@ -214,18 +218,11 @@
 (function(){
   var openInviteId = null;
 
-  function inviteRowHtml(){
-    return '<div class="invite-row">' +
-      '<input class="inv-name" placeholder="Full Name">' +
-      '<input class="inv-phone" placeholder="+255 7XX XXX XXX">' +
-      '</div>';
-  }
-
-  function resetInviteRows(){
-    var box = document.getElementById('smsInviteRows');
-    if (!box) return;
-    box.innerHTML = '';
-    box.insertAdjacentHTML('beforeend', inviteRowHtml());
+  function resetInviteForm(){
+    var name = document.getElementById('invNewName');
+    var phone = document.getElementById('invNewPhone');
+    if (name) name.value = '';
+    if (phone) phone.value = '';
   }
   window.copyInviteLink = function(id){
     var tr = document.querySelector('[data-view-invite][data-id="' + id + '"]');
@@ -237,15 +234,13 @@
   };
 
   document.addEventListener('DOMContentLoaded', function(){
-    resetInviteRows();
+    resetInviteForm();
 
     function collectInvitees(){
       var invitees = [];
-      document.querySelectorAll('#smsInviteRows .invite-row').forEach(function(row){
-        var name = row.querySelector('.inv-name').value.trim();
-        var phone = row.querySelector('.inv-phone').value.replace(/[^+\d]/g, '');
-        if (phone) invitees.push({ name: name, phone: phone });
-      });
+      var name = (document.getElementById('invNewName') || { value: '' }).value.trim();
+      var phone = (document.getElementById('invNewPhone') || { value: '' }).value.replace(/[^+\d]/g, '');
+      if (phone) invitees.push({ name: name, phone: phone });
       return invitees;
     }
 
@@ -272,8 +267,8 @@
       .then(function(r){ return r.json(); })
       .then(function(j){
         listBtn.disabled = false;
-        listBtn.textContent = 'Save List';
-        resetInviteRows();
+        listBtn.textContent = 'Add to List';
+        resetInviteForm();
         if (j && j.ok) { toast(j.message || successLabel, 'success'); }
         else { toast((j && j.message) || 'Action could not be completed', 'error'); }
         if (j && j.recipients && j.recipients.length) {
@@ -283,7 +278,7 @@
       })
       .catch(function(){
         listBtn.disabled = false;
-        listBtn.textContent = 'Save List';
+        listBtn.textContent = 'Add to List';
         toast('Could not complete the action. Please try again.', 'error');
       });
     }
