@@ -24,7 +24,7 @@ class UserController extends Controller
             'users' => User::with('role')->orderBy('name')->get(),
             'roles' => Role::withCount('users')->orderBy('id')->get(),
             'permissions' => Role::PERMISSIONS,
-            'welcomeMessage' => (string) Setting::get('users.welcome_message', 'Karibu {name}! Your OpenGate Camp Connect account is ready. Login at https://opengatecamp.iccrtz.org/login with your phone number.'),
+            'welcomeMessage' => (string) Setting::get('users.welcome_message', (string) MessageTemplate::render('member_welcome')),
         ]);
     }
 
@@ -129,7 +129,7 @@ class UserController extends Controller
 
         if ($template === '') {
             $template = MessageTemplate::forUsage('member_welcome', ['name' => $user->name, 'phone' => $user->phone ?? ''])
-                ?? (string) Setting::get('users.welcome_message', 'Karibu {name}! Your OpenGate Camp Connect account is ready. Login at https://opengatecamp.iccrtz.org/login with your phone number.');
+                ?? (string) Setting::get('users.welcome_message', (string) MessageTemplate::render('member_welcome'));
         }
 
         $message = str_replace(
@@ -231,7 +231,7 @@ class UserController extends Controller
     private function resolveMessage(User $user): string
     {
         $template = MessageTemplate::forUsage('member_welcome', ['name' => $user->name, 'phone' => $user->phone ?? ''])
-            ?? (string) Setting::get('users.welcome_message', 'Karibu {name}! Your OpenGate Camp Connect account is ready. Login at https://opengatecamp.iccrtz.org/login with your phone number.');
+            ?? (string) Setting::get('users.welcome_message', (string) MessageTemplate::render('member_welcome'));
 
         return str_replace(
             ['{name}', '{phone}'],
