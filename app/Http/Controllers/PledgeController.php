@@ -6,6 +6,7 @@ use App\Models\AuditLog;
 use App\Models\Event;
 use App\Models\Member;
 use App\Models\Message;
+use App\Models\MessageTemplate;
 use App\Models\Pledge;
 use App\Models\PledgePayment;
 use App\Services\AccountingPostingService;
@@ -125,18 +126,28 @@ class PledgeController extends Controller
 
         $event = $pledge->event?->title ?? 'Open Gate Camp';
         $remaining = max(0, (float) $pledge->amount - (float) $pledge->paid_amount);
+        $fulfilled = empty($remaining) || $pledge->status === 'fulfilled';
+
+        $placeholders = [
+            'name'      => $pledge->name,
+            'event'     => $event,
+            'amount'    => number_format($pledge->amount),
+            'paid'      => number_format($pledge->paid_amount),
+            'remaining' => number_format($remaining),
+        ];
 
         if ($type === 'remind') {
-            $msg = empty($remaining) || $pledge->status === 'fulfilled'
-                ? "Asante {$pledge->name}! Umekamilisha ahadi yako ya TZS ".number_format($pledge->amount)
-                    ." kwa \"{$event}\". Mungu akubariki, na asante kwa moyo wako wa kutoa. — OpenGate Camp Connect"
-                : "Reminder {$pledge->name}: ahadi yako ya TZS ".number_format($pledge->amount)
-                    ." kwa \"{$event}\" ina salio la TZS ".number_format($remaining).'.'
-                    .($pledge->due_date ? ' Tarehe ya mwisho '.$pledge->due_date->format('d/m/Y').'.' : '')
-                    .' Tunakuomba ukamilishe ahadi yako. Asante! — OpenGate Camp Connect';
+            $msg = MessageTemplate::render(
+                $fulfilled ? 'pledge_fulfilled' : 'pledge_reminder',
+                $placeholders
+            ) ?? ($fulfilled
+                ? "Asante {$pledge->name}! Umekamilisha ahadi yako ya TZS ".number_format($pledge->amount)." kwa \"{$event}\". Mungu akubariki, na asante kwa moyo wako wa kutoa. — OpenGate Camp Connect"
+                : "Reminder {$pledge->name}: ahadi yako ya TZS ".number_format($pledge->amount)." kwa \"{$event}\" ina salio la TZS ".number_format($remaining).". Tunakuomba ukamilishe ahadi yako. Asante! — OpenGate Camp Connect");
         } else {
-            $msg = "Shukrani {$pledge->name}, tumepokea ahadi yako ya TZS ".number_format($pledge->amount)
-                ." kwa \"{$event}\". Tunakushukuru kwa moyo wako wa kutoa! Mungu akubariki. — OpenGate Camp Connect";
+            $msg = MessageTemplate::render(
+                $fulfilled ? 'pledge_fulfilled' : 'pledge_received',
+                $placeholders
+            ) ?? "Shukrani {$pledge->name}, tumepokea ahadi yako ya TZS ".number_format($pledge->amount)." kwa \"{$event}\". Tunakushukuru kwa moyo wako wa kutoa! Mungu akubariki. — OpenGate Camp Connect";
         }
 
         $result = $sms->send($pledge->phone, $msg);
@@ -214,13 +225,22 @@ class PledgeController extends Controller
             $sms = new SmsService();
 
             if ($sms->isConfigured()) {
-                $event = $pledge->event?->title ?? 'OpenGate Camp Connect';
+                $event = $pledge->event?->title ?? 'Open Gate Camp';
                 $remaining = $pledge->getRemainingAttribute();
+                $fulfilled = $pledge->status === 'fulfilled';
 
-                $msg = "Asante {$pledge->name}, tumepokea mchango wako wa TSH ".number_format($payment->amount)
-                    ." kuongezea ahadi yako. Kwaajili ya \"{$event}\"."
-                    .($remaining > 0 ? ' Salio lako ni TSH '.number_format($remaining).'.' : ' Ahadi yako imekamilika. Asante sana!')
-                    .' Mungu akubariki. — OpenGate Camp Connect';
+                $placeholders = [
+                    'name'      => $pledge->name,
+                    'event'     => $event,
+                    'amount'    => number_format($payment->amount),
+                    'remaining' => number_format($remaining),
+                ];
+
+                $msg = MessageTemplate::render(
+                    $fulfilled ? 'pledge_fulfilled' : 'pledge_received',
+                    $placeholders
+                ) ?? "Asante {$pledge->name}, tumepokea mchango wako wa TSH ".number_format($payment->amount)
+                    ." kuongezea ahadi yako. Kwaajili ya \"{$event}\". Mungu akubariki. — OpenGate Camp Connect";
 
                 $result = $sms->send($pledge->phone, $msg);
 

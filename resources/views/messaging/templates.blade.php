@@ -22,7 +22,7 @@
                 <div class="cell-avatar">{{ collect(explode(' ', $t->name ?? '?'))->map(fn($w) => mb_substr($w, 0, 1))->take(2)->implode('') }}</div>
                 <div>
                   <div class="cu-name">{{ $t->name }}</div>
-                  <div class="cu-sub">Saved by {{ $t->created_by ?? 'System' }}</div>
+                  <div class="cu-sub">Saved by {{ $t->created_by ?? 'System' }}@if($t->key) · <code style="font-size:11px">{{ $t->key }}</code>@endif</div>
                 </div>
               </div>
             </td>
@@ -43,6 +43,7 @@
                   </form>
                   <button type="button" data-tpl-details data-id="{{ $t->id }}">Details</button>
                   <button type="button" data-tpl-copy data-text="{{ $t->message }}">Copy</button>
+                  <button type="button" data-tpl-edit data-id="{{ $t->id }}">Edit</button>
                   <form method="POST" action="{{ route('messaging.templates.destroy', $t->id) }}" data-confirm
                         data-confirm-title="Delete template?"
                         data-confirm-message="This template will be permanently removed. This cannot be undone."
@@ -82,7 +83,7 @@
           <div class="field full"><label>Message *</label>
             <textarea name="message" required maxlength="2000" placeholder="Type your template here. You can use placeholders like {name}, {event}, {date}..." style="min-height:110px" id="newTplMsg" oninput="updateTplCount()">{{ old('message') }}</textarea>
             <div style="display:flex;justify-content:space-between;margin-top:4px">
-              <small style="color:var(--text-muted)">Placeholders: {name} {event} {date} {venue} {campaign} {balance} {amount} {sacrament}</small>
+              <small style="color:var(--text-muted)">Placeholders: {name} {event} {year} {venue} {amount} {paid} {remaining} {link}</small>
               <small id="tplCount" style="font-weight:700;color:var(--text-secondary)">0 / 2000</small>
             </div>
           </div>
@@ -91,6 +92,38 @@
       <div class="drawer-foot">
         <button type="button" class="btn btn-secondary" data-drawer-close>Cancel</button>
         <button type="submit" class="btn btn-accent">Save Template</button>
+      </div>
+    </form>
+  </div>
+</div>
+
+{{-- Edit template drawer --}}
+<div class="drawer-overlay" id="tplEditDrawer">
+  <div class="drawer-panel">
+    <div class="drawer-head">
+      <div><h3>Edit Template</h3><p>Update the name and message. Saving updates all future messages sent from this template.</p></div>
+      <button type="button" class="modal-close" data-drawer-close><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><path d="M18 6L6 18M6 6l12 12"/></svg></button>
+    </div>
+    <form method="POST" action="" id="tplEditForm">
+      @csrf
+      @method('PUT')
+      <div class="drawer-body">
+        <div class="form-grid">
+          <div class="field full"><label>Template Name *</label>
+            <input name="name" required maxlength="120" id="tplEditName">
+          </div>
+          <div class="field full"><label>Message *</label>
+            <textarea name="message" required maxlength="2000" style="min-height:110px" id="tplEditMsg">{{ old('message') }}</textarea>
+            <div style="display:flex;justify-content:space-between;margin-top:4px">
+              <small style="color:var(--text-muted)">Placeholders: {name} {event} {year} {venue} {amount} {paid} {remaining} {link}</small>
+              <small id="tplEditCount" style="font-weight:700;color:var(--text-secondary)">0 / 2000</small>
+            </div>
+          </div>
+        </div>
+      </div>
+      <div class="drawer-foot">
+        <button type="button" class="btn btn-secondary" data-drawer-close>Cancel</button>
+        <button type="submit" class="btn btn-accent">Save Changes</button>
       </div>
     </form>
   </div>
@@ -108,7 +141,7 @@
       <div style="margin-top:8px;background:var(--bg-muted,#f8fafc);border:1px solid var(--border,#e5e7eb);border-radius:10px;padding:16px 18px;white-space:pre-wrap;word-break:break-word;line-height:1.7;font-size:14px" id="tplDBody">—</div>
       <div style="margin-top:18px">
         <div style="font-size:11px;font-weight:700;letter-spacing:.05em;text-transform:uppercase;color:var(--text-tertiary)">Placeholders</div>
-        <p style="font-size:12.5px;color:var(--text-secondary);margin:6px 0 0;line-height:1.7">You can use <code>{name}</code>, <code>{event}</code>, <code>{date}</code>, <code>{venue}</code>, <code>{campaign}</code>, <code>{balance}</code>, <code>{amount}</code> and <code>{sacrament}</code>. They are replaced with real member data when sending.</p>
+        <p style="font-size:12.5px;color:var(--text-secondary);margin:6px 0 0;line-height:1.7">You can use <code>{name}</code>, <code>{event}</code>, <code>{year}</code>, <code>{venue}</code>, <code>{amount}</code>, <code>{paid}</code>, <code>{remaining}</code> and <code>{link}</code>. They are replaced with real member data when sending.</p>
       </div>
       <details style="margin-top:18px;border:1px solid var(--border,#e5e7eb);border-radius:10px;padding:14px 18px">
         <summary style="cursor:pointer;font-size:11px;font-weight:700;letter-spacing:.05em;text-transform:uppercase;color:var(--text-secondary)">Template info</summary>
@@ -140,6 +173,7 @@
         'message'    => $t->message,
         'created_by' => $t->created_by ?? '—',
         'created_at' => $t->created_at?->format('d M Y, H:i') ?? '—',
+        'url'        => route('messaging.templates.update', $t->id),
     ]])->toArray();
     $tplDataJson = json_encode($tplData, JSON_HEX_APOS | JSON_HEX_QUOT | JSON_HEX_TAG | JSON_HEX_AMP);
 @endphp
@@ -181,8 +215,31 @@ function updateTplCount() {
   if (el && out) out.textContent = el.value.length + ' / 2000';
 }
 
+function openTplEdit(id) {
+  var d = TPL_DATA[id];
+  if (!d) return;
+  document.getElementById('tplEditName').value = d.name;
+  document.getElementById('tplEditMsg').value = d.message;
+  document.getElementById('tplEditForm').action = d.url;
+  updateTplEditCount();
+  openDrawerById('tplEditDrawer');
+}
+
+function updateTplEditCount() {
+  var el = document.getElementById('tplEditMsg');
+  var out = document.getElementById('tplEditCount');
+  if (el && out) out.textContent = el.value.length + ' / 2000';
+}
+
 document.addEventListener('DOMContentLoaded', function(){
   updateTplCount();
+  updateTplEditCount();
+
+  document.querySelectorAll('[data-tpl-edit]').forEach(function(btn){
+    btn.addEventListener('click', function(){
+      openTplEdit(btn.dataset.id);
+    });
+  });
 
   document.querySelectorAll('[data-view-tpl]').forEach(function(tr){
     tr.addEventListener('click', function(e){

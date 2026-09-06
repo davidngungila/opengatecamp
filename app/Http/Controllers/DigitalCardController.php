@@ -7,6 +7,7 @@ use App\Models\DigitalCard;
 use App\Models\DigitalCardContribution;
 use App\Models\DigitalCardRecipient;
 use App\Models\Message;
+use App\Models\MessageTemplate;
 use App\Models\Pledge;
 use App\Models\Setting;
 use App\Services\AccountingPostingService;
@@ -322,12 +323,16 @@ class DigitalCardController extends Controller
             return back()->with('error', 'These phone numbers already have a digital card. Each contact can only have one card.');
         }
 
+        $card = $recipient->digitalCard;
+
         $sms = app(SmsService::class);
         if (! $sms->isConfigured()) {
             return back()->with('error', 'SMS API token not configured.');
         }
 
-        $template = $card->sms_text ?: 'You are invited! View your digital card and contribute: {link}';
+        $template = $card->sms_text
+            ?: (MessageTemplate::render('card_invite', ['name' => '', 'link' => $recipient->short_link])
+                ?? 'You are invited! View your digital card and contribute: {link}');
         $success = 0;
         $fail = 0;
         $messageIds = [];
@@ -412,9 +417,17 @@ class DigitalCardController extends Controller
     {
         $sms = app(SmsService::class);
 
+        $placeholders = [
+            'name'  => $recipient->name ?? '',
+            'link'  => $recipient->short_link,
+            'event' => (string) Setting::get('event.name', 'Open Gate Camp'),
+            'year'  => (string) (Setting::get('event.start_date') ? date('Y', strtotime(Setting::get('event.start_date'))) : date('Y')),
+            'venue' => (string) Setting::get('event.venue', 'Arusha'),
+        ];
+
         $msg = str_replace(
-            ['{link}', '{name}'],
-            [$recipient->short_link, $recipient->name ?? ''],
+            array_map(fn ($k) => '{'.$k.'}', array_keys($placeholders)),
+            array_values($placeholders),
             $template
         );
 
@@ -537,7 +550,9 @@ class DigitalCardController extends Controller
             return back()->with('error', 'SMS API token not configured.');
         }
 
-        $template = $card->sms_text ?: 'You are invited! View your digital card and contribute: {link}';
+        $template = $card->sms_text
+            ?: (MessageTemplate::render('card_invite', ['name' => '', 'link' => null])
+                ?? 'You are invited! View your digital card and contribute: {link}');
         $success = 0;
         $fail = 0;
         $messageIds = [];
@@ -689,10 +704,23 @@ class DigitalCardController extends Controller
             return back()->with('error', 'SMS API token not configured.');
         }
 
-        $template = $card->sms_text ?: 'You are invited! View your digital card and contribute: {link}';
-        $link = $recipient->short_link;
+        $template = $card->sms_text
+            ?: (MessageTemplate::render('card_invite', ['name' => '', 'link' => ''])
+                ?? 'You are invited! View your digital card and contribute: {link}');
 
-        $msg = str_replace(['{link}', '{name}'], [$link, $recipient->name ?? ''], $template);
+        $placeholders = [
+            'name'  => $recipient->name ?? '',
+            'link'  => $recipient->short_link,
+            'event' => (string) Setting::get('event.name', 'Open Gate Camp'),
+            'year'  => (string) (Setting::get('event.start_date') ? date('Y', strtotime(Setting::get('event.start_date'))) : date('Y')),
+            'venue' => (string) Setting::get('event.venue', 'Arusha'),
+        ];
+
+        $msg = str_replace(
+            array_map(fn ($k) => '{'.$k.'}', array_keys($placeholders)),
+            array_values($placeholders),
+            $template
+        );
         if (($recipient->name ?? '') !== '' && ! str_contains($template, '{name}')) {
             $msg = 'Shukurani '.$recipient->name.', '.$msg;
         }

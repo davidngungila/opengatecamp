@@ -57,15 +57,7 @@ class MessagingController extends Controller
 
     public function templates()
     {
-        if (MessageTemplate::count() === 0) {
-            MessageTemplate::insert(array_map(fn ($tpl) => [
-                'name'       => $tpl[0],
-                'message'    => $tpl[1],
-                'created_by' => 'System',
-                'created_at' => now(),
-                'updated_at' => now(),
-            ], MessageTemplate::defaultTemplates()));
-        }
+        MessageTemplate::seedDefaults();
 
         return view('messaging.templates', $this->sharedData() + [
             'templates' => MessageTemplate::latest()->get(),
@@ -99,6 +91,26 @@ class MessagingController extends Controller
         AuditLog::record('Deleted message template', 'Communication — Templates', $template->name);
 
         return back()->with('success', "Template '{$template->name}' deleted.");
+    }
+
+    public function templateUpdate(Request $request, int $id)
+    {
+        $template = MessageTemplate::findOrFail($id);
+
+        $data = $request->validate([
+            'name'    => 'required|string|max:120',
+            'message' => 'required|string|max:2000',
+        ]);
+
+        $template->update([
+            'name'       => $data['name'],
+            'message'    => $data['message'],
+            'created_by' => auth()->user()?->name ?? $template->created_by,
+        ]);
+
+        AuditLog::record('Updated message template', 'Communication — Templates', $data['name']);
+
+        return back()->with('success', "Template '{$data['name']}' updated.");
     }
 
     public function history(Request $request)

@@ -10,6 +10,7 @@ use App\Models\ReceiptPayment;
 use App\Models\FinancialYear;
 use App\Models\Group;
 use App\Models\Member;
+use App\Models\MessageTemplate;
 use App\Models\Ministry;
 use App\Models\Pledge;
 use App\Models\PledgePayment;
@@ -24,6 +25,8 @@ class DatabaseSeeder extends Seeder
     public function run(): void
     {
         $year = now()->year;
+
+        MessageTemplate::seedDefaults();
 
         FinancialYear::updateOrCreate(
             ['name' => 'FY '.$year],

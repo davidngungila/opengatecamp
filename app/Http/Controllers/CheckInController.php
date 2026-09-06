@@ -5,6 +5,7 @@ namespace App\Http\Controllers;
 use App\Models\AuditLog;
 use App\Models\EventAttendee;
 use App\Models\Message;
+use App\Models\MessageTemplate;
 use App\Services\SmsService;
 use Illuminate\Http\Request;
 
@@ -159,7 +160,11 @@ class CheckInController extends Controller
 
         try {
             $sms = new SmsService();
-            $msg = "Welcome {$attendee->name} to {$attendee->event?->title}! You have been admitted. Enjoy the camp! — OpenGate Camp Connect";
+            $msg = MessageTemplate::render('attendee_welcome', [
+                'name'  => $attendee->name,
+                'event' => $attendee->event?->title,
+                'year'  => $attendee->event?->start_date?->format('Y') ?: date('Y'),
+            ]) ?? "Welcome {$attendee->name} to {$attendee->event?->title}! You have been admitted. Enjoy the camp! — OpenGate Camp Connect";
             $result = $sms->send($attendee->phone, $msg);
 
             Message::create([

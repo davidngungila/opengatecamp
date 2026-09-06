@@ -8,6 +8,7 @@ use App\Models\EventAttendee;
 use App\Models\EventSession;
 use App\Models\Member;
 use App\Models\Message;
+use App\Models\MessageTemplate;
 use App\Models\Pledge;
 use App\Services\AccountingPostingService;
 use App\Services\SmsService;
@@ -232,7 +233,11 @@ class EventController extends Controller
         if ($sendSms && ! empty($attendee->phone)) {
             $sms = new SmsService();
             if ($sms->isConfigured()) {
-                $msg = "Hello {$attendee->name},\nYou are registered for \"{$event->title}\" at {$event->venue}. We look forward to seeing you! — OpenGate Camp Connect";
+                $msg = MessageTemplate::render('attendee_registered', [
+                    'name'  => $attendee->name,
+                    'event' => $event->title,
+                    'year'  => $event->start_date?->format('Y') ?: date('Y'),
+                ]) ?? "Hello {$attendee->name},\nYou are registered for \"{$event->title}\" at {$event->venue}. We look forward to seeing you! — OpenGate Camp Connect";
                 $result = $sms->send($attendee->phone, $msg);
                 Message::create([
                     'channel'          => 'sms',
@@ -310,10 +315,15 @@ class EventController extends Controller
                     }
 
                     $remaining = $balance !== null
-                        ? " Your remaining balance is TZS ".number_format($balance)."."
+                        ? number_format($balance)
                         : '';
-                    $msg = "Hello {$attendee->name},\nWe have received your payment of TZS ".number_format($amount)
-                        ." for \"{$attendee->event?->title}\". Thank you for your support and generosity!".$remaining
+                    $msg = MessageTemplate::render('attendee_payment', [
+                        'name'   => $attendee->name,
+                        'event'  => $attendee->event?->title,
+                        'year'   => $attendee->event?->start_date?->format('Y') ?: date('Y'),
+                        'amount' => number_format($amount),
+                    ]) ?? "Hello {$attendee->name},\nWe have received your payment of TZS ".number_format($amount)
+                        ." for \"{$attendee->event?->title}\". Thank you for your support and generosity!".($remaining !== '' ? " Your remaining balance is TZS {$remaining}." : '')
                         ." — OpenGate Camp Connect";
 
                     $result = $sms->send($attendee->phone, $msg);
