@@ -99,6 +99,7 @@
             data-description="{{ $t->description ?? '' }}"
             data-assignee="{{ $t->assignee_name ?? 'Unassigned' }}"
             data-assigned-by="{{ $t->assignedBy?->name ?? '—' }}"
+            data-assignees="{{ $t->assignees->map(fn($a) => ['id' => $a->id, 'name' => $a->name, 'role' => $a->role?->name ?? ''])->values()->toJson(JSON_HEX_APOS | JSON_HEX_QUOT | JSON_HEX_TAG | JSON_HEX_AMP) }}"
             data-deadline="{{ $t->deadline?->format('d M Y') ?? '—' }}"
             data-event="{{ $t->event?->title ?? '—' }}"
             data-priority="{{ $t->getPriorityLabel() }}"
@@ -118,10 +119,11 @@
               </div>
             </td>
             <td>
-              <div class="cu-name" style="font-size:13px">{{ $t->assignee_name ?? '—' }}</div>
-              @if($t->assignee)
-              <div class="cu-sub">{{ $t->assignee->role?->name ?? '' }}</div>
-              @endif
+              @forelse($t->assignees as $a)
+              <span class="badge badge-info badge-dotted" style="margin:1px 2px 1px 0">{{ $a->name }}</span>
+              @empty
+              <span style="color:var(--text-tertiary)">—</span>
+              @endforelse
             </td>
             <td>
               <span style="font-weight:600">{{ $t->deadline?->format('d M') ?? '—' }}</span>
@@ -142,7 +144,7 @@
                 </button>
                 <div class="action-menu" id="am-task-{{ $t->id }}">
                   <button type="button" data-open-progress data-id="{{ $t->id }}" data-title="{{ $t->title }}" data-progress="{{ $t->progress }}" data-status="{{ $t->status }}">Update Progress</button>
-                  <button type="button" data-open-reassign data-id="{{ $t->id }}" data-title="{{ $t->title }}" data-assignee="{{ $t->assignee_id ?? '' }}">Reassign Task</button>
+                  <button type="button" data-open-reassign data-id="{{ $t->id }}" data-title="{{ $t->title }}" data-assignee-ids="{{ $t->assignees->pluck('id')->values()->toJson(JSON_HEX_APOS | JSON_HEX_QUOT | JSON_HEX_TAG | JSON_HEX_AMP) }}">Reassign Task</button>
                   @if(!$isCommittee)
                   <button type="button" data-edit-task data-id="{{ $t->id }}" data-title="{{ $t->title }}" data-description="{{ $t->description ?? '' }}" data-category="{{ $t->category ?? '' }}" data-assignee="{{ $t->assignee_id ?? '' }}" data-deadline="{{ $t->deadline?->format('Y-m-d') ?? '' }}" data-priority="{{ $t->priority }}">Edit</button>
                   <form method="POST" action="{{ route('activities.destroy', $t) }}" data-confirm
@@ -173,7 +175,7 @@
 <div class="drawer-overlay" id="taskNewDrawer">
   <div class="drawer-panel">
     <div class="drawer-head">
-      <div><h3>New Activity / Task</h3><p>Assign against {{ $campEvent?->title ?? \App\Models\Setting::get('event.name', 'Open Gate Camp') }}</p></div>
+      <div><h3>New Activity / Task</h3><p>Assign against {{ $campEvent?->title ?? \App\Models\Setting::get('event.name', 'Open Gate Camp') }} — SMS is sent to every assignee</p></div>
       <button type="button" class="modal-close" data-drawer-close><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><path d="M18 6L6 18M6 6l12 12"/></svg></button>
     </div>
     <form method="POST" action="{{ route('activities.store') }}">
@@ -185,10 +187,9 @@
             <option value="">Select category…</option>
             @foreach($categories as $k=>$c)<option value="{{ $k }}" {{ old('category')===$k ? 'selected' : '' }}>{{ $c }}</option>@endforeach
           </select></div>
-          <div class="field"><label>Assign To</label><select name="assignee_id">
-            <option value="">— Unassigned —</option>
-            @foreach($assignees as $u)<option value="{{ $u->id }}" {{ old('assignee_id')==(string)$u->id ? 'selected' : '' }}>{{ $u->name }} ({{ $u->role?->name ?? 'User' }})</option>@endforeach
-          </select></div>
+          <div class="field full"><label>Assign To</label><select name="assignee_ids[]" multiple size="6">
+            @foreach($assignees as $u)<option value="{{ $u->id }}" {{ is_array(old('assignee_ids')) && in_array($u->id, old('assignee_ids')) ? 'selected' : '' }}>{{ $u->name }} ({{ $u->role?->name ?? 'User' }})</option>@endforeach
+          </select><div class="field-hint">Hold <b>Ctrl</b> (or <b>Cmd</b> on Mac) to select more than one. Every selected member receives the assignment SMS and can report progress.</div></div>
           <div class="field"><label>Deadline</label><input type="date" name="deadline" value="{{ old('deadline') }}"></div>
           <div class="field"><label>Priority</label><select name="priority">
             @foreach($priorities as $k=>$p)<option value="{{ $k }}" {{ old('priority', 'medium')===$k ? 'selected' : '' }}>{{ $p }}</option>@endforeach
@@ -247,10 +248,9 @@
             <option value="">Select category…</option>
             @foreach($categories as $k=>$c)<option value="{{ $k }}">{{ $c }}</option>@endforeach
           </select></div>
-          <div class="field"><label>Assign To</label><select name="assignee_id" id="editTaskAssignee">
-            <option value="">— Unassigned —</option>
+          <div class="field full"><label>Assign To</label><select name="assignee_ids[]" id="editTaskAssignee" multiple size="6">
             @foreach($assignees as $u)<option value="{{ $u->id }}">{{ $u->name }} ({{ $u->role?->name ?? 'User' }})</option>@endforeach
-          </select></div>
+          </select><div class="field-hint">Select one or more members. Only newly-added members receive the SMS.</div></div>
           <div class="field"><label>Deadline</label><input type="date" name="deadline" id="editTaskDeadline"></div>
           <div class="field"><label>Priority</label><select name="priority" id="editTaskPriority">
             @foreach($priorities as $k=>$p)<option value="{{ $k }}">{{ $p }}</option>@endforeach
@@ -277,10 +277,9 @@
       @csrf
       <div class="drawer-body">
         <div class="form-grid">
-          <div class="field full"><label>Assign To (Committee Member) *</label><select name="assignee_id" id="reassignAssignee" required>
-            <option value="">Select member…</option>
+          <div class="field full"><label>Assign To (Committee Members) *</label><select name="assignee_ids[]" id="reassignAssignee" multiple size="6" required>
             @foreach($assignees as $u)<option value="{{ $u->id }}">{{ $u->name }} ({{ $u->role?->name ?? 'User' }})</option>@endforeach
-          </select></div>
+          </select><div class="field-hint">Hold <b>Ctrl</b>/<b>Cmd</b> to select more than one. An SMS is sent to every selected member.</div></div>
           <div class="field full"><label>Note (optional)</label><textarea name="note" rows="2" placeholder="Reason for reassignment"></textarea></div>
         </div>
       </div>
@@ -470,7 +469,8 @@ document.addEventListener('DOMContentLoaded', function(){
       document.getElementById('drawerProgressBtn').dataset.status = d.statusKey;
       document.getElementById('drawerReassignBtn').dataset.id = d.id;
       document.getElementById('drawerReassignBtn').dataset.title = d.title;
-      document.getElementById('drawerReassignBtn').dataset.assignee = d.assignee || '';
+      try { document.getElementById('drawerReassignBtn').dataset.assigneeIds = JSON.stringify((JSON.parse(decodeEntities(d.assignees || '[]'))||[]).map(function(a){ return Number(a.id); })); }
+      catch(err){ document.getElementById('drawerReassignBtn').dataset.assigneeIds = '[]'; }
 
       openDrawerById('taskDetailDrawer');
     });
@@ -495,7 +495,10 @@ document.addEventListener('DOMContentLoaded', function(){
 
   function openReassign(d){
     document.getElementById('reassignTaskTitle').textContent = d.title || '—';
-    document.getElementById('reassignAssignee').value = d.assignee || '';
+    var sel = document.getElementById('reassignAssignee');
+    var ids = [];
+    try { ids = JSON.parse(d.assigneeIds || '[]'); } catch(err){ ids = []; }
+    Array.prototype.forEach.call(sel.options, function(opt){ opt.selected = ids.indexOf(Number(opt.value)) !== -1; });
     document.getElementById('reassignForm').action = "{{ url('/activities-tasks') }}/" + d.id + "/reassign";
     if(document.getElementById('taskDetailDrawer').classList.contains('open')) closeDrawerById('taskDetailDrawer');
     openDrawerById('taskReassignDrawer');

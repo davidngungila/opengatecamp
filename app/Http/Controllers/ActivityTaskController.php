@@ -5,8 +5,10 @@ namespace App\Http\Controllers;
 use App\Models\ActivityTask;
 use App\Models\AuditLog;
 use App\Models\Event;
+use App\Models\MessageTemplate;
 use App\Models\TaskUpdate;
 use App\Models\User;
+use App\Services\SmsService;
 use Illuminate\Http\Request;
 
 class ActivityTaskController extends Controller
@@ -31,7 +33,7 @@ class ActivityTaskController extends Controller
         $query->when($status, fn ($qr) => $qr->where('status', $status))
             ->when($priority, fn ($qr) => $qr->where('priority', $priority))
             ->when($category, fn ($qr) => $qr->where('category', $category))
-            ->when($assignee, fn ($qr) => $qr->where('assignee_id', (int) $assignee))
+            ->when($assignee, fn ($qr) => $qr->whereHas('assignees', fn ($a) => $a->where('users.id', (int) $assignee)))
             ->when($q !== '', fn ($qr) => $qr->where(fn ($w) => $w
                 ->where('title', 'like', "%{$q}%")
                 ->orWhere('task_no', 'like', "%{$q}%")
@@ -81,35 +83,48 @@ class ActivityTaskController extends Controller
             'title' => 'required|string|max:255',
             'description' => 'nullable|string|max:5000',
             'category' => 'nullable|string|max:100',
-            'assignee_id' => 'nullable|exists:users,id',
+            'assignee_ids' => 'nullable|array',
+            'assignee_ids.*' => 'integer|exists:users,id',
             'deadline' => 'nullable|date',
             'priority' => 'required|in:low,medium,high,urgent',
             'event_id' => 'nullable|exists:events,id',
         ]);
 
-        $assignee = isset($data['assignee_id']) ? User::find($data['assignee_id']) : null;
+        $assigneeIds = $data['assignee_ids'] ?? [];
+        $assignees = $assigneeIds ? User::whereIn('id', $assigneeIds)->get() : collect();
 
-        $task = ActivityTask::create($data + [
+        $task = ActivityTask::create([
             'task_no' => ActivityTask::nextTaskNo(),
+            'title' => $data['title'],
+            'description' => $data['description'] ?? null,
+            'category' => $data['category'] ?? null,
             'event_id' => $data['event_id'] ?? Event::currentCamp()?->id,
-            'assignee_name' => $assignee?->name,
+            'assignee_id' => $assignees->first()?->id,
+            'assignee_name' => $assignees->pluck('name')->implode(', '),
             'assigned_by_id' => auth()->id(),
+            'deadline' => $data['deadline'] ?? null,
+            'priority' => $data['priority'],
             'status' => 'open',
             'progress' => 0,
             'created_by' => auth()->user()?->name,
         ]);
+
+        $task->syncAssignees($assigneeIds);
 
         TaskUpdate::create([
             'activity_task_id' => $task->id,
             'user_id' => auth()->id(),
             'user_name' => auth()->user()?->name,
             'type' => 'assignment',
-            'content' => $assignee
-                ? "Assigned to {$assignee->name}".($task->deadline ? " (deadline {$task->deadline->format('d M Y')})" : '').'.'
+            'content' => $assignees->isNotEmpty()
+                ? 'Assigned to '.$assignees->pluck('name')->implode(', ')
+                    .($task->deadline ? " (deadline {$task->deadline->format('d M Y')})" : '').'.'
                 : 'Created — waiting for assignee.',
             'progress' => 0,
-            'new_value' => $assignee?->name,
+            'new_value' => $assignees->pluck('name')->implode(', ') ?: null,
         ]);
+
+        $this->notifyAssignees($task, $assignees);
 
         AuditLog::record('Created task', 'Activities & Tasks', "{$task->task_no} — {$task->title}");
 
@@ -122,26 +137,41 @@ class ActivityTaskController extends Controller
             'title' => 'required|string|max:255',
             'description' => 'nullable|string|max:5000',
             'category' => 'nullable|string|max:100',
-            'assignee_id' => 'nullable|exists:users,id',
+            'assignee_ids' => 'nullable|array',
+            'assignee_ids.*' => 'integer|exists:users,id',
             'deadline' => 'nullable|date',
             'priority' => 'required|in:low,medium,high,urgent',
         ]);
 
-        if (isset($data['assignee_id']) && (int) $data['assignee_id'] !== $task->assignee_id) {
-            $assignee = User::find($data['assignee_id']);
+        $newIds = array_values(array_unique(array_filter($data['assignee_ids'] ?? [])));
+        $assignees = $newIds ? User::whereIn('id', $newIds)->get() : collect();
+        $oldIds = $task->assignees->pluck('id')->map(fn ($id) => (int) $id)->values()->all();
+
+        sort($oldIds);
+        sort($newIds);
+
+        if ($oldIds !== $newIds) {
             TaskUpdate::create([
                 'activity_task_id' => $task->id,
                 'user_id' => auth()->id(),
                 'user_name' => auth()->user()?->name,
                 'type' => 'assignment',
-                'content' => "Task reassigned to {$assignee?->name}.",
+                'content' => 'Assignees updated to: '.($assignees->pluck('name')->implode(', ') ?: 'Unassigned').'.',
                 'old_value' => $task->assignee_name,
-                'new_value' => $assignee?->name,
+                'new_value' => $assignees->pluck('name')->implode(', ') ?: null,
             ]);
-            $data['assignee_name'] = $assignee?->name;
+            $data['assignee_name'] = $assignees->pluck('name')->implode(', ') ?: null;
+            $data['assignee_id'] = $assignees->first()?->id;
         }
 
+        unset($data['assignee_ids']);
+
         $task->update($data);
+        $task->syncAssignees($newIds);
+        $task->loadMissing('assignees');
+
+        $this->notifyAssignees($task, $assignees, array_diff($newIds, $oldIds));
+
         AuditLog::record('Updated task', 'Activities & Tasks', "{$task->task_no} — {$task->title}");
 
         return back()->with('success', "Task {$task->task_no} updated.");
@@ -247,19 +277,21 @@ class ActivityTaskController extends Controller
     public function reassign(Request $request, ActivityTask $task)
     {
         $data = $request->validate([
-            'assignee_id' => 'required|exists:users,id',
+            'assignee_ids' => 'required|array|min:1',
+            'assignee_ids.*' => 'integer|exists:users,id',
             'note' => 'nullable|string|max:1000',
         ]);
 
-        $assignee = User::find($data['assignee_id']);
+        $assignees = User::whereIn('id', $data['assignee_ids'])->get();
 
-        if (! $assignee) {
-            return back()->with('error', 'Selected assignee was not found.');
-        }
+        $oldIds = $task->assignees->pluck('id')->map(fn ($id) => (int) $id)->values()->all();
+        $newIds = array_values(array_unique(array_filter($data['assignee_ids'])));
 
+        $task->syncAssignees($newIds);
+        $task->loadMissing('assignees');
         $task->update([
-            'assignee_id' => $assignee->id,
-            'assignee_name' => $assignee->name,
+            'assignee_id' => $assignees->first()?->id,
+            'assignee_name' => $assignees->pluck('name')->implode(', ') ?: null,
         ]);
 
         TaskUpdate::create([
@@ -267,14 +299,17 @@ class ActivityTaskController extends Controller
             'user_id' => auth()->id(),
             'user_name' => auth()->user()?->name,
             'type' => 'assignment',
-            'content' => "Task reassigned to {$assignee->name}.".($data['note'] ?? '' ? " Note: {$data['note']}" : ''),
+            'content' => 'Task assigned to '.$assignees->pluck('name')->implode(', ').'.'
+                .($data['note'] ?? '' ? " Note: {$data['note']}" : ''),
             'old_value' => null,
-            'new_value' => $assignee->name,
+            'new_value' => $assignees->pluck('name')->implode(', ') ?: null,
         ]);
 
-        AuditLog::record('Reassigned task', 'Activities & Tasks', "{$task->task_no} → {$assignee->name}");
+        $this->notifyAssignees($task, $assignees, $oldIds ? array_diff($newIds, $oldIds) : $newIds);
 
-        return back()->with('success', "Task {$task->task_no} reassigned to {$assignee->name}.");
+        AuditLog::record('Reassigned task', 'Activities & Tasks', "{$task->task_no} → ".$assignees->pluck('name')->implode(', '));
+
+        return back()->with('success', "Task {$task->task_no} assigned to ".$assignees->pluck('name')->implode(', ').'.');
     }
 
     public function exportCsv(Request $request)
@@ -285,12 +320,12 @@ class ActivityTaskController extends Controller
         $assignee = $request->query('assignee');
         $q = trim((string) $request->query('q'));
 
-        $query = ActivityTask::with('event');
+        $query = ActivityTask::with(['event', 'assignees']);
 
         $query->when($status, fn ($qr) => $qr->where('status', $status))
             ->when($priority, fn ($qr) => $qr->where('priority', $priority))
             ->when($category, fn ($qr) => $qr->where('category', $category))
-            ->when($assignee, fn ($qr) => $qr->where('assignee_id', (int) $assignee))
+            ->when($assignee, fn ($qr) => $qr->whereHas('assignees', fn ($a) => $a->where('users.id', (int) $assignee)))
             ->when($q !== '', fn ($qr) => $qr->where(fn ($w) => $w
                 ->where('title', 'like', "%{$q}%")
                 ->orWhere('task_no', 'like', "%{$q}%")
@@ -326,5 +361,41 @@ class ActivityTaskController extends Controller
             'Content-Type' => 'text/csv; charset=UTF-8',
             'Content-Disposition' => 'attachment; filename=tasks-'.now()->format('Y-m-d-His').'.csv',
         ]);
+    }
+
+    /**
+     * Send the Swahili assignment SMS (with a login link to report progress) to
+     * each newly-assigned user who has a phone number.
+     *
+     * @param  \Illuminate\Support\Collection<int, User>  $assignees
+     */
+    private function notifyAssignees(ActivityTask $task, $assignees, ?array $onlyIds = null): void
+    {
+        $sms = new SmsService();
+
+        if (! $sms->isConfigured()) {
+            return;
+        }
+
+        $event = $task->event ?? Event::currentCamp();
+        foreach ($assignees as $user) {
+            if ($onlyIds !== null && ! in_array((int) $user->id, array_map('intval', $onlyIds), true)) {
+                continue;
+            }
+            if (empty($user->phone)) {
+                continue;
+            }
+
+            $message = MessageTemplate::forUsage('task_assignment', [
+                'name' => $user->name,
+                'task' => $task->title,
+                'event' => $event?->title ?? \App\Models\Setting::get('event.name', 'Open Gate Camp'),
+                'link' => url('/login'),
+            ]);
+
+            if (! empty($message)) {
+                $sms->send($user->phone, $message);
+            }
+        }
     }
 }

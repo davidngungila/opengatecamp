@@ -45,6 +45,10 @@ class MessageTemplateSeeder extends Seeder
                 'name' => 'Digital Card — Contribution Invitation',
                 'message' => "Shaloom {name}. Umoja wa Vyuo Karismatiki Katoliki Tanzania unakualika kushiriki katika uwezeshaji wa {event} {year}, itakayofanyika {venue}, na kuratibiwa kwa ushirikiano na Umoja wa Vyuo wa Jimbo Kuu la Arusha na Jimbo la Moshi.\n\nTazama kadi yako ya mwaliko ya kidijitali na ushiriki katika kutoa mchango wako kwa ajili ya kuwezesha kambi hii, ili Injili iwafikie vijana wengi zaidi.\n\nMchango wako ni muhimu katika kuhakikisha kambi hii inafanikiwa. Mungu akubariki sana.\n\n{link}",
             ],
+            'task_assignment' => [
+                'name' => 'Activity — Assignment Notification',
+                'message' => "Shalomu {name}. Umepewa kazi ya: {task} katika {event}. Tafadhali ingia kwenye mfumo kupitia {link} kuweza kuripoti maendeleo, changamoto na hatua zinazofuata za kazi hiyo. Asante kwa utendaji wako. Mungu akubariki.",
+            ],
         ];
     }
 

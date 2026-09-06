@@ -25,8 +25,27 @@ class ActivityTask extends Model
 
     public function event() { return $this->belongsTo(Event::class); }
     public function assignee() { return $this->belongsTo(User::class, 'assignee_id'); }
+    public function assignees()
+    {
+        return $this->belongsToMany(User::class, 'activity_task_assignees', 'activity_task_id', 'user_id')
+            ->withPivot('assigned_by_id')
+            ->withTimestamps();
+    }
     public function assignedBy() { return $this->belongsTo(User::class, 'assigned_by_id'); }
     public function updates() { return $this->hasMany(TaskUpdate::class, 'activity_task_id')->latest('created_at'); }
+
+    public function syncAssignees(array $userIds, ?int $assignedById = null): void
+    {
+        $assignedById = $assignedById ?? auth()->id();
+        $rows = [];
+        foreach (array_values(array_unique(array_filter($userIds))) as $uid) {
+            $rows[$uid] = [
+                'user_name'      => User::find($uid)?->name,
+                'assigned_by_id' => $assignedById,
+            ];
+        }
+        $this->assignees()->sync($rows);
+    }
 
     public static function statuses(): array
     {

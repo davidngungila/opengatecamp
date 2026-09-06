@@ -98,6 +98,11 @@ class MessageTemplate extends Model
                 'description' => 'Sent to digital card invitees (save list / send pending / resend).',
                 'default' => 'card_invite',
             ],
+            'task_assignment' => [
+                'label' => 'Activity — Assignment notification',
+                'description' => 'Sent automatically to each assignee when an activity/task is created or (re)assigned, with a login link to report progress.',
+                'default' => 'task_assignment',
+            ],
         ];
     }
 
