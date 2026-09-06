@@ -21,12 +21,13 @@ class MessageTemplate extends Model
     }
 
     /**
-     * Upsert the canonical templates by key (idempotent; safe on every request).
+     * Seed only missing canonical templates by key (idempotent; safe on every request).
+     * Existing rows are left untouched so admin edits to name/message persist.
      */
     public static function seedDefaults(): void
     {
         foreach (static::defaultTemplates() as $key => $template) {
-            static::updateOrCreate(
+            static::firstOrCreate(
                 ['key' => $key],
                 ['name' => $template['name'], 'message' => $template['message']]
             );
