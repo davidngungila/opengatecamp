@@ -323,16 +323,13 @@ class DigitalCardController extends Controller
             return back()->with('error', 'These phone numbers already have a digital card. Each contact can only have one card.');
         }
 
-        $card = $recipient->digitalCard;
-
         $sms = app(SmsService::class);
         if (! $sms->isConfigured()) {
             return back()->with('error', 'SMS API token not configured.');
         }
 
-        $template = $card->sms_text
-            ?: (MessageTemplate::forUsage('card_invite', ['name' => '', 'link' => $recipient->short_link])
-                ?? 'You are invited! View your digital card and contribute: {link}');
+        $template = MessageTemplate::forUsage('card_invite', ['name' => '', 'link' => ''])
+            ?? 'You are invited! View your digital card and contribute: {link}';
         $success = 0;
         $fail = 0;
         $messageIds = [];
@@ -479,6 +476,8 @@ class DigitalCardController extends Controller
 
         $invitees = $this->normalizeInvitees($data);
 
+        $invitees = array_slice($invitees, 0, 1);
+
         if (empty($invitees)) {
             return back()->with('error', 'No valid names and phone numbers provided. Fill in Full Name and Phone for each person.');
         }
@@ -550,9 +549,8 @@ class DigitalCardController extends Controller
             return back()->with('error', 'SMS API token not configured.');
         }
 
-        $template = $card->sms_text
-            ?: (MessageTemplate::forUsage('card_invite', ['name' => '', 'link' => null])
-                ?? 'You are invited! View your digital card and contribute: {link}');
+        $template = MessageTemplate::forUsage('card_invite', ['name' => '', 'link' => ''])
+            ?? 'You are invited! View your digital card and contribute: {link}';
         $success = 0;
         $fail = 0;
         $messageIds = [];
@@ -704,9 +702,8 @@ class DigitalCardController extends Controller
             return back()->with('error', 'SMS API token not configured.');
         }
 
-        $template = $card->sms_text
-            ?: (MessageTemplate::render('card_invite', ['name' => '', 'link' => ''])
-                ?? 'You are invited! View your digital card and contribute: {link}');
+        $template = MessageTemplate::forUsage('card_invite', ['name' => '', 'link' => ''])
+            ?? 'You are invited! View your digital card and contribute: {link}';
 
         $placeholders = [
             'name'  => $recipient->name ?? '',

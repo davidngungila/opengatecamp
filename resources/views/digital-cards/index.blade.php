@@ -123,10 +123,7 @@
       <button type="button" class="modal-close" data-drawer-close><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><path d="M18 6L6 18M6 6l12 12"/></svg></button>
     </div>
     <div class="drawer-body">
-      <div style="display:flex;align-items:center;justify-content:space-between;gap:8px;margin-bottom:10px">
-        <div class="text-muted" style="font-size:12px">Each phone number can only have one card — duplicates will be skipped. SMS is sent later in bulk.</div>
-        <button type="button" class="btn btn-secondary btn-sm" onclick="addInviteRow()">+ Add Person</button>
-      </div>
+      <div class="text-muted" style="font-size:12px;margin-bottom:10px">Records one person at a time. Each phone number can only have one card — duplicates will be skipped. SMS is sent later in bulk.</div>
       <div id="smsInviteRows"></div>
     </div>
     <div class="drawer-foot">
@@ -221,7 +218,6 @@
     return '<div class="invite-row">' +
       '<input class="inv-name" placeholder="Full Name">' +
       '<input class="inv-phone" placeholder="+255 7XX XXX XXX">' +
-      '<button type="button" class="btn btn-sm" onclick="removeInviteRow(this)" style="height:38px;padding:0 10px;background:transparent;color:var(--danger)" title="Remove person">&times;</button>' +
       '</div>';
   }
 
@@ -231,13 +227,6 @@
     box.innerHTML = '';
     box.insertAdjacentHTML('beforeend', inviteRowHtml());
   }
-  window.addInviteRow = function(){
-    var box = document.getElementById('smsInviteRows');
-    if (box) box.insertAdjacentHTML('beforeend', inviteRowHtml());
-  };
-  window.removeInviteRow = function(btn){
-    btn.closest('.invite-row').remove();
-  };
   window.copyInviteLink = function(id){
     var tr = document.querySelector('[data-view-invite][data-id="' + id + '"]');
     if (tr && tr.dataset.link) {
