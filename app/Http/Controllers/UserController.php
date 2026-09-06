@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use App\Models\AuditLog;
 use App\Models\Message;
+use App\Models\MessageTemplate;
 use App\Models\Role;
 use App\Models\Setting;
 use App\Models\User;
@@ -124,8 +125,12 @@ class UserController extends Controller
             'welcome_message' => 'nullable|string|max:2000',
         ]);
 
-        $template = trim((string) ($data['welcome_message'] ?? ''))
-            ?: (string) Setting::get('users.welcome_message', 'Karibu {name}! Your OpenGate Camp Connect account is ready. Login at https://opengatecamp.iccrtz.org/login with your phone number.');
+        $template = trim((string) ($data['welcome_message'] ?? ''));
+
+        if ($template === '') {
+            $template = MessageTemplate::forUsage('member_welcome', ['name' => $user->name, 'phone' => $user->phone ?? ''])
+                ?? (string) Setting::get('users.welcome_message', 'Karibu {name}! Your OpenGate Camp Connect account is ready. Login at https://opengatecamp.iccrtz.org/login with your phone number.');
+        }
 
         $message = str_replace(
             ['{name}', '{phone}'],
@@ -225,7 +230,8 @@ class UserController extends Controller
 
     private function resolveMessage(User $user): string
     {
-        $template = (string) Setting::get('users.welcome_message', 'Karibu {name}! Your OpenGate Camp Connect account is ready. Login at https://opengatecamp.iccrtz.org/login with your phone number.');
+        $template = MessageTemplate::forUsage('member_welcome', ['name' => $user->name, 'phone' => $user->phone ?? ''])
+            ?? (string) Setting::get('users.welcome_message', 'Karibu {name}! Your OpenGate Camp Connect account is ready. Login at https://opengatecamp.iccrtz.org/login with your phone number.');
 
         return str_replace(
             ['{name}', '{phone}'],

@@ -45,6 +45,10 @@ class MessageTemplateSeeder extends Seeder
                 'name' => 'Digital Card — Contribution Invitation',
                 'message' => "Shaloom {name}. Umoja wa Vyuo Karismatiki Katoliki Tanzania unakualika kushiriki katika uwezeshaji wa {event} {year}, itakayofanyika {venue}, na kuratibiwa kwa ushirikiano na Umoja wa Vyuo wa Jimbo Kuu la Arusha na Jimbo la Moshi.\n\nTazama kadi yako ya mwaliko ya kidijitali na ushiriki katika kutoa mchango wako kwa ajili ya kuwezesha kambi hii, ili Injili iwafikie vijana wengi zaidi.\n\nMchango wako ni muhimu katika kuhakikisha kambi hii inafanikiwa. Mungu akubariki sana.\n\n{link}",
             ],
+            'member_welcome' => [
+                'name' => 'Member — Portal Welcome',
+                'message' => 'Shaloom {name}! Karibu kwenye mfumo wa Open Gate Camp Connect. Tumia mfumo huu kupata taarifa muhimu na kushiriki katika shughuli za Open Gate Camp Season Three 2026. Ili kuingia kwenye mfumo, tumia namba yako ya simu na nywila (password). Karibu sana na Mungu akubariki!',
+            ],
             'task_assignment' => [
                 'name' => 'Activity — Assignment Notification',
                 'message' => "Shalomu {name}. Umepewa kazi ya: {task} katika {event}. Tafadhali ingia kwenye mfumo kupitia {link} kuweza kuripoti maendeleo, changamoto na hatua zinazofuata za kazi hiyo. Asante kwa utendaji wako. Mungu akubariki.",

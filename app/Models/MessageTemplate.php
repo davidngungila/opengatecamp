@@ -99,6 +99,11 @@ class MessageTemplate extends Model
                 'description' => 'Sent to digital card invitees (save list / send pending / resend).',
                 'default' => 'card_invite',
             ],
+            'member_welcome' => [
+                'label' => 'Member — Portal welcome',
+                'description' => 'Sent from the Users page (Send / Send bulk) when a portal member is welcomed to Open Gate Camp Connect.',
+                'default' => 'member_welcome',
+            ],
             'task_assignment' => [
                 'label' => 'Activity — Assignment notification',
                 'description' => 'Sent automatically to each assignee when an activity/task is created or (re)assigned, with a login link to report progress.',
