@@ -8,6 +8,23 @@
 <div class="fade-in">
   <div class="section-head"><h2>Settings</h2><p style="color:var(--text-secondary);font-size:13px;margin:4px 0 0">Audit Logs</p></div>
 
+  <div class="filter-bar" style="display:flex;gap:10px;flex-wrap:wrap;margin-bottom:16px">
+    <form method="GET" action="{{ route('settings.page.audit') }}" style="display:flex;gap:10px;flex-wrap:wrap;flex:1">
+      <div class="field" style="margin:0;min-width:200px;flex:1">
+        <select name="user_id">
+          <option value="0">All users</option>
+          @foreach($users as $u)
+            <option value="{{ $u->id }}" {{ $selectedUserId == $u->id ? 'selected' : '' }}>{{ $u->name }}</option>
+          @endforeach
+        </select>
+      </div>
+      <button type="submit" class="btn btn-secondary btn-sm">Filter</button>
+      @if($selectedUserId > 0)
+      <a class="btn btn-ghost btn-sm" href="{{ route('settings.page.audit') }}">Reset</a>
+      @endif
+    </form>
+  </div>
+
   <div class="table-card">
     <div class="table-scroll">
       <table class="data-table">

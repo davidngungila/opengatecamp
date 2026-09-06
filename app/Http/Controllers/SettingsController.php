@@ -70,8 +70,19 @@ class SettingsController extends Controller
 
     public function auditPage(Request $request)
     {
+        $selectedUserId = $request->integer('user_id');
+
+        $query = AuditLog::query();
+        if ($selectedUserId > 0) {
+            $query->where('user_id', $selectedUserId);
+        }
+
         return view('settings.pages.audit', [
-            'auditLogs' => AuditLog::latest()->paginate(10, ['*'], 'page', $request->query('page', 1)),
+            'auditLogs' => $query->latest()
+                ->paginate(10, ['*'], 'page', $request->query('page', 1))
+                ->withQueryString(),
+            'users' => User::orderBy('name')->get(['id', 'name']),
+            'selectedUserId' => $selectedUserId,
         ]);
     }
 
