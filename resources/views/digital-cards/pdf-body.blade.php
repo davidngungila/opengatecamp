@@ -55,6 +55,14 @@
         $dark = '#10233F';
         $lightBlue = '#EAF4FF';
         $gold = '#F2C300';
+
+        $cardText = function (string $key, string $default = ''): string {
+            $t = (string) \App\Models\Setting::get($key, $default);
+            $t = e($t);
+            $t = preg_replace('/\*\*(.+?)\*\*/s', '<b>$1</b>', $t);
+
+            return nl2br($t);
+        };
     @endphp
 
 
@@ -174,6 +182,19 @@
         font-weight: 900;
 
         text-transform: uppercase;
+    }
+
+    .campaign-header .kadi {
+        margin-top: 10px;
+
+        font-size: 26px;
+        line-height: 1.1;
+        font-weight: 900;
+        letter-spacing: 4px;
+
+        text-transform: uppercase;
+
+        color: {{ $gold }};
     }
 
 
@@ -451,11 +472,11 @@
         <div class="organization">
 
             <div class="main">
-                UMOJA WA VYUO KARISMATIKI KATOLIKI TANZANIA
+                {{ \App\Models\Setting::get('digital_card.org_main', 'UMOJA WA VYUO KARISMATIKI KATOLIKI TANZANIA') }}
             </div>
 
             <div class="sub">
-                JIMBO KUU KATOLIKI LA ARUSHA NA JIMBO LA MOSHI
+                {{ \App\Models\Setting::get('digital_card.org_sub', 'JIMBO KUU KATOLIKI LA ARUSHA NA JIMBO LA MOSHI') }}
             </div>
 
         </div>
@@ -467,11 +488,15 @@
         <div class="campaign-header">
 
             <div class="small">
-                OPEN GATE CAMP
+                {{ \App\Models\Setting::get('digital_card.campaign_small', 'OPEN GATE CAMP') }}
             </div>
 
             <div class="large">
-                SEASON THREE
+                {{ \App\Models\Setting::get('digital_card.campaign_large', 'SEASON THREE') }}
+            </div>
+
+            <div class="kadi">
+                {{ \App\Models\Setting::get('digital_card.campaign_kadi', 'KADI YA MCHANGO') }}
             </div>
 
         </div>
@@ -483,7 +508,7 @@
         <div class="donor-section">
 
             <div class="donor-title">
-                Ask./Prof./Mch./Mhe./Dkt./Bw. &amp; Bi.
+                {{ \App\Models\Setting::get('digital_card.donor_title', 'Ask./Padr./Prof./Mch./Mhe./Dkt./Bw. & Bi.') }}
             </div>
 
             <div class="donor-name">
@@ -499,33 +524,17 @@
         <div class="body">
 
             <div class="paragraph">
-
-                Tunayo furaha kukualika kushiriki katika
-                <b>Open Gate Camp Season Three</b>,
-                tukio linalolenga kuwaunganisha na kuwajenga
-                vijana wa vyuo katika <b>imani, umoja na maendeleo.</b>
-
+                {!! $cardText('digital_card.body_1', 'Tunayo furaha kukualika kushiriki katika uwezeshaji wa kambi **Open Gate Camp Season Three**, tukio linalolenga kuwaunganisha na kuwajenga vijana wa vyuo katika **imani, umoja na maendeleo**.') !!}
             </div>
 
 
             <div class="paragraph">
-
-                Mwaka huu tunalenga kukusanya
-                <b>TZS 20,000,000/=</b> kwa ajili ya kugharamia
-                mahitaji muhimu ya Camp. Tunaomba mchango wako wa
-                <b>TZS 15,000/= au zaidi</b> ili kwa pamoja tufanikishe
-                huduma hii.
-
+                {!! $cardText('digital_card.body_2', 'Tunahitaji **TZS 20,000,000/=** kwa ajili ya kugharamia mahitaji muhimu ya kambi. Tunaomba mchango wako wa **hali na Mali kwaajili ya kuweza kufanikisha kambi hii** ili kwa pamoja tufanikishe huduma hii na kuwafikia vijana wengi zaidi.') !!}
             </div>
 
 
             <div class="paragraph">
-
-                Mchango wako ni sehemu ya mafanikio ya
-                <b>Open Gate Camp Season Three.</b>
-                Kila kiasi kina thamani na kina mchango katika
-                kuwafikia, kuwaunganisha na kuwajenga vijana.
-
+                {!! $cardText('digital_card.body_3', '**Mchango wako ni sehemu ya mafanikio ya kambi hii Open Gate Camp Season Three.** Kila kiasi kina thamani na kina mchango katika kuwafikia, kuwaunganisha na kuwajenga vijana.') !!}
             </div>
 
         </div>
@@ -536,17 +545,8 @@
         ====================================================== --}}
         <div class="contribution-box">
 
-            @php
-                $noteSecName = (string) \App\Models\Setting::get('digital_card.leader_secretary_name', '');
-                $noteSecPhone = (string) \App\Models\Setting::get('digital_card.leader_secretary_phone', '');
-                $noteTreName = (string) \App\Models\Setting::get('digital_card.leader_treasurer_name', '');
-                $noteTrePhone = (string) \App\Models\Setting::get('digital_card.leader_treasurer_phone', '');
-                $noteSecBlock = ($noteSecName ?: '[Jina]').' — '.($noteSecPhone ?: '[Namba ya Simu]');
-                $noteTreBlock = ($noteTreName ?: '[Jina]').' — '.($noteTrePhone ?: '[Namba ya Simu]');
-            @endphp
             <div class="note">
-                Unaweza kuwasilisha mchango wako sasa kupitia Lipa Namba ya Vodacom: 67676666 au kwa namba ya simu 0756 112 102.<br>
-                Kwa mawasiliano zaidi kuhusu namna ya kuwasilisha mchango wako, wasiliana na Katibu {{ $noteSecBlock }} au Mhazini {{ $noteTreBlock }}.
+                {!! $cardText('digital_card.contribution_note', 'Tunaomba wasilisha mchango wako kupitia: **LIPA NAMBA YA VODA 56945866-MOSHI KARISMATIKI**'."\n".'Kwa maelezo zaidi kuhusu namna ya kuwasilisha mchango wako, wasiliana na **Mhazini Karisma — +255 762 192 129** na **Mhazini Maryciana — +255 618 231 472**') !!}
             </div>
 
         </div>
@@ -560,7 +560,7 @@
             <div class="qr-section">
 
                 <div class="qr-title">
-                    Scan QR Code kuchangia Online
+                    {{ \App\Models\Setting::get('digital_card.qr_title', 'Scan QR Code kuchangia mtandaoni') }}
                 </div>
 
                 <div class="qr">
@@ -580,7 +580,7 @@
         ====================================================== --}}
         <div class="motto">
 
-            “Fungua malango ili taifa lenye haki lipate kuingia” — Isaya 26:2
+            {{ \App\Models\Setting::get('digital_card.motto', '“Fungua malango ili taifa lenye haki lipate kuingia.” — Isaya 26:2') }}
 
         </div>
 
@@ -591,13 +591,13 @@
         <div class="footer">
 
             <div class="contact">
-                OPEN GATE CAMP SEASON THREE
+                {{ \App\Models\Setting::get('digital_card.footer_contact', 'OPEN GATE CAMP SEASON THREE') }}
             </div>
 
             <div class="bottom">
                 {{ $card->card_no }}
                 · OpenGate Camp Connect
-                · Mchango wako una thamani
+                · {{ \App\Models\Setting::get('digital_card.footer_tagline', 'Mchango wako una thamani') }}
             </div>
 
         </div>

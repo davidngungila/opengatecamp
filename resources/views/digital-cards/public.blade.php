@@ -1,3 +1,15 @@
+@php
+    $dcGet = fn (string $k, string $d = '') => (string) \App\Models\Setting::get('digital_card.'.$k, $d);
+    $dcText = function (string $k, string $default = ''): string {
+        $t = \App\Models\Setting::get('digital_card.'.$k, $default);
+        $t = e((string) $t);
+        $t = preg_replace('/\*\*(.+?)\*\*/s', '<b>$1</b>', $t);
+
+        return nl2br($t);
+    };
+    $dcRecipient = trim((string) ($recipient?->name ?: ($recipientName ?? '')));
+    $dcCampaign = trim($dcGet('campaign_small', 'OPEN GATE CAMP').' '.$dcGet('campaign_large', 'SEASON THREE'));
+@endphp
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -105,6 +117,11 @@
   .event-box .evt-name{font-weight:800;font-size:15px;color:#0f172a;margin-bottom:4px;}
   .event-box .evt-meta{font-size:12.5px;color:#5b6472;display:flex;flex-wrap:wrap;gap:12px;}
   .event-box .evt-meta svg{width:13px;height:13px;vertical-align:-2px;margin-right:3px;}
+  .card-tpl p{font-size:14.5px;line-height:1.8;color:#334155;margin:0 0 14px;}
+  .card-tpl p:last-of-type{margin-bottom:16px;}
+  .card-tpl b{color:var(--card-accent);}
+  .card-tpl .pay{margin-bottom:14px;background:rgba(var(--accent-rgb),.07);border:1px solid rgba(var(--accent-rgb),.32);border-radius:12px;padding:13px 15px;font-size:13.5px;line-height:1.75;color:#1f2937;}
+  .card-tpl .motto{font-weight:800;font-style:italic;color:#475569;font-size:13.5px;text-align:center;line-height:1.6;}
   .progress-wrap{margin:28px 0;}
   .progress-head{display:flex;justify-content:space-between;align-items:baseline;margin-bottom:9px;}
   .progress-head .collected{font-size:22px;font-weight:800;color:#111827;}
@@ -324,14 +341,14 @@
           <div class="org-sub">Camp Mission</div>
         </div>
       </div>
-      @if($card->title)
-      <h1 class="title">{{ $card->title }}</h1>
-      @endif
-      @if($card->title || $card->message)
+      <h1 class="title">{{ $dcCampaign }}</h1>
       <div class="ornament"><span class="line"></span><span class="diamond"></span><span class="line"></span></div>
+      <div class="message" style="font-weight:800;letter-spacing:3px;font-size:13px;text-transform:uppercase;opacity:.95">{{ $dcGet('campaign_kadi', 'KADI YA MCHANGO') }}</div>
+      @if($dcRecipient)
+      <div class="message" style="font-weight:800;font-size:clamp(22px,5.5vw,32px);margin-top:10px;text-shadow:0 3px 24px rgba(0,0,0,.35)">{{ $dcGet('donor_title', 'Ask./Padr./Prof./Mch./Mhe./Dkt./Bw. & Bi.') }}<br>{{ $dcRecipient }}</div>
       @endif
-      @if($card->message)
-      <div class="message">{{ $card->message }}</div>
+      @if($card->message || $card->title)
+      <div class="message" style="margin-top:18px">{{ $card->message }}</div>
       @endif
     </div>
   </header>
@@ -345,6 +362,14 @@
         <span>Shukurani {{ $recipient->name }}! This card has been prepared for you.</span>
       </div>
       @endif
+
+      <div class="event-box card-tpl">
+        <p>{!! $dcText('body_1', 'Tunayo furaha kukualika kushiriki katika uwezeshaji wa kambi **Open Gate Camp Season Three**, tukio linalolenga kuwaunganisha na kuwajenga vijana wa vyuo katika **imani, umoja na maendeleo**.') !!}</p>
+        <p>{!! $dcText('body_2', 'Tunahitaji **TZS 20,000,000/=** kwa ajili ya kugharamia mahitaji muhimu ya kambi. Tunaomba mchango wako wa **hali na Mali kwaajili ya kuweza kufanikisha kambi hii** ili kwa pamoja tufanikishe huduma hii na kuwafikia vijana wengi zaidi.') !!}</p>
+        <p>{!! $dcText('body_3', '**Mchango wako ni sehemu ya mafanikio ya kambi hii Open Gate Camp Season Three.** Kila kiasi kina thamani na kina mchango katika kuwafikia, kuwaunganisha na kuwajenga vijana.') !!}</p>
+        <div class="pay">{!! $dcText('contribution_note', 'Tunaomba wasilisha mchango wako kupitia: **LIPA NAMBA YA VODA 56945866-MOSHI KARISMATIKI**'."\n".'Kwa maelezo zaidi kuhusu namna ya kuwasilisha mchango wako, wasiliana na **Mhazini Karisma — +255 762 192 129** na **Mhazini Maryciana — +255 618 231 472**') !!}</div>
+        <div class="motto">{{ $dcGet('motto', '“Fungua malango ili taifa lenye haki lipate kuingia.” — Isaya 26:2') }}</div>
+      </div>
 
       @if($card->event)
       <div class="event-box">
@@ -469,8 +494,8 @@
   </main>
 
   <footer class="footer-org">
-    <strong>OpenGate Camp Connect</strong>
-    <span>UMOJA WA VYUO · KARISMATIKI KATOLIKI TANZANIA · JIMBO LA MOSHI NA ARUSHA</span>
+    <strong>{{ $dcGet('footer_contact', 'OPEN GATE CAMP SEASON THREE') }}</strong>
+    <span>{{ $dcGet('org_main', 'UMOJA WA VYUO KARISMATIKI KATOLIKI TANZANIA') }} · {{ $dcGet('org_sub', 'JIMBO KUU KATOLIKI LA ARUSHA NA JIMBO LA MOSHI') }} · {{ $dcGet('footer_tagline', 'Mchango wako una thamani') }}</span>
   </footer>
 
 <script>

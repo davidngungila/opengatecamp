@@ -7,6 +7,22 @@
 @php
     $s = fn($key, $default = '') => old($key, \App\Models\Setting::get($key, $default));
     $statuses = ['draft' => 'Draft', 'planned' => 'Planned', 'open_registration' => 'Open Registration', 'ongoing' => 'Ongoing', 'completed' => 'Completed', 'cancelled' => 'Cancelled'];
+    $dcDefaults = [
+        'org_main' => 'UMOJA WA VYUO KARISMATIKI KATOLIKI TANZANIA',
+        'org_sub' => 'JIMBO KUU KATOLIKI LA ARUSHA NA JIMBO LA MOSHI',
+        'campaign_small' => 'OPEN GATE CAMP',
+        'campaign_large' => 'SEASON THREE',
+        'campaign_kadi' => 'KADI YA MCHANGO',
+        'donor_title' => 'Ask./Padr./Prof./Mch./Mhe./Dkt./Bw. &amp; Bi.',
+        'body_1' => "Tunayo furaha kukualika kushiriki katika uwezeshaji wa kambi **Open Gate Camp Season Three**, tukio linalolenga kuwaunganisha na kuwajenga vijana wa vyuo katika **imani, umoja na maendeleo**.",
+        'body_2' => "Tunahitaji **TZS 20,000,000/=** kwa ajili ya kugharamia mahitaji muhimu ya kambi. Tunaomba mchango wako wa **hali na Mali kwaajili ya kuweza kufanikisha kambi hii** ili kwa pamoja tufanikishe huduma hii na kuwafikia vijana wengi zaidi.",
+        'body_3' => "**Mchango wako ni sehemu ya mafanikio ya kambi hii Open Gate Camp Season Three.** Kila kiasi kina thamani na kina mchango katika kuwafikia, kuwaunganisha na kuwajenga vijana.",
+        'contribution_note' => "Tunaomba wasilisha mchango wako kupitia: **LIPA NAMBA YA VODA 56945866-MOSHI KARISMATIKI**\nKwa maelezo zaidi kuhusu namna ya kuwasilisha mchango wako, wasiliana na **Mhazini Karisma — +255 762 192 129** na **Mhazini Maryciana — +255 618 231 472**",
+        'qr_title' => 'Scan QR Code kuchangia mtandaoni',
+        'motto' => '“Fungua malango ili taifa lenye haki lipate kuingia.” — Isaya 26:2',
+        'footer_contact' => 'OPEN GATE CAMP SEASON THREE',
+        'footer_tagline' => 'Mchango wako una thamani',
+    ];
 @endphp
 
 @section('content')
@@ -150,6 +166,21 @@
         </div>
         <div class="field full"><label>Card Message</label><textarea name="digital_card_message" rows="3" placeholder="Messages shown on the card the invited person opens">{{ $s('digital_card.message') }}</textarea></div>
         <div class="field full"><label>SMS Template (use {link} and {name} placeholders)</label><textarea name="digital_card_sms_text" rows="3" placeholder="View your special digital card: {link}">{{ $s('digital_card.sms_text') }}</textarea></div>
+        <div class="field full" style="margin-top:4px;padding-top:14px;border-top:1px solid var(--border)"><label style="font-weight:800;font-size:13px">Card Template Text</label><div style="font-size:12px;color:var(--text-tertiary);margin-top:2px">Every word printed on the card, editable below. Wrap words in **text** to make them bold.</div></div>
+        <div class="field"><label>Organization Name</label><input type="text" name="digital_card_org_main" value="{{ $s('digital_card.org_main', $dcDefaults['org_main']) }}"></div>
+        <div class="field"><label>Organization Sub</label><input type="text" name="digital_card_org_sub" value="{{ $s('digital_card.org_sub', $dcDefaults['org_sub']) }}"></div>
+        <div class="field"><label>Campaign (Small)</label><input type="text" name="digital_card_campaign_small" value="{{ $s('digital_card.campaign_small', $dcDefaults['campaign_small']) }}"></div>
+        <div class="field"><label>Campaign (Large)</label><input type="text" name="digital_card_campaign_large" value="{{ $s('digital_card.campaign_large', $dcDefaults['campaign_large']) }}"></div>
+        <div class="field full"><label>Card Heading (Kadi Ya Mchango)</label><input type="text" name="digital_card_campaign_kadi" value="{{ $s('digital_card.campaign_kadi', $dcDefaults['campaign_kadi']) }}"></div>
+        <div class="field full"><label>Donor Salutation</label><input type="text" name="digital_card_donor_title" value="{{ $s('digital_card.donor_title', $dcDefaults['donor_title']) }}"></div>
+        <div class="field full"><label>Paragraph 1</label><textarea name="digital_card_body_1" rows="3">{{ $s('digital_card.body_1', $dcDefaults['body_1']) }}</textarea></div>
+        <div class="field full"><label>Paragraph 2</label><textarea name="digital_card_body_2" rows="3">{{ $s('digital_card.body_2', $dcDefaults['body_2']) }}</textarea></div>
+        <div class="field full"><label>Paragraph 3</label><textarea name="digital_card_body_3" rows="3">{{ $s('digital_card.body_3', $dcDefaults['body_3']) }}</textarea></div>
+        <div class="field full"><label>Contribution Note</label><textarea name="digital_card_contribution_note" rows="5">{{ $s('digital_card.contribution_note', $dcDefaults['contribution_note']) }}</textarea></div>
+        <div class="field"><label>QR Title</label><input type="text" name="digital_card_qr_title" value="{{ $s('digital_card.qr_title', $dcDefaults['qr_title']) }}"></div>
+        <div class="field"><label>Motto</label><input type="text" name="digital_card_motto" value="{{ $s('digital_card.motto', $dcDefaults['motto']) }}"></div>
+        <div class="field"><label>Footer Contact</label><input type="text" name="digital_card_footer_contact" value="{{ $s('digital_card.footer_contact', $dcDefaults['footer_contact']) }}"></div>
+        <div class="field"><label>Footer Tagline</label><input type="text" name="digital_card_footer_tagline" value="{{ $s('digital_card.footer_tagline', $dcDefaults['footer_tagline']) }}"></div>
         <div class="field full" style="margin-top:4px;padding-top:14px;border-top:1px solid var(--border)"><label style="font-weight:800;font-size:13px">Card Signatures</label></div>
         <div class="field full"><label>Leader Name (Event Coordinator)</label><input type="text" name="digital_card_leader_event_name" value="{{ $s('digital_card.leader_event_name') }}" placeholder="Mratibu wa Tukio"></div>
         <div class="field full"><label>Leader Name (Secretary)</label><input type="text" name="digital_card_leader_secretary_name" value="{{ $s('digital_card.leader_secretary_name') }}" placeholder="Katibu"></div>
