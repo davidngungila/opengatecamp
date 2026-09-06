@@ -137,14 +137,14 @@ class PledgeController extends Controller
         ];
 
         if ($type === 'remind') {
-            $msg = MessageTemplate::render(
+            $msg = MessageTemplate::forUsage(
                 $fulfilled ? 'pledge_fulfilled' : 'pledge_reminder',
                 $placeholders
             ) ?? ($fulfilled
                 ? "Asante {$pledge->name}! Umekamilisha ahadi yako ya TZS ".number_format($pledge->amount)." kwa \"{$event}\". Mungu akubariki, na asante kwa moyo wako wa kutoa. — OpenGate Camp Connect"
                 : "Reminder {$pledge->name}: ahadi yako ya TZS ".number_format($pledge->amount)." kwa \"{$event}\" ina salio la TZS ".number_format($remaining).". Tunakuomba ukamilishe ahadi yako. Asante! — OpenGate Camp Connect");
         } else {
-            $msg = MessageTemplate::render(
+            $msg = MessageTemplate::forUsage(
                 $fulfilled ? 'pledge_fulfilled' : 'pledge_received',
                 $placeholders
             ) ?? "Shukrani {$pledge->name}, tumepokea ahadi yako ya TZS ".number_format($pledge->amount)." kwa \"{$event}\". Tunakushukuru kwa moyo wako wa kutoa! Mungu akubariki. — OpenGate Camp Connect";
@@ -236,7 +236,7 @@ class PledgeController extends Controller
                     'remaining' => number_format($remaining),
                 ];
 
-                $msg = MessageTemplate::render(
+                $msg = MessageTemplate::forUsage(
                     $fulfilled ? 'pledge_fulfilled' : 'pledge_received',
                     $placeholders
                 ) ?? "Asante {$pledge->name}, tumepokea mchango wako wa TSH ".number_format($payment->amount)

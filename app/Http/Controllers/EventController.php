@@ -233,7 +233,7 @@ class EventController extends Controller
         if ($sendSms && ! empty($attendee->phone)) {
             $sms = new SmsService();
             if ($sms->isConfigured()) {
-                $msg = MessageTemplate::render('attendee_registered', [
+                $msg = MessageTemplate::forUsage('attendee_registered', [
                     'name'  => $attendee->name,
                     'event' => $event->title,
                     'year'  => $event->start_date?->format('Y') ?: date('Y'),
@@ -317,7 +317,7 @@ class EventController extends Controller
                     $remaining = $balance !== null
                         ? number_format($balance)
                         : '';
-                    $msg = MessageTemplate::render('attendee_payment', [
+                    $msg = MessageTemplate::forUsage('attendee_payment', [
                         'name'   => $attendee->name,
                         'event'  => $attendee->event?->title,
                         'year'   => $attendee->event?->start_date?->format('Y') ?: date('Y'),

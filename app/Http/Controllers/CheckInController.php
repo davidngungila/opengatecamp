@@ -160,7 +160,7 @@ class CheckInController extends Controller
 
         try {
             $sms = new SmsService();
-            $msg = MessageTemplate::render('attendee_welcome', [
+            $msg = MessageTemplate::forUsage('attendee_welcome', [
                 'name'  => $attendee->name,
                 'event' => $attendee->event?->title,
                 'year'  => $attendee->event?->start_date?->format('Y') ?: date('Y'),

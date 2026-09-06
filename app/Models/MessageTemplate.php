@@ -2,6 +2,7 @@
 
 namespace App\Models;
 
+use Database\Seeders\MessageTemplateSeeder;
 use Illuminate\Database\Eloquent\Model;
 
 class MessageTemplate extends Model
@@ -10,40 +11,13 @@ class MessageTemplate extends Model
 
     /**
      * Canonical templates keyed so automated flows can render messages from them.
+     * Source of truth lives in Database\Seeders\MessageTemplateSeeder so the data
+     * can be re-seeded independently (php artisan db:seed --class=MessageTemplateSeeder).
      * Placeholders: {name}, {event}, {year}, {venue}, {amount}, {paid}, {remaining}, {link}
      */
     public static function defaultTemplates(): array
     {
-        return [
-            'pledge_received' => [
-                'name' => 'Pledge — Contribution Received (Partial)',
-                'message' => 'Shaloom {name}. Tumepokea mchango wako wa TZS {amount}, ikiwa ni sehemu ya kukamilisha ahadi yako kwa ajili ya {event}. Tunakushukuru kwa moyo wako wa kujitoa. Mungu akubariki sana.',
-            ],
-            'pledge_fulfilled' => [
-                'name' => 'Pledge — Fulfilled Confirmation',
-                'message' => 'Shaloom {name}! Tumepokea na kuthibitisha kukamilika kwa ahadi yako ya TZS {amount} kwa ajili ya {event}. Tunakushukuru kwa moyo wako wa kujitoa na kusaidia kazi hii. Mungu akubariki sana. Endapo utapenda, unaweza kuendelea kuchangia zaidi kwa ajili ya kufanikisha kambi hii.',
-            ],
-            'pledge_reminder' => [
-                'name' => 'Pledge — Reminder with Balance',
-                'message' => 'Shaloom {name}. Tunakukumbusha kuhusu ahadi yako ya TZS {amount} kwa ajili ya {event}. Tumepokea TZS {paid}, hivyo salio lililobaki ni TZS {remaining}. Tafadhali tunaomba ukamilishe ahadi yako. Tunakushukuru kwa moyo wako wa kujitoa. Mungu akubariki sana.',
-            ],
-            'attendee_registered' => [
-                'name' => 'Attendee — Registration Success',
-                'message' => 'Hongera {name}! Umefanikiwa kusajiliwa kushiriki katika {event} {year}. Tunakukaribisha kwa furaha na tunatarajia kukuona kambini. Tafadhali wasilisha mchango wako wa ushiriki kwa ajili ya kuwezesha maandalizi ya kambi hii. Mungu akubariki.',
-            ],
-            'attendee_welcome' => [
-                'name' => 'Attendee — Welcome to Camp',
-                'message' => 'Shaloom {name}. Asante kwa kufika na kushiriki katika {event} {year}. Tunakuombea baraka tele, amani na furaha katika kambi hii. Uwepo wa Mungu usikupungukie, na ukae daima katika uwepo wake. Karibu sana!',
-            ],
-            'attendee_payment' => [
-                'name' => 'Attendee — Payment Received',
-                'message' => 'Shaloom {name}. Tumepokea mchango wako wa TZS {amount} kwa ajili ya {event} {year}. Tunakushukuru kwa moyo wako wa kujitoa. Mungu akubariki sana.',
-            ],
-            'card_invite' => [
-                'name' => 'Digital Card — Contribution Invitation',
-                'message' => "Shaloom {name}. Umoja wa Vyuo Karismatiki Katoliki Tanzania unakualika kushiriki katika uwezeshaji wa {event} {year}, itakayofanyika {venue}, na kuratibiwa kwa ushirikiano na Umoja wa Vyuo wa Jimbo Kuu la Arusha na Jimbo la Moshi.\n\nTazama kadi yako ya mwaliko ya kidijitali na ushiriki katika kutoa mchango wako kwa ajili ya kuwezesha kambi hii, ili Injili iwafikie vijana wengi zaidi.\n\nMchango wako ni muhimu katika kuhakikisha kambi hii inafanikiwa. Mungu akubariki sana.\n\n{link}",
-            ],
-        ];
+        return MessageTemplateSeeder::templates();
     }
 
     /**
@@ -77,6 +51,136 @@ class MessageTemplate extends Model
             }
         }
 
+        return static::renderRow($raw, $data);
+    }
+
+    /**
+     * Every automated SMS flow that reads its content from a template.
+     * Assignments (template id per usage) are stored in settings so admins can
+     * remap "where a template is used" from the templates page.
+     * slug => ['label' => ..., 'description' => ..., 'default' => default_key]
+     */
+    public static function usages(): array
+    {
+        return [
+            'pledge_received' => [
+                'label' => 'Pledge — Contribution received',
+                'description' => 'Sent automatically when a pledge payment is recorded and the pledge is still partial.',
+                'default' => 'pledge_received',
+            ],
+            'pledge_fulfilled' => [
+                'label' => 'Pledge — Fulfilled confirmation',
+                'description' => 'Sent when a pledge payment completes the pledge.',
+                'default' => 'pledge_fulfilled',
+            ],
+            'pledge_reminder' => [
+                'label' => 'Pledge — Reminder with balance',
+                'description' => 'Sent from the Remind (SMS) button on a pledge or the pending-pledges reminder.',
+                'default' => 'pledge_reminder',
+            ],
+            'attendee_registered' => [
+                'label' => 'Attendee — Registration success',
+                'description' => 'Sent after an attendee is registered on the event page.',
+                'default' => 'attendee_registered',
+            ],
+            'attendee_welcome' => [
+                'label' => 'Attendee — Welcome at admission',
+                'description' => 'Sent when an attendee is checked in / admitted at the gate.',
+                'default' => 'attendee_welcome',
+            ],
+            'attendee_payment' => [
+                'label' => 'Attendee — Payment received',
+                'description' => 'Sent when an attendee payment is recorded with the notify SMS option.',
+                'default' => 'attendee_payment',
+            ],
+            'card_invite' => [
+                'label' => 'Digital card — Contribution invitation',
+                'description' => 'Sent to digital card invitees (save list / send pending / resend).',
+                'default' => 'card_invite',
+            ],
+        ];
+    }
+
+    /**
+     * Resolve the template configured for an SMS flow and render it with data.
+     * Respects a stored assignment (template id) and falls back to the flow default.
+     */
+    public static function forUsage(string $usage, array $data = []): ?string
+    {
+        $usages = static::usages();
+
+        if (! isset($usages[$usage])) {
+            return static::render($usage, $data);
+        }
+
+        $defaultKey = $usages[$usage]['default'];
+        $assignedId = Setting::get('template.usage.'.$usage);
+
+        if ($assignedId !== null && $assignedId !== '') {
+            $assigned = static::find((int) $assignedId);
+            if ($assigned && trim($assigned->message) !== '') {
+                return static::renderRow($assigned->message, $data);
+            }
+        }
+
+        return static::render($defaultKey, $data);
+    }
+
+    /**
+     * Map of template id => list of flows using it, for the templates table.
+     * A flow counts when a template is explicitly assigned or is the flow default.
+     */
+    public static function usageMap(iterable $templates): array
+    {
+        $usages = static::usages();
+        $map = [];
+
+        foreach ($templates as $template) {
+            $labels = [];
+            foreach ($usages as $slug => $usage) {
+                $assigned = Setting::get('template.usage.'.$slug);
+                $isAssigned = $assigned !== null && $assigned !== '' && (int) $assigned === (int) $template->id;
+                $isDefault = ! $isAssigned && $usage['default'] === $template->key;
+
+                if ($isAssigned || $isDefault) {
+                    $labels[$slug] = ['label' => $usage['label'], 'active' => $isAssigned];
+                }
+            }
+
+            $map[$template->id] = $labels;
+        }
+
+        return $map;
+    }
+
+    /**
+     * Resolve the current assignment (template id) and status for every flow.
+     */
+    public static function usageAssignments(): array
+    {
+        $usages = static::usages();
+
+        return collect($usages)->mapWithKeys(function ($usage, $slug) {
+            $assignedId = Setting::get('template.usage.'.$slug);
+            $assignedId = $assignedId !== null && $assignedId !== '' ? (int) $assignedId : null;
+
+            if ($assignedId === null) {
+                $status = 'default';
+            } else {
+                $template = static::find($assignedId);
+                $status = $template && trim($template->message) !== '' ? 'connected' : 'missing';
+            }
+
+            return [$slug => [
+                'assigned_id'   => $assignedId,
+                'assigned_name' => $assignedId ? static::find($assignedId)?->name : null,
+                'status'        => $status,
+            ]];
+        })->all();
+    }
+
+    private static function renderRow(string $raw, array $data): string
+    {
         $search = [];
         $replace = [];
         foreach ($data as $placeholder => $value) {

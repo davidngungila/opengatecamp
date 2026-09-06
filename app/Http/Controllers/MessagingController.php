@@ -59,8 +59,13 @@ class MessagingController extends Controller
     {
         MessageTemplate::seedDefaults();
 
+        $templates = MessageTemplate::latest()->get();
+
         return view('messaging.templates', $this->sharedData() + [
-            'templates' => MessageTemplate::latest()->get(),
+            'templates'      => $templates,
+            'usages'         => MessageTemplate::usages(),
+            'usageMap'       => MessageTemplate::usageMap($templates),
+            'usageAssign'    => MessageTemplate::usageAssignments(),
         ]);
     }
 
@@ -111,6 +116,31 @@ class MessagingController extends Controller
         AuditLog::record('Updated message template', 'Communication — Templates', $data['name']);
 
         return back()->with('success', "Template '{$data['name']}' updated.");
+    }
+
+    public function templateUsage(Request $request)
+    {
+        $data = $request->validate([
+            'usage' => 'nullable|array',
+        ]);
+
+        $usages = MessageTemplate::usages();
+        $input = $data['usage'] ?? [];
+        $changed = 0;
+
+        foreach ($usages as $slug => $usage) {
+            $value = $input[$slug] ?? null;
+            if ($value === null || $value === '' || (int) $value <= 0) {
+                Setting::put('template.usage.'.$slug, null);
+            } else {
+                Setting::put('template.usage.'.$slug, (int) $value);
+            }
+            $changed++;
+        }
+
+        AuditLog::record('Updated template usage mapping', 'Communication — Templates', "{$changed} flow(s) assigned");
+
+        return back()->with('success', 'Template usage assignments updated. Future SMS in those flows will use the assigned template.');
     }
 
     public function history(Request $request)

@@ -331,7 +331,7 @@ class DigitalCardController extends Controller
         }
 
         $template = $card->sms_text
-            ?: (MessageTemplate::render('card_invite', ['name' => '', 'link' => $recipient->short_link])
+            ?: (MessageTemplate::forUsage('card_invite', ['name' => '', 'link' => $recipient->short_link])
                 ?? 'You are invited! View your digital card and contribute: {link}');
         $success = 0;
         $fail = 0;
@@ -551,7 +551,7 @@ class DigitalCardController extends Controller
         }
 
         $template = $card->sms_text
-            ?: (MessageTemplate::render('card_invite', ['name' => '', 'link' => null])
+            ?: (MessageTemplate::forUsage('card_invite', ['name' => '', 'link' => null])
                 ?? 'You are invited! View your digital card and contribute: {link}');
         $success = 0;
         $fail = 0;

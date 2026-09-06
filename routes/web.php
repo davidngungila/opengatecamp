@@ -191,6 +191,7 @@ Route::middleware(['auth', 'committee.readonly'])->group(function () {
         Route::get('/messaging/templates', [MessagingController::class, 'templates'])->name('messaging.templates');
         Route::post('/messaging/templates', [MessagingController::class, 'templateStore'])->name('messaging.templates.store');
         Route::put('/messaging/templates/{id}', [MessagingController::class, 'templateUpdate'])->name('messaging.templates.update');
+        Route::post('/messaging/templates/usage', [MessagingController::class, 'templateUsage'])->name('messaging.templates.usage');
         Route::delete('/messaging/templates/{id}', [MessagingController::class, 'templateDestroy'])->name('messaging.templates.destroy');
         Route::get('/messaging/settings', [MessagingController::class, 'settings'])->name('messaging.settings');
         Route::get('/messaging/settings/email', [MessagingController::class, 'emailSettings'])->name('messaging.settings.email');

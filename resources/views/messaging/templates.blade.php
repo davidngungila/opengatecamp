@@ -7,7 +7,10 @@
 <div class="fade-in">
   <div class="section-head">
     <div><h2>Message Templates</h2><div class="sub">{{ $templates->count() }} saved · reusable for SMS or Email</div></div>
-    <button type="button" class="btn btn-accent" data-drawer-open="tplNewDrawer">+ New Template</button>
+    <div style="display:flex;gap:8px">
+      <button type="button" class="btn btn-secondary" data-drawer-open="tplUsageDrawer">Manage Usage</button>
+      <button type="button" class="btn btn-accent" data-drawer-open="tplNewDrawer">+ New Template</button>
+    </div>
   </div>
 
   <div class="table-card">
@@ -23,6 +26,13 @@
                 <div>
                   <div class="cu-name">{{ $t->name }}</div>
                   <div class="cu-sub">Saved by {{ $t->created_by ?? 'System' }}@if($t->key) · <code style="font-size:11px">{{ $t->key }}</code>@endif</div>
+                  @if(! empty($usageMap[$t->id]))
+                  <div style="display:flex;flex-wrap:wrap;gap:5px;margin-top:5px">
+                    @foreach($usageMap[$t->id] as $slug => $u)
+                    <span class="badge {{ $u['active'] ? 'badge-success' : 'badge-info' }} badge-dotted" style="font-size:10px" title="Used in: {{ $u['label'] }} ({{ $slug }})">{{ $u['label'] }}</span>
+                    @endforeach
+                  </div>
+                  @endif
                 </div>
               </div>
             </td>
@@ -61,7 +71,7 @@
       </table>
     </div>
     <div class="table-footer">
-      <span class="tf-info">{{ $templates->count() }} template(s) total · Templates saved by <b>System</b> are built-in defaults. Use <b>Use in SMS</b> to load a template into the SMS composer.</span>
+      <span class="tf-info">{{ $templates->count() }} template(s) total · Use <b>Manage Usage</b> to assign which template each SMS flow uses; green badges mean a flow is actively assigned here.</span>
     </div>
   </div>
 </div>
@@ -129,6 +139,43 @@
   </div>
 </div>
 
+{{-- Template usage assignment drawer --}}
+<div class="drawer-overlay" id="tplUsageDrawer">
+  <div class="drawer-panel">
+    <div class="drawer-head">
+      <div><h3>Where Templates Are Used</h3><p>Assign which template each automated SMS flow sends. Unassigned flows use the system default marked <code>Default</code>.</p></div>
+      <button type="button" class="modal-close" data-drawer-close><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><path d="M18 6L6 18M6 6l12 12"/></svg></button>
+    </div>
+    <form method="POST" action="{{ route('messaging.templates.usage') }}">
+      @csrf
+      <div class="drawer-body">
+        @foreach($usages as $slug => $usage)
+        @php $uState = $usageAssign[$slug] ?? ['assigned_id' => null, 'status' => 'default']; @endphp
+        <div style="border:1px solid var(--border,#e5e7eb);border-radius:10px;padding:12px 14px;margin-bottom:10px">
+          <div style="display:flex;justify-content:space-between;align-items:center;gap:10px;flex-wrap:wrap">
+            <div style="font-weight:700;font-size:13.5px">{{ $usage['label'] }} <code style="font-size:10.5px;color:var(--text-tertiary)">{{ $slug }}</code></div>
+            <span class="badge badge-{{ $uState['status'] === 'connected' ? 'success' : ($uState['status'] === 'missing' ? 'warning' : 'info') }} badge-dotted" style="font-size:10px;white-space:nowrap">{{ $uState['status'] === 'connected' ? 'Connected' : ($uState['status'] === 'missing' ? 'Missing — fallback' : 'Default') }}</span>
+          </div>
+          <div style="font-size:12px;color:var(--text-secondary);margin-top:3px;line-height:1.55">{{ $usage['description'] }}</div>
+          <div style="margin-top:8px">
+            <select name="usage[{{ $slug }}]" class="tpl-usage-select" style="width:100%;padding:8px 10px;border:1px solid var(--border,#e5e7eb);border-radius:8px;background:var(--bg,#fff);color:var(--text-primary);font-size:13px">
+              <option value="">System default ({{ $usage['default'] }})</option>
+              @foreach($templates as $tpl)
+              <option value="{{ $tpl->id }}" @selected((int) $uState['assigned_id'] === (int) $tpl->id)>{{ $tpl->name }}</option>
+              @endforeach
+            </select>
+          </div>
+        </div>
+        @endforeach
+      </div>
+      <div class="drawer-foot">
+        <button type="button" class="btn btn-secondary" data-drawer-close>Cancel</button>
+        <button type="submit" class="btn btn-accent">Save Assignments</button>
+      </div>
+    </form>
+  </div>
+</div>
+
 {{-- Template detail drawer --}}
 <div class="drawer-overlay" id="tplDetailDrawer">
   <div class="drawer-panel">
@@ -149,6 +196,7 @@
           <div style="color:var(--text-tertiary)">Name</div><div id="tplDInfoName">—</div>
           <div style="color:var(--text-tertiary)">Created by</div><div id="tplDInfoBy">—</div>
           <div style="color:var(--text-tertiary)">Created</div><div id="tplDInfoAt">—</div>
+          <div style="color:var(--text-tertiary)">Used where</div><div id="tplDInfoUses">—</div>
         </div>
       </details>
     </div>
@@ -174,6 +222,7 @@
         'created_by' => $t->created_by ?? '—',
         'created_at' => $t->created_at?->format('d M Y, H:i') ?? '—',
         'url'        => route('messaging.templates.update', $t->id),
+        'used_in'    => array_values(array_map(fn ($u) => $u['label'], $usageMap[$t->id] ?? [])),
     ]])->toArray();
     $tplDataJson = json_encode($tplData, JSON_HEX_APOS | JSON_HEX_QUOT | JSON_HEX_TAG | JSON_HEX_AMP);
 @endphp
@@ -189,6 +238,12 @@ function openTplDetails(id) {
   document.getElementById('tplDInfoName').textContent = d.name;
   document.getElementById('tplDInfoBy').textContent = d.created_by;
   document.getElementById('tplDInfoAt').textContent = d.created_at;
+  var uses = document.getElementById('tplDInfoUses');
+  if (uses) {
+    uses.innerHTML = (d.used_in && d.used_in.length)
+      ? d.used_in.map(function(l){ return '<span class="badge badge-info badge-dotted" style="font-size:10px;margin-right:4px">'+l+'</span>'; }).join('')
+      : (d.key ? '<span class="badge badge-info badge-dotted" style="font-size:10px">System default</span>' : 'No flow assigned yet');
+  }
   document.getElementById('tplDFormMsg').value = d.message;
   document.getElementById('tplDFormName').value = d.name;
   openDrawerById('tplDetailDrawer');
