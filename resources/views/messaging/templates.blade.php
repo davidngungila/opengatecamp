@@ -6,73 +6,94 @@
 @section('content')
 <div class="fade-in">
   <div class="section-head">
-    <h2>Message Templates</h2>
-    <span class="badge badge-neutral">{{ $templates->count() }} saved</span>
+    <div><h2>Message Templates</h2><div class="sub">{{ $templates->count() }} saved · reusable for SMS or Email</div></div>
+    <button type="button" class="btn btn-accent" data-drawer-open="tplNewDrawer">+ New Template</button>
   </div>
 
-  @if(session('error'))
-  <div style="background:#fef2f2;border:1px solid #fecaca;border-radius:8px;padding:12px 16px;margin-bottom:18px;color:#991b1b;font-size:13.5px">{{ session('error') }}</div>
-  @endif
-  @if(session('success'))
-  <div style="background:#f0fdf4;border:1px solid #bbf7d0;border-radius:8px;padding:12px 16px;margin-bottom:18px;color:#166534;font-size:13.5px">{{ session('success') }}</div>
-  @endif
+  <div class="table-card">
+    <div class="table-scroll">
+      <table class="data-table">
+        <thead><tr><th>Template</th><th>Message</th><th>Created</th><th style="width:90px">Actions</th></tr></thead>
+        <tbody>
+          @forelse($templates as $t)
+          <tr style="cursor:pointer" data-view-tpl data-id="{{ $t->id }}">
+            <td>
+              <div class="cell-user">
+                <div class="cell-avatar">{{ collect(explode(' ', $t->name ?? '?'))->map(fn($w) => mb_substr($w, 0, 1))->take(2)->implode('') }}</div>
+                <div>
+                  <div class="cu-name">{{ $t->name }}</div>
+                  <div class="cu-sub">Saved by {{ $t->created_by ?? 'System' }}</div>
+                </div>
+              </div>
+            </td>
+            <td>
+              <div style="max-width:520px;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden;color:var(--text-secondary);font-size:12.5px;line-height:1.6">{{ $t->message }}</div>
+            </td>
+            <td><span class="badge badge-neutral badge-dotted">{{ $t->created_at?->format('d M Y') }}</span></td>
+            <td onclick="event.stopPropagation()">
+              <div class="action-menu-wrap">
+                <button type="button" class="action-trigger" onclick="toggleActionMenu('am-tpl-{{ $t->id }}')">
+                  <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><circle cx="12" cy="5" r=".6"/><circle cx="12" cy="12" r=".6"/><circle cx="12" cy="19" r=".6"/></svg>
+                </button>
+                <div class="action-menu" id="am-tpl-{{ $t->id }}">
+                  <form method="POST" action="{{ route('messaging.use-template') }}" style="display:contents">@csrf
+                    <input type="hidden" name="template" value="{{ $t->message }}">
+                    <input type="hidden" name="name" value="{{ $t->name }}">
+                    <button type="submit">Use in SMS</button>
+                  </form>
+                  <button type="button" data-tpl-details data-id="{{ $t->id }}">Details</button>
+                  <button type="button" data-tpl-copy data-text="{{ $t->message }}">Copy</button>
+                  <form method="POST" action="{{ route('messaging.templates.destroy', $t->id) }}" data-confirm
+                        data-confirm-title="Delete template?"
+                        data-confirm-message="This template will be permanently removed. This cannot be undone."
+                        data-confirm-label="Delete">@csrf @method('DELETE')
+                    <button type="submit" class="danger">Delete</button>
+                  </form>
+                </div>
+              </div>
+            </td>
+          </tr>
+          @empty
+          <tr><td colspan="4"><div class="empty-state" style="padding:40px 20px"><h3>No templates yet</h3><p>Create your first reusable message template.</p><button type="button" class="btn btn-accent" data-drawer-open="tplNewDrawer">+ New Template</button></div></td></tr>
+          @endforelse
+        </tbody>
+      </table>
+    </div>
+    <div class="table-footer">
+      <span class="tf-info">{{ $templates->count() }} template(s) total · Templates saved by <b>System</b> are built-in defaults. Use <b>Use in SMS</b> to load a template into the SMS composer.</span>
+    </div>
+  </div>
+</div>
 
-  <div class="glass-card" style="margin-bottom:20px">
-    <h2 style="font-size:14.5px;margin:0 0 4px">New Template</h2>
-    <p style="font-size:12.5px;color:var(--text-tertiary);margin:0 0 14px">Templates are saved to the database and can be reused for SMS or Email.</p>
-    <form method="POST" action="{{ route('messaging.templates.store') }}" class="form-grid">
+{{-- New template drawer --}}
+<div class="drawer-overlay" id="tplNewDrawer">
+  <div class="drawer-panel">
+    <div class="drawer-head">
+      <div><h3>New Template</h3><p>Templates are saved to the database and reused for SMS or Email.</p></div>
+      <button type="button" class="modal-close" data-drawer-close><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><path d="M18 6L6 18M6 6l12 12"/></svg></button>
+    </div>
+    <form method="POST" action="{{ route('messaging.templates.store') }}">
       @csrf
-      <div class="field">
-        <label>Template Name *</label>
-        <input name="name" required maxlength="120" placeholder="e.g. Pledge Reminder" value="{{ old('name') }}">
-      </div>
-      <div class="field full">
-        <label>Message *</label>
-        <textarea name="message" required maxlength="2000" placeholder="Type your template here. You can use placeholders like {name}, {event}, {date}..." style="min-height:110px" id="newTplMsg" oninput="updateTplCount()">{{ old('message') }}</textarea>
-        <div style="display:flex;justify-content:space-between;margin-top:4px">
-          <small style="color:var(--text-muted)">Placeholders: {name} {event} {date} {venue} {campaign} {balance} {amount} {sacrament}</small>
-          <small id="tplCount" style="font-weight:700;color:var(--text-secondary)">0 / 2000</small>
+      <div class="drawer-body">
+        <div class="form-grid">
+          <div class="field full"><label>Template Name *</label>
+            <input name="name" required maxlength="120" placeholder="e.g. Pledge Reminder" value="{{ old('name') }}">
+          </div>
+          <div class="field full"><label>Message *</label>
+            <textarea name="message" required maxlength="2000" placeholder="Type your template here. You can use placeholders like {name}, {event}, {date}..." style="min-height:110px" id="newTplMsg" oninput="updateTplCount()">{{ old('message') }}</textarea>
+            <div style="display:flex;justify-content:space-between;margin-top:4px">
+              <small style="color:var(--text-muted)">Placeholders: {name} {event} {date} {venue} {campaign} {balance} {amount} {sacrament}</small>
+              <small id="tplCount" style="font-weight:700;color:var(--text-secondary)">0 / 2000</small>
+            </div>
+          </div>
         </div>
       </div>
-      <div class="field full" style="display:flex;justify-content:flex-end;gap:8px">
+      <div class="drawer-foot">
+        <button type="button" class="btn btn-secondary" data-drawer-close>Cancel</button>
         <button type="submit" class="btn btn-accent">Save Template</button>
       </div>
     </form>
   </div>
-
-  <div class="msg-templates">
-    @forelse($templates as $t)
-    <div class="tpl-card">
-      <div class="flex gap-8" style="align-items:center;justify-content:space-between;gap:8px">
-        <h5 style="margin:0;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap" title="{{ $t->name }}">{{ $t->name }}</h5>
-        <span class="badge badge-neutral badge-dotted" style="font-size:10px">{{ $t->created_at?->format('d M Y') }}</span>
-      </div>
-      <p style="display:-webkit-box;-webkit-line-clamp:3;-webkit-box-orient:vertical;overflow:hidden">{{ $t->message }}</p>
-      <div style="display:flex;gap:8px;margin-top:10px;flex-wrap:wrap">
-        <form method="POST" action="{{ route('messaging.use-template') }}" style="display:inline">
-          @csrf
-          <input type="hidden" name="template" value="{{ $t->message }}">
-          <input type="hidden" name="name" value="{{ $t->name }}">
-          <button type="submit" class="btn btn-ghost btn-sm" style="padding:6px 12px">Use in SMS</button>
-        </form>
-        <button type="button" class="btn btn-primary btn-sm" style="padding:6px 12px" onclick="openTplDetails({{ $t->id }})">Details</button>
-        <button type="button" class="btn btn-ghost btn-sm" style="padding:6px 12px;color:var(--blue-accent)" onclick="copyTemplate(this)" data-text="{{ $t->message }}">Copy</button>
-        <form method="POST" action="{{ route('messaging.templates.destroy', $t->id) }}" style="display:inline">
-          @csrf
-          @method('DELETE')
-          <button type="submit" class="btn btn-ghost btn-sm" style="padding:6px 12px;color:var(--red)"
-                  data-confirm data-confirm-title="Delete template?"
-                  data-confirm-message="This template will be permanently removed. This cannot be undone."
-                  data-confirm-label="Delete">Delete</button>
-        </form>
-      </div>
-    </div>
-    @empty
-    <div class="empty-state" style="grid-column:1/-1;padding:30px 16px"><p>No templates yet. Create one above.</p></div>
-    @endforelse
-  </div>
-
-  <p style="font-size:12px;color:var(--text-tertiary);margin-top:16px">Templates marked as saved by <b>System</b> are built-in defaults. Use <b>Use in SMS</b> to load a template into the SMS composer.</p>
 </div>
 
 {{-- Template detail drawer --}}
@@ -159,6 +180,28 @@ function updateTplCount() {
   var out = document.getElementById('tplCount');
   if (el && out) out.textContent = el.value.length + ' / 2000';
 }
-document.addEventListener('DOMContentLoaded', updateTplCount);
+
+document.addEventListener('DOMContentLoaded', function(){
+  updateTplCount();
+
+  document.querySelectorAll('[data-view-tpl]').forEach(function(tr){
+    tr.addEventListener('click', function(e){
+      if(e.target.closest('.action-menu-wrap') || e.target.closest('form') || e.target.closest('button') || e.target.closest('a')) return;
+      openTplDetails(tr.dataset.id);
+    });
+  });
+
+  document.querySelectorAll('[data-tpl-details]').forEach(function(btn){
+    btn.addEventListener('click', function(){
+      openTplDetails(btn.dataset.id);
+    });
+  });
+
+  document.querySelectorAll('[data-tpl-copy]').forEach(function(btn){
+    btn.addEventListener('click', function(){
+      copyTemplate(this);
+    });
+  });
+});
 </script>
 @endpush
