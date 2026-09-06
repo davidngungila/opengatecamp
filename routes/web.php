@@ -135,7 +135,7 @@ Route::middleware(['auth', 'committee.readonly'])->group(function () {
     Route::post('/calendar/sessions', [EventController::class, 'storeCalendarSession'])->name('calendar.sessions.store');
         Route::put('/calendar/sessions/{session}', [EventController::class, 'updateCalendarSession'])->name('calendar.sessions.update');
         Route::delete('/calendar/sessions/{session}', [EventController::class, 'destroyCalendarSession'])->name('calendar.sessions.destroy');
-    Route::get('/calendar/timetable', [EventController::class, 'timetable'])->name('calendar.timetable');
+    Route::get('/calendar/planner', [EventController::class, 'planner'])->name('calendar.planner');
 
     // ── Admission desk (scan ticket / enter code) ─────────
     Route::get('/admission', [CheckInController::class, 'index'])->name('admission.index');

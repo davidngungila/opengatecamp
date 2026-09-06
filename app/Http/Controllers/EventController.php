@@ -656,36 +656,39 @@ class EventController extends Controller
     }
 
     /**
-     * Printable timetable — scope: month (default), a single day, or the whole programme.
+     * Day activity planner — schedule an activity for a specific day and hours.
      */
-    public function timetable(Request $request)
+    public function planner(Request $request)
     {
-        $scope = $request->query('scope', 'month');
-        $date  = $request->query('date') ? date_create($request->query('date')) : now();
-        $month = $request->query('month', $date->format('Y-m'));
+        $parsed = $request->query('date') ? date_create($request->query('date')) : now();
+        $date = ($parsed ?: now())->setTime(0, 0, 0);
 
-        if ($scope === 'day') {
-            $sessions = EventSession::with('event')
-                ->whereDate('session_date', $date->format('Y-m-d'))
-                ->orderBy('start_time')->get();
-            $groups = [$date->format('Y-m-d') => $sessions];
-        } elseif ($scope === 'programme') {
-            $sessions = EventSession::with('event')
-                ->orderBy('session_date')->orderBy('start_time')->get();
-            $groups = $sessions->groupBy(fn ($s) => $s->session_date?->format('Y-m-d'))->all();
-        } else {
-            $start = date_create($month.'-01') ?: now()->startOfMonth();
-            $end = (clone $start)->modify('last day of this month');
-            $sessions = EventSession::with('event')
-                ->whereBetween('session_date', [$start, $end])
-                ->orderBy('session_date')->orderBy('start_time')->get();
-            $groups = $sessions->groupBy(fn ($s) => $s->session_date?->format('Y-m-d'))->all();
-        }
+        $sessions = EventSession::with('event')
+            ->whereDate('session_date', $date->format('Y-m-d'))
+            ->orderBy('start_time')
+            ->get();
 
-        return view('calendar.timetable', [
-            'scope' => $scope,
-            'groups' => $groups,
-            'monthDate' => date_create($month.'-01') ?: now()->startOfMonth(),
+        $sessionsJson = $sessions->mapWithKeys(fn ($s) => [$s->id => [
+            'id'          => $s->id,
+            'session_date'=> $s->session_date?->format('Y-m-d'),
+            'title'       => $s->title,
+            'start_time'  => $s->start_time ? substr($s->start_time, 0, 5) : '',
+            'end_time'    => $s->end_time ? substr($s->end_time, 0, 5) : '',
+            'venue'       => $s->venue,
+            'category'    => $s->category,
+            'speaker'     => $s->speaker,
+            'facilitator' => $s->facilitator,
+            'description' => $s->description,
+            'event_title' => $s->event?->title,
+        ],
+        ])->values()->toJson(JSON_HEX_APOS | JSON_HEX_QUOT | JSON_HEX_TAG | JSON_HEX_AMP);
+
+        return view('calendar.planner', [
+            'date' => $date,
+            'sessions' => $sessions,
+            'sessionsJson' => $sessionsJson,
+            'prevDate' => (clone $date)->modify('-1 day')->format('Y-m-d'),
+            'nextDate' => (clone $date)->modify('+1 day')->format('Y-m-d'),
             'today' => now(),
         ]);
     }

@@ -104,7 +104,7 @@
                         <path d="M9 8h6M9 12h6M9 16h3"/>
                     </svg>
                 </span>
-                <span class="nav-label">Activities &amp; Tasks ⭐</span>
+                <span class="nav-label">Activities &amp; Tasks</span>
             </a>
             <span class="tt">Activities &amp; Tasks</span>
         </div>
