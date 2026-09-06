@@ -143,7 +143,7 @@ class Event extends Model
     public function isUpcoming(): bool
     {
         return in_array($this->status, ['planned', 'open_registration'], true)
-            && $this->start_date->isFuture();
+            && $this->start_date && $this->start_date->isFuture();
     }
 
     public function isOngoingOrUpcoming(): bool

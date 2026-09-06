@@ -41,15 +41,19 @@
   <div class="center org-sub">KARISMATIKI KATOLIKI TANZANIA</div>
   <div class="center org-line">JIMBO LA MOSHI NA ARUSHA</div>
   <div class="center org-tag">OPEN GATE SEASON THREE</div>
+  @php
+  $eventDate = $event->start_date ? $event->start_date->format('d M Y') : '—';
+  $eventYear = $event->start_date ? $event->start_date->format('Y') : date('Y');
+@endphp
   <div class="event">{{ $event->title }}</div>
-  <div class="center" style="font-size:9px">{{ $event->venue ?? '' }} · {{ $event->start_date->format('d M Y') }}</div>
+  <div class="center" style="font-size:9px">{{ $event->venue ?? '' }} · {{ $eventDate }}</div>
 
   <div class="title">TICKET</div>
 
   <table class="head" cellpadding="0" cellspacing="0">
     <tr><td class="lbl">Ticket No</td><td class="r"><b>{{ $attendee->getTicketNo() }}</b></td></tr>
     <tr><td class="lbl">Event</td><td class="r"><b>{{ $event->title }}</b></td></tr>
-    <tr><td class="lbl">Date</td><td class="r">{{ $event->start_date->format('d M Y') }}</td></tr>
+    <tr><td class="lbl">Date</td><td class="r">{{ $eventDate }}</td></tr>
     <tr><td class="lbl">Venue</td><td class="r">{{ $event->venue ?? '—' }}</td></tr>
   </table>
 
@@ -70,11 +74,11 @@
   @endif
   <div class="barcode">*{{ $attendee->getTicketNo() }}*</div>
 
-  <div class="admit">ADMIT ONE · {{ $event->start_date->format('d M Y') }}</div>
+  <div class="admit">ADMIT ONE · {{ $eventDate }}</div>
 
   <div class="foot">
     Present this ticket with a valid ID at the open gate.<br>
-    {{ \App\Models\Setting::get('event.name', 'Open Gate Camp Season 3') }} {{ $event->start_date->format('Y') }}
+    {{ \App\Models\Setting::get('event.name', 'Open Gate Camp Season 3') }} {{ $eventYear }}
   </div>
 </body>
 </html>

@@ -49,17 +49,34 @@
         <div class="field"><label>End Time</label><input type="time" name="event_end_time" value="{{ $s('event.end_time') }}"></div>
         <div class="field"><label>Capacity</label><input type="number" min="0" name="event_capacity" value="{{ $s('event.capacity') }}" placeholder="e.g. 500"></div>
         <div class="field"><label>Registration Fee</label><input type="number" min="0" step="0.01" name="event_registration_fee" value="{{ $s('event.registration_fee', '0') }}" placeholder="e.g. 10000"></div>
-        <div class="field"><label>Organizer</label>
-          <select name="event_organizer">
-            @php $currentOrg = $s('event.organizer'); @endphp
-            <option value="" @if(!$currentOrg) selected @endif>— Select a leader —</option>
-            @if($currentOrg && ! $organizerUsers->contains('name', $currentOrg))
-            <option value="{{ $currentOrg }}" selected>{{ $currentOrg }}</option>
-            @endif
-            @foreach($organizerUsers as $u)
-            <option value="{{ $u->name }}" @if($currentOrg === $u->name) selected @endif>{{ $u->name }} ({{ $u->role?->name ?? 'User' }})</option>
+        <div class="field"><label>Chairperson of the Event</label>
+          <select name="event_chairperson_id">
+            <option value="">— Not set —</option>
+            @foreach($eventUsers as $u)
+            <option value="{{ $u->id }}" @if($s('event.chairperson_id') == $u->id) selected @endif>{{ $u->name }} ({{ $u->role?->name ?? 'No system role' }})</option>
             @endforeach
           </select>
+        </div>
+        <div class="field"><label>Secretary of the Event</label>
+          <select name="event_secretary_id">
+            <option value="">— Not set —</option>
+            @foreach($eventUsers as $u)
+            <option value="{{ $u->id }}" @if($s('event.secretary_id') == $u->id) selected @endif>{{ $u->name }} ({{ $u->role?->name ?? 'No system role' }})</option>
+            @endforeach
+          </select>
+        </div>
+        <div class="field"><label>Treasurer of the Event</label>
+          <select name="event_treasurer_id">
+            <option value="">— Not set —</option>
+            @foreach($eventUsers as $u)
+            <option value="{{ $u->id }}" @if($s('event.treasurer_id') == $u->id) selected @endif>{{ $u->name }} ({{ $u->role?->name ?? 'No system role' }})</option>
+            @endforeach
+          </select>
+        </div>
+        <div class="field full">
+          <div style="font-size:12px;color:var(--text-tertiary);background:var(--blue-light);color:var(--blue-accent);border-radius:8px;padding:9px 12px;line-height:1.5">
+            Selecting a leader automatically updates their system role to the matching post (Chairperson / Secretary / Treasurer) so they can access the system. A user can hold only one of the three posts.
+          </div>
         </div>
         <div class="field full"><label>Description</label><textarea name="event_description" rows="3" placeholder="Short description of the event">{{ $s('event.description') }}</textarea></div>
       </div>

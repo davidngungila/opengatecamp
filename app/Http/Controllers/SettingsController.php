@@ -21,11 +21,11 @@ class SettingsController extends Controller
 
     public function generalPage()
     {
-        $organizerUsers = User::whereHas('role', function ($q) {
-            $q->whereIn('name', ['Chairperson', 'Secretary', 'Treasurer']);
+        $eventUsers = User::with('role')->whereDoesntHave('role', function ($q) {
+            $q->where('name', 'Super Administrator');
         })->orderBy('name')->get();
 
-        return view('settings.pages.general', compact('organizerUsers'));
+        return view('settings.pages.general', compact('eventUsers'));
     }
 
     public function notificationsPage()
@@ -244,7 +244,19 @@ class SettingsController extends Controller
             'event_capacity' => 'nullable|integer|min:0',
             'event_registration_fee' => 'nullable|numeric|min:0',
             'event_organizer' => 'nullable|string|max:255',
+            'event_chairperson_id' => 'nullable|integer|exists:users,id',
+            'event_secretary_id' => 'nullable|integer|exists:users,id',
+            'event_treasurer_id' => 'nullable|integer|exists:users,id',
         ]);
+
+        $officers = collect(['event_chairperson_id', 'event_secretary_id', 'event_treasurer_id'])
+            ->map(fn ($f) => $data[$f] ?? null)
+            ->filter()
+            ->values();
+
+        if ($officers->unique()->count() !== $officers->count()) {
+            return back()->with('error', 'A user can hold only one of the three event leadership posts (Chairperson, Secretary, Treasurer).');
+        }
 
         foreach ([
             'event_name' => 'event.name',
@@ -259,9 +271,38 @@ class SettingsController extends Controller
             'event_capacity' => 'event.capacity',
             'event_registration_fee' => 'event.registration_fee',
             'event_organizer' => 'event.organizer',
+            'event_chairperson_id' => 'event.chairperson_id',
+            'event_secretary_id' => 'event.secretary_id',
+            'event_treasurer_id' => 'event.treasurer_id',
         ] as $field => $key) {
             Setting::put($key, $data[$field] ?? null);
         }
+
+        $roleMap = [
+            'event_chairperson_id' => 'Chairperson',
+            'event_secretary_id' => 'Secretary',
+            'event_treasurer_id' => 'Treasurer',
+        ];
+
+        foreach ($roleMap as $field => $roleName) {
+            $userId = $data[$field] ?? null;
+            if (! $userId) {
+                continue;
+            }
+
+            $user = User::find($userId);
+            $role = Role::where('name', $roleName)->first();
+
+            if ($user && $role && $user->role_id !== $role->id) {
+                $previous = $user->role?->name ?? 'no role';
+                $user->update(['role_id' => $role->id]);
+
+                AuditLog::record("Assigned {$roleName} of the event", 'Settings &mdash; Event', "{$user->name} role changed from '{$previous}' to '{$roleName}'");
+            }
+        }
+
+        $chair = ! empty($data['event_chairperson_id']) ? User::find($data['event_chairperson_id'])?->name : null;
+        Setting::put('event.organizer', $chair ?? '');
 
         AuditLog::record('Updated event settings', 'Settings &mdash; Event');
 
