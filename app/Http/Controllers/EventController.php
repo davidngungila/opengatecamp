@@ -13,6 +13,7 @@ use App\Models\Pledge;
 use App\Services\AccountingPostingService;
 use App\Services\SmsService;
 use Illuminate\Http\Request;
+use Illuminate\Support\Carbon;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Str;
 
@@ -599,6 +600,7 @@ class EventController extends Controller
     {
         $data = $request->validate([
             'session_date'   => 'required|date',
+            'end_date'       => 'nullable|date|after_or_equal:session_date',
             'title'          => 'required|string|max:255',
             'start_time'     => 'required',
             'end_time'       => 'required|after:start_time',
@@ -623,16 +625,34 @@ class EventController extends Controller
             AuditLog::record('Auto-created default camp event', 'Calendar', $event->title);
         }
 
-        $data['event_id'] = $event->id;
-        $data['sort_order'] = (((int) EventSession::where('event_id', $event->id)->max('sort_order')) + 1);
-        $data['session_date'] = $data['session_date'];
+        $start = Carbon::parse($data['session_date'])->startOfDay();
+        $end = ! empty($data['end_date'])
+            ? Carbon::parse($data['end_date'])->startOfDay()
+            : (clone $start);
+        unset($data['end_date']);
 
-        $session = EventSession::create($data);
+        if ($end->lt($start)) {
+            $end = clone $start;
+        }
+
+        $lastSort = (int) EventSession::where('event_id', $event->id)->max('sort_order');
+        $created = 0;
+        for ($day = clone $start; $day->lte($end); $day->addDay()) {
+            $data['event_id'] = $event->id;
+            $data['sort_order'] = ++$lastSort;
+            $data['session_date'] = $day->format('Y-m-d');
+            EventSession::create($data);
+            $created++;
+        }
+
         AuditLog::record('Planned calendar activity', 'Calendar',
-            $session->title.' — '.$session->session_date?->format('Y-m-d')
-            .($session->start_time ? ' '.$session->start_time.'-'.($session->end_time ?? '') : ''));
+            $data['title']
+            .' — '.$start->format('Y-m-d').($created > 1 ? ' to '.$end->format('Y-m-d') : '')
+            .($data['start_time'] ? ' '.$data['start_time'].'-'.($data['end_time'] ?? '') : '')
+            .($created > 1 ? " ({$created} days)" : ''));
 
-        return back()->with('success', 'Activity planned for '.$session->session_date?->format('d M Y').'.');
+        return back()->with('success', 'Activity planned for '.$created.' day'.($created > 1 ? 's' : '')
+            .' ('.$start->format('d M Y').($created > 1 ? ' → '.$end->format('d M Y') : '').').');
     }
 
     public function updateCalendarSession(Request $request, EventSession $session)

@@ -66,4 +66,63 @@ class CalendarPlannerTest extends TestCase
         $res->assertSee('Day Planner');
         $res->assertDontSee('Print Timetable');
     }
+
+    public function test_store_calendar_session_creates_one_activity_per_day_in_range(): void
+    {
+        $this->committeeUser();
+
+        Event::create(['title' => 'Camp Season 4', 'event_type' => 'camp', 'start_date' => now()]);
+
+        $this->post(route('calendar.sessions.store'), [
+            'session_date'   => '2026-09-07',
+            'end_date'       => '2026-09-10',
+            'title'          => 'Morning Devotion',
+            'start_time'     => '07:00',
+            'end_time'       => '08:00',
+            'venue'          => 'Main Hall',
+            'category'       => 'Worship',
+        ])->assertSessionHas('success');
+
+        $this->assertDatabaseCount('event_sessions', 4);
+        $this->assertDatabaseHas('event_sessions', ['session_date' => '2026-09-07 00:00:00', 'title' => 'Morning Devotion', 'category' => 'Worship']);
+        $this->assertDatabaseHas('event_sessions', ['session_date' => '2026-09-10 00:00:00', 'title' => 'Morning Devotion']);
+
+        $dates = EventSession::orderBy('session_date')->pluck('session_date')
+            ->map(fn ($d) => $d->format('Y-m-d'))->all();
+        $this->assertEquals(['2026-09-07', '2026-09-08', '2026-09-09', '2026-09-10'], $dates);
+    }
+
+    public function test_store_calendar_session_single_day_when_end_date_missing(): void
+    {
+        $this->committeeUser();
+
+        Event::create(['title' => 'Camp Season 4', 'event_type' => 'camp', 'start_date' => now()]);
+
+        $this->post(route('calendar.sessions.store'), [
+            'session_date' => '2026-09-07',
+            'title'        => 'Closing Devotion',
+            'start_time'   => '19:00',
+            'end_time'     => '20:00',
+        ])->assertSessionHas('success');
+
+        $this->assertDatabaseCount('event_sessions', 1);
+        $this->assertDatabaseHas('event_sessions', ['session_date' => '2026-09-07 00:00:00', 'title' => 'Closing Devotion']);
+    }
+
+    public function test_store_calendar_session_rejects_end_date_before_start_date(): void
+    {
+        $this->committeeUser();
+
+        Event::create(['title' => 'Camp Season 4', 'event_type' => 'camp', 'start_date' => now()]);
+
+        $this->post(route('calendar.sessions.store'), [
+            'session_date' => '2026-09-10',
+            'end_date'     => '2026-09-07',
+            'title'        => 'Bad Range',
+            'start_time'   => '07:00',
+            'end_time'     => '08:00',
+        ])->assertSessionHasErrors('end_date');
+
+        $this->assertDatabaseCount('event_sessions', 0);
+    }
 }

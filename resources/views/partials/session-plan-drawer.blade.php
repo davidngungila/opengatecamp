@@ -14,7 +14,10 @@
       <input type="hidden" name="id" id="sessId" value="">
       <div class="drawer-body">
         <div class="form-grid">
-          <div class="field full"><label>Date *</label><input type="date" name="session_date" id="sessDate" required></div>
+          <div class="field"><label>Start Date *</label><input type="date" name="session_date" id="sessDate" required></div>
+          <div class="field" id="sessEndDateRow"><label>End Date</label><input type="date" name="end_date" id="sessEndDate">
+            <div class="hint" id="sessRangeHint">Blank = single day. Set an end date to repeat this activity daily.</div>
+          </div>
           <div class="field full"><label>Activity / Title *</label><input name="title" id="sessTitleInput" placeholder="e.g. Opening Devotion, Group Games" required></div>
           <div class="field"><label>Start Time *</label><input type="time" name="start_time" id="sessStart" required></div>
           <div class="field"><label>End Time *</label><input type="time" name="end_time" id="sessEnd" required></div>
@@ -46,6 +49,8 @@ var planDate = '';
 function fillSessionForm(s){
   document.getElementById('sessId').value = s.id;
   document.getElementById('sessDate').value = s.session_date || planDate;
+  document.getElementById('sessEndDate').value = '';
+  document.getElementById('sessEndDateRow').style.display = 'none';
   document.getElementById('sessTitleInput').value = s.title || '';
   document.getElementById('sessStart').value = s.start_time || '';
   document.getElementById('sessEnd').value = s.end_time || '';
@@ -56,6 +61,19 @@ function fillSessionForm(s){
   document.getElementById('sessDescription').value = s.description || '';
 }
 
+function syncEndDateHint(dateStr){
+  var start = document.getElementById('sessDate').value;
+  var end = document.getElementById('sessEndDate').value;
+  var hint = document.getElementById('sessRangeHint');
+  if(!start){ hint.textContent = 'Blank = single day. Set an end date to repeat this activity daily.'; return; }
+  if(!end){ hint.textContent = 'Single day activity on ' + (dateStr || start) + '.'; return; }
+  var d1 = new Date(start + 'T00:00:00');
+  var d2 = new Date(end + 'T00:00:00');
+  if(d2 < d1){ hint.textContent = 'End date must be on or after the start date.'; return; }
+  var days = Math.round((d2 - d1) / 86400000) + 1;
+  hint.textContent = 'Repeats daily over ' + days + (days > 1 ? ' days' : ' day') + ' (' + start + ' → ' + end + ').';
+}
+
 function openPlanDrawer(dateStr){
   planDate = dateStr || todayLabel || '';
   document.getElementById('sessTitle').textContent = 'Plan Day Activity';
@@ -64,6 +82,12 @@ function openPlanDrawer(dateStr){
   document.getElementById('sessionForm').action = @json(route('calendar.sessions.store'));
   document.getElementById('sessId').value = '';
   document.getElementById('sessDate').value = dateStr || @json($today->format('Y-m-d'));
+  document.getElementById('sessDate').min = document.getElementById('sessDate').value;
+  var ed = document.getElementById('sessEndDate');
+  ed.value = '';
+  ed.max = '';
+  document.getElementById('sessEndDateRow').style.display = '';
+  syncEndDateHint(document.getElementById('sessDate').value);
   document.getElementById('sessTitleInput').value = '';
   document.getElementById('sessStart').value = '';
   document.getElementById('sessEnd').value = '';
@@ -98,4 +122,12 @@ function deleteSession(){
   f.action = @json(url('/calendar/sessions')) + '/' + id;
   confirmAction(f, 'Delete this activity?', 'This activity will be removed from the calendar permanently.', 'Delete');
 }
+
+document.getElementById('sessDate').addEventListener('input', function(){
+  document.getElementById('sessEndDate').min = this.value;
+  syncEndDateHint(this.value);
+});
+document.getElementById('sessEndDate').addEventListener('input', function(){
+  syncEndDateHint(document.getElementById('sessDate').value);
+});
 </script>
