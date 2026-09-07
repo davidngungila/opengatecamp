@@ -25,7 +25,7 @@
       </form>
       <a href="{{ route('calendar.index', ['month' => $date->format('Y-m')]) }}" class="btn btn-secondary btn-sm" title="Open month calendar">Month Grid</a>
       <button type="button" class="btn btn-secondary btn-sm" onclick="window.print()">Print</button>
-      <button type="button" class="btn btn-accent btn-sm" onclick="openPlanDrawer(@json($date->format('Y-m-d')))">+ Plan Activity</button>
+      <button type="button" class="btn btn-accent btn-sm" onclick="openPlanDrawer('{{ $date->format('Y-m-d') }}')">+ Plan Activity</button>
     </div>
   </div>
 
@@ -68,7 +68,7 @@
             <div class="empty-state">
               <h3>No activities planned for this day</h3>
               <p>Plan an activity with its start and end hours for {{ $date->format('d F Y') }}.</p>
-              <button type="button" class="btn btn-accent" onclick="openPlanDrawer(@json($date->format('Y-m-d')))">+ Plan Activity</button>
+              <button type="button" class="btn btn-accent" onclick="openPlanDrawer('{{ $date->format('Y-m-d') }}')">+ Plan Activity</button>
             </div>
           </td></tr>
           @endforelse

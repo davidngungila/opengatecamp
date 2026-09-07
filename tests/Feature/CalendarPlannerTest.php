@@ -54,6 +54,7 @@ class CalendarPlannerTest extends TestCase
         $res->assertSee('08:00');
         $res->assertSee('openPlanDrawer');
         $res->assertSee('openEditDrawer');
+        $res->assertSee("openPlanDrawer('".now()->format('Y-m-d')."')", false);
     }
 
     public function test_calendar_index_links_to_planner_instead_of_timetable(): void
