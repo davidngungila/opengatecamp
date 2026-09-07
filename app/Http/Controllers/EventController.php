@@ -611,8 +611,20 @@ class EventController extends Controller
 
         $event = Event::currentCamp();
 
-        $data['event_id'] = $event?->id;
-        $data['sort_order'] = (((int) EventSession::where('event_id', $event?->id)->max('sort_order')) + 1);
+        if (! $event) {
+            $event = Event::create([
+                'title'      => 'Open Gate Camp',
+                'event_type' => 'camp',
+                'start_date' => now()->startOfMonth()->toDateString(),
+                'end_date'   => now()->endOfMonth()->toDateString(),
+                'status'     => 'planned',
+                'featured'   => true,
+            ]);
+            AuditLog::record('Auto-created default camp event', 'Calendar', $event->title);
+        }
+
+        $data['event_id'] = $event->id;
+        $data['sort_order'] = (((int) EventSession::where('event_id', $event->id)->max('sort_order')) + 1);
         $data['session_date'] = $data['session_date'];
 
         $session = EventSession::create($data);

@@ -460,6 +460,23 @@ class MessagingController extends Controller
         $sentCount = 0;
         $failCount = 0;
         $phoneList = '';
+        $phones = [];
+
+        if ($data['channel'] === 'sms') {
+            if (! empty($data['phones_json'])) {
+                $decoded = json_decode($data['phones_json'], true);
+                if (is_array($decoded)) {
+                    $phones = array_filter(array_map('trim', $decoded));
+                }
+            }
+            if (empty($phones) && ! empty($data['phone'])) {
+                $phones = [trim($data['phone'])];
+            }
+            if (! empty($phones)) {
+                $phoneList = implode(', ', array_slice($phones, 0, 10))
+                    .(count($phones) > 10 ? '... (+'.(count($phones)-10).')' : '');
+            }
+        }
 
         if ($data['channel'] === 'sms' && $isSend) {
             $sms = new SmsService();
@@ -469,21 +486,9 @@ class MessagingController extends Controller
                     'SMS API token is not configured. Go to Messaging â†’ Settings to add your API token.');
             }
 
-            $phones = [];
-            if (! empty($data['phones_json'])) {
-                $decoded = json_decode($data['phones_json'], true);
-                if (is_array($decoded)) {
-                    $phones = array_filter(array_map('trim', $decoded));
-                }
-            } elseif (! empty($data['phone'])) {
-                $phones = [$data['phone']];
-            }
-
             if (empty($phones)) {
-                return back()->withInput()->with('error', 'No valid phone numbers found. Select recipients first.');
+                return back()->withInput()->with('error', 'No valid phone numbers found. Select recipients or enter a phone number first.');
             }
-
-            $phoneList = implode(', ', array_slice($phones, 0, 10)).(count($phones) > 10 ? '... (+'.(count($phones)-10).')' : '');
 
             if (count($phones) === 1) {
                 $result = $sms->send($phones[0], $data['message']);

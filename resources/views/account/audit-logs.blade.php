@@ -31,7 +31,7 @@
   <div class="table-card">
     <div class="table-scroll">
       <table class="data-table">
-        <thead><tr><th>User</th><th>Action</th><th>Module</th><th>Details</th><th>IP</th><th>When</th></tr></thead>
+        <thead><tr><th>User</th><th>Action</th><th>Module</th><th>Details</th><th>IP</th><th>Location</th><th>When</th></tr></thead>
         <tbody>
           @forelse($logs as $log)
           <tr style="cursor:pointer" data-view-audit
@@ -40,6 +40,8 @@
               data-module="{{ $log->module ?? '—' }}"
               data-details="{{ $log->details ?? '—' }}"
               data-ip="{{ $log->ip }}"
+              data-country="{{ $log->country }}"
+              data-region="{{ $log->region }}"
               data-created="{{ $log->created_at?->format('d M Y H:i:s') }}"
               data-date="{{ $log->created_at?->diffForHumans() }}">
             <td>
@@ -52,10 +54,11 @@
             <td>{{ $log->module ?? '—' }}</td>
             <td>{{ Str::limit($log->details ?? '—', 50) }}</td>
             <td>{{ $log->ip }}</td>
+            <td>{{ $log->country ? trim($log->country.($log->region ? ', '.$log->region : '')) : '—' }}</td>
             <td>{{ $log->created_at?->format('d M Y H:i') }}</td>
           </tr>
           @empty
-          <tr><td colspan="6"><div class="empty-state"><h3>No activity found</h3><p>Try adjusting your filter or search.</p></div></td></tr>
+          <tr><td colspan="7"><div class="empty-state"><h3>No activity found</h3><p>Try adjusting your filter or search.</p></div></td></tr>
           @endforelse
         </tbody>
       </table>
@@ -85,6 +88,8 @@
         <div class="info-row"><span>Action</span><b id="audDrawerActionVal">—</b></div>
         <div class="info-row"><span>Module</span><b id="audDrawerModule">—</b></div>
         <div class="info-row"><span>IP Address</span><b id="audDrawerIp">—</b></div>
+        <div class="info-row"><span>Country</span><b id="audDrawerCountry">—</b></div>
+        <div class="info-row"><span>Region</span><b id="audDrawerRegion">—</b></div>
         <div class="info-row"><span>Timestamp</span><b id="audDrawerCreated">—</b></div>
         <div class="info-row"><span>When</span><b id="audDrawerDate">—</b></div>
       </div>
@@ -113,6 +118,8 @@ document.addEventListener('DOMContentLoaded', function(){
       document.getElementById('audDrawerActionVal').textContent = d.action || '—';
       document.getElementById('audDrawerModule').textContent = d.module || '—';
       document.getElementById('audDrawerIp').textContent = d.ip || '—';
+      document.getElementById('audDrawerCountry').textContent = d.country || '—';
+      document.getElementById('audDrawerRegion').textContent = d.region || '—';
       document.getElementById('audDrawerCreated').textContent = d.created || '—';
       document.getElementById('audDrawerDate').textContent = d.date || '—';
       document.getElementById('audDrawerDetails').textContent = d.details || '—';
