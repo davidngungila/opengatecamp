@@ -8,7 +8,10 @@
 <div class="fade-in">
   <div class="section-head">
     <div><h2>Budget Management</h2><div class="sub">@if($fy) Period: {{ $fy->name }} — Income TZS {{ number_format($incomeTotal) }}. @else Select a financial year. @endif</div></div>
-    <button type="button" class="btn btn-accent" data-drawer-open="budgetModal">+ Add Budget</button>
+    <div style="display:flex;gap:10px">
+      <a href="{{ route('accounting.budgets.export', ['event_id' => request('event_id')]) }}" class="btn btn-secondary btn-sm">Export PDF</a>
+      <button type="button" class="btn btn-accent" data-drawer-open="budgetModal">+ Add Budget</button>
+    </div>
   </div>
 
   <form class="toolbar" method="GET" action="{{ route('accounting.budgets') }}">
@@ -52,7 +55,7 @@
                   @if(!$isCommittee)
                   <a href="#" onclick="event.stopPropagation();openBudgetEdit({{ $b->id }})">Edit</a>
                   @endif
-                  <a href="{{ route('accounting.ledger', ['account' => $b->account_id]) }}">View Ledger</a>
+                  <a href="{{ route('accounting.ledger', ['account' => $b->account->ref()]) }}">View Ledger</a>
                   @if(!$isCommittee)
                   <form method="POST" action="{{ route('accounting.budgets.destroy', $b) }}"
                         data-confirm data-confirm-title="Delete this budget line?"
@@ -246,7 +249,7 @@ document.addEventListener('DOMContentLoaded', function(){
             });
           }
 
-          document.getElementById('budLedgerLink').href = '{{ url("/accounting/ledger") }}?account=' + d.account.id;
+          document.getElementById('budLedgerLink').href = '{{ url("/accounting/ledger") }}?account=' + encodeURIComponent(d.account.ref);
           openDrawerById('budgetDetailDrawer');
         });
   }

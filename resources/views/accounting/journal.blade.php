@@ -8,7 +8,10 @@
 <div class="fade-in">
   <div class="section-head">
     <div><h2>Journal Entries</h2><div class="sub">@if($fy) Period: {{ $fy->name }}. @else All periods. @endif Every entry must balance: Debits = Credits.</div></div>
-    <a class="btn btn-accent" href="{{ route('accounting.journal.create') }}">+ New Journal Entry</a>
+    <div style="display:flex;gap:10px">
+      <a href="{{ route('accounting.journal.export') }}" class="btn btn-secondary btn-sm">Export PDF</a>
+      <a class="btn btn-accent" href="{{ route('accounting.journal.create') }}">+ New Journal Entry</a>
+    </div>
   </div>
 
   <div class="table-card">

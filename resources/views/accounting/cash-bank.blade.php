@@ -8,6 +8,7 @@
 <div class="fade-in">
   <div class="section-head">
     <div><h2>Cash &amp; Bank Management</h2><div class="sub">@if($fy) Period: {{ $fy->name }}. @else All periods. @endif Live cash position, inflows/outflows and account-level movement.</div></div>
+    <a href="{{ route('accounting.cash-bank.export') }}" class="btn btn-secondary btn-sm">Export PDF</a>
   </div>
 
   {{-- KPI grid --}}
@@ -227,7 +228,7 @@ document.addEventListener('DOMContentLoaded', function(){
             });
           }
 
-          document.getElementById('cashAcctLedgerLink').href = '{{ url("/accounting/ledger") }}?account=' + a.id;
+          document.getElementById('cashAcctLedgerLink').href = '{{ url("/accounting/ledger") }}?account=' + encodeURIComponent(a.ref);
           openDrawerById('cashAcctDrawer');
         });
     });

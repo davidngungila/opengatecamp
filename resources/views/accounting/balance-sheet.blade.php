@@ -8,7 +8,10 @@
 <div class="fade-in">
   <div class="section-head">
     <div><h2>Balance Sheet</h2><div class="sub">As of {{ $asOf }}. @if($fy) {{ $fy->name }}. @endif</div></div>
-    <button type="button" class="btn btn-secondary btn-sm" onclick="window.print()">Print</button>
+    <div style="display:flex;gap:10px">
+      <button type="button" class="btn btn-secondary btn-sm" onclick="window.print()">Print</button>
+      <a href="{{ route('accounting.balance-sheet.export') }}" class="btn btn-secondary btn-sm">Export PDF</a>
+    </div>
   </div>
 
   <div class="two-col" style="grid-template-columns:1fr 1fr;margin-bottom:0">
@@ -124,7 +127,7 @@ document.addEventListener('DOMContentLoaded', function(){
             });
           }
 
-          document.getElementById('bsLedgerLink').href = '{{ url("/accounting/ledger") }}?account=' + a.id;
+          document.getElementById('bsLedgerLink').href = '{{ url("/accounting/ledger") }}?account=' + encodeURIComponent(a.ref);
           openDrawerById('bsDetailDrawer');
         });
     });

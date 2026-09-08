@@ -12,7 +12,10 @@
 <div class="fade-in">
   <div class="section-head">
     <div><h2>Payments &amp; Expense Management</h2><div class="sub">@if($fy) Period: {{ $fy->name }}. @else All periods. @endif Every payment posts Dr Expense · Cr Cash/Bank.</div></div>
-    <button type="button" class="btn btn-accent" data-drawer-open="paymentModal">+ Record Payment</button>
+    <div style="display:flex;gap:10px">
+      <a href="{{ route('accounting.payments.export') }}" class="btn btn-secondary btn-sm">Export PDF</a>
+      <button type="button" class="btn btn-accent" data-drawer-open="paymentModal">+ Record Payment</button>
+    </div>
   </div>
 
   <div class="table-card">
@@ -35,7 +38,7 @@
                   <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><circle cx="12" cy="5" r=".6"/><circle cx="12" cy="12" r=".6"/><circle cx="12" cy="19" r=".6"/></svg>
                 </button>
                 <div class="action-menu" id="am-pay-{{ $d->id }}">
-                  <a href="{{ route('accounting.ledger', ['account' => $d->category_account_id]) }}">View Expense Ledger</a>
+                  <a href="{{ route('accounting.ledger', ['account' => $d->categoryAccount?->ref()]) }}">View Expense Ledger</a>
                   @if(!$isCommittee)
                   <form method="POST" action="{{ route('accounting.documents.destroy', $d) }}"
                         data-confirm data-confirm-title="Delete this payment?"

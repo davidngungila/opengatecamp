@@ -12,7 +12,10 @@
 <div class="fade-in">
   <div class="section-head">
     <div><h2>Chart of Accounts</h2><div class="sub">{{ $accounts->count() }} accounts</div></div>
-    <button type="button" class="btn btn-accent" data-drawer-open="accountModal" onclick="resetAccountModal()">+ Add Account</button>
+    <div style="display:flex;gap:10px">
+      <a href="{{ route('accounting.accounts.export', ['type' => $typeFilter]) }}" class="btn btn-secondary btn-sm">Export PDF</a>
+      <button type="button" class="btn btn-accent" data-drawer-open="accountModal" onclick="resetAccountModal()">+ Add Account</button>
+    </div>
   </div>
 
   <form class="toolbar" method="GET" action="{{ url('/accounting/accounts') }}">
@@ -42,7 +45,7 @@
                   <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><circle cx="12" cy="5" r=".6"/><circle cx="12" cy="12" r=".6"/><circle cx="12" cy="19" r=".6"/></svg>
                 </button>
                 <div class="action-menu" id="am-acct-{{ $a->id }}">
-                  <a href="{{ route('accounting.ledger', ['account' => $a->id]) }}">View Ledger</a>
+                  <a href="{{ route('accounting.ledger', ['account' => $a->ref()]) }}">View Ledger</a>
                   <button type="button" data-edit-account
                           data-id="{{ $a->id }}" data-code="{{ $a->code }}" data-name="{{ $a->name }}" data-type="{{ $a->type }}">Edit</button>
                   @if(!$isCommittee)
@@ -188,7 +191,7 @@ document.addEventListener('DOMContentLoaded', function(){
             });
           }
 
-          document.getElementById('acctLedgerLink').href = '{{ url("/accounting/ledger") }}?account=' + a.id;
+          document.getElementById('acctLedgerLink').href = '{{ url("/accounting/ledger") }}?account=' + encodeURIComponent(a.ref);
           openDrawerById('acctDetailDrawer');
         });
     });

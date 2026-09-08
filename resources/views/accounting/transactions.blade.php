@@ -8,6 +8,7 @@
 <div class="fade-in">
   <div class="section-head">
     <div><h2>Transaction History</h2><div class="sub">@if($fy) Period: {{ $fy->name }}. @else All periods. @endif Every line is a posted journal entry — sorted by most recent.</div></div>
+    <a href="{{ route('accounting.transactions.export', ['q' => $q, 'account' => $accountId]) }}" class="btn btn-secondary btn-sm">Export PDF</a>
   </div>
 
   <div class="glass-card" style="margin-bottom:20px;padding:16px 20px">

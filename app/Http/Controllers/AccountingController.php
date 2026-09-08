@@ -11,8 +11,10 @@ use App\Models\JournalEntry;
 use App\Models\JournalLine;
 use App\Models\ReceiptPayment;
 use App\Models\Setting;
+use App\Services\ReportPdfService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Str;
 
 class AccountingController extends Controller
 {
@@ -193,9 +195,8 @@ class AccountingController extends Controller
     public function ledger(Request $request)
     {
         [$fy, $between] = $this->fyWindow();
-        $accountId = $request->query('account');
-
-        $account = $accountId ? Account::findOrFail($accountId) : null;
+        $ref = $request->query('account');
+        $account = $ref ? (Account::resolveRef($ref) ?? abort(404)) : null;
 
         $lines = collect();
         $running = 0;
@@ -338,7 +339,7 @@ class AccountingController extends Controller
     {
         $data = $request->validate([
             'pay_date' => 'required|date',
-            'party' => 'required|string|max:255',
+            'party' => $type === 'receipt' ? 'nullable|string|max:255' : 'required|string|max:255',
             'category_account_id' => 'required|exists:accounts,id',
             'money_account_id' => 'required|exists:accounts,id',
             'amount' => 'required|numeric|min:0.01',
@@ -346,6 +347,10 @@ class AccountingController extends Controller
             'reference' => 'nullable|string|max:100',
             'description' => 'nullable|string|max:500',
         ]);
+
+        if ($type === 'receipt') {
+            $data['party'] = trim((string) ($data['party'] ?? '')) ?: 'Other Income';
+        }
 
         $entry = DB::transaction(function () use ($data, $type) {
             $entry = JournalEntry::create([
@@ -718,6 +723,453 @@ class AccountingController extends Controller
         return $mpdf->Output($filename, $request->boolean('inline') ? 'I' : 'D');
     }
 
+    private function pdfResponse(\Mpdf\Mpdf $mpdf, string $filename)
+    {
+        return response($mpdf->Output($filename, 'S'), 200, [
+            'Content-Type' => 'application/pdf',
+            'Content-Disposition' => 'attachment; filename="'.$filename.'"',
+        ]);
+    }
+
+    private function brandedReport(string $title, string $subtitle, array $columns, array $rows, array $totals = [], array $filters = [])
+    {
+        return app(ReportPdfService::class)->generate(
+            ['title' => $title, 'subtitle' => $subtitle, 'filters' => $filters],
+            $columns,
+            $rows,
+            $totals
+        );
+    }
+
+    public function exportAccountsPdf(Request $request)
+    {
+        $accounts = Account::withSum('journalLines as total_debit', 'debit')
+            ->withSum('journalLines as total_credit', 'credit')
+            ->when($request->query('type'), fn ($q, $t) => $q->where('type', $t))
+            ->orderBy('code')->get();
+
+        $rows = $accounts->map(fn ($a) => [
+            'code' => $a->code,
+            'name' => $a->name,
+            'type' => ucfirst($a->type),
+            'debit' => 'TZS '.number_format((float) $a->total_debit, 2),
+            'credit' => 'TZS '.number_format((float) $a->total_credit, 2),
+        ])->all();
+
+        $totals = [
+            ['label' => 'Accounts', 'value' => number_format($accounts->count())],
+            ['label' => 'Total Debits', 'value' => 'TZS '.number_format($accounts->sum('total_debit'), 2)],
+            ['label' => 'Total Credits', 'value' => 'TZS '.number_format($accounts->sum('total_credit'), 2)],
+        ];
+
+        $filters = $request->query('type') ? ['Type' => ucfirst($request->query('type'))] : [];
+
+        $mpdf = $this->brandedReport('Chart of Accounts', 'Account listing and balances', [
+            ['label' => 'Code', 'key' => 'code'],
+            ['label' => 'Account Name', 'key' => 'name'],
+            ['label' => 'Type', 'key' => 'type'],
+            ['label' => 'Total Debits', 'key' => 'debit', 'align' => 'right'],
+            ['label' => 'Total Credits', 'key' => 'credit', 'align' => 'right'],
+        ], $rows, $totals, $filters);
+
+        return $this->pdfResponse($mpdf, 'Chart-of-Accounts-'.now()->format('Ymd-His').'.pdf');
+    }
+
+    public function exportJournalPdf()
+    {
+        [$fy, $between] = $this->fyWindow();
+
+        $entries = JournalEntry::with(['lines.account'])
+            ->when($fy, fn ($q) => $q->whereBetween('entry_date', $between))
+            ->orderByDesc('entry_date')->orderByDesc('id')->get();
+
+        $rows = $entries->map(fn ($e) => [
+            'entry' => $e->entry_no,
+            'date' => $e->entry_date->format('d M Y'),
+            'description' => Str::limit($e->description ?? '—', 46),
+            'reference' => $e->reference ?? '—',
+            'lines' => $e->lines->count(),
+            'amount' => 'TZS '.number_format((float) $e->lines->sum('debit'), 2),
+            'status' => ucfirst($e->status),
+        ])->all();
+
+        $totals = [
+            ['label' => 'Entries', 'value' => number_format($entries->count())],
+            ['label' => 'Total Dr/Cr', 'value' => 'TZS '.number_format($entries->sum(fn ($e) => (float) $e->lines->sum('debit')), 2)],
+        ];
+
+        $mpdf = $this->brandedReport('Journal Entries', $fy ? 'Period: '.$fy->name : 'All periods', [
+            ['label' => 'Entry No', 'key' => 'entry'],
+            ['label' => 'Date', 'key' => 'date'],
+            ['label' => 'Description', 'key' => 'description'],
+            ['label' => 'Reference', 'key' => 'reference'],
+            ['label' => 'Lines', 'key' => 'lines'],
+            ['label' => 'Amount (TZS)', 'key' => 'amount', 'align' => 'right'],
+            ['label' => 'Status', 'key' => 'status'],
+        ], $rows, $totals);
+
+        return $this->pdfResponse($mpdf, 'Journal-Entries-'.now()->format('Ymd-His').'.pdf');
+    }
+
+    public function exportTrialBalancePdf()
+    {
+        [$fy, $between] = $this->fyWindow();
+
+        $rows = $this->trialBalanceRows($between);
+
+        $dataRows = $rows->map(fn ($r) => [
+            'code' => $r['account']->code,
+            'name' => $r['account']->name,
+            'type' => ucfirst($r['account']->type),
+            'debit' => $r['debit'] > 0 ? 'TZS '.number_format($r['debit'], 2) : '—',
+            'credit' => $r['credit'] > 0 ? 'TZS '.number_format($r['credit'], 2) : '—',
+        ])->all();
+
+        $totals = [
+            ['label' => 'Total Debits', 'value' => 'TZS '.number_format($rows->sum('debit'), 2)],
+            ['label' => 'Total Credits', 'value' => 'TZS '.number_format($rows->sum('credit'), 2)],
+        ];
+
+        $mpdf = $this->brandedReport('Trial Balance', $fy ? 'Period: '.$fy->name : 'All periods', [
+            ['label' => 'Code', 'key' => 'code'],
+            ['label' => 'Account', 'key' => 'name'],
+            ['label' => 'Type', 'key' => 'type'],
+            ['label' => 'Debit (TZS)', 'key' => 'debit', 'align' => 'right'],
+            ['label' => 'Credit (TZS)', 'key' => 'credit', 'align' => 'right'],
+        ], $dataRows, $totals);
+
+        return $this->pdfResponse($mpdf, 'Trial-Balance-'.now()->format('Ymd-His').'.pdf');
+    }
+
+    public function exportLedgerPdf(Request $request)
+    {
+        [$fy, $between] = $this->fyWindow();
+        $ref = $request->query('account');
+        $account = $ref ? (Account::resolveRef($ref) ?? abort(404)) : null;
+
+        $filestem = $account ? 'Ledger-'.preg_replace('/[^A-Za-z0-9-_]/', '', $account->code) : 'General-Ledger-All-Accounts';
+
+        if (! $account) {
+            $data = [];
+            foreach (Account::orderBy('code')->get() as $a) {
+                $d = (float) $this->baseLineQuery($between)->clone()->where('account_id', $a->id)->sum('debit');
+                $c = (float) $this->baseLineQuery($between)->clone()->where('account_id', $a->id)->sum('credit');
+                if ($d != 0 || $c != 0) {
+                    $data[] = [
+                        'code' => $a->code,
+                        'name' => $a->name,
+                        'debit' => 'TZS '.number_format($d, 2),
+                        'credit' => 'TZS '.number_format($c, 2),
+                        'net' => 'TZS '.number_format($d - $c, 2),
+                    ];
+                }
+            }
+
+            $mpdf = $this->brandedReport('General Ledger — All Accounts', $fy ? 'Period: '.$fy->name : 'All periods', [
+                ['label' => 'Code', 'key' => 'code'],
+                ['label' => 'Account', 'key' => 'name'],
+                ['label' => 'Debit (TZS)', 'key' => 'debit', 'align' => 'right'],
+                ['label' => 'Credit (TZS)', 'key' => 'credit', 'align' => 'right'],
+                ['label' => 'Net (TZS)', 'key' => 'net', 'align' => 'right'],
+            ], $data, [
+                ['label' => 'Accounts with activity', 'value' => number_format(count($data))],
+            ]);
+
+            return $this->pdfResponse($mpdf, $filestem.'-'.now()->format('Ymd-His').'.pdf');
+        }
+
+        $lines = JournalLine::with('entry')
+            ->where('account_id', $account->id)
+            ->whereHas('entry', fn ($q) => $q->whereBetween('entry_date', $between))
+            ->get()
+            ->sortBy(fn ($l) => $l->entry->entry_date.'-'.$l->journal_entry_id)
+            ->values();
+
+        $running = 0;
+        $rows = [];
+        foreach ($lines as $line) {
+            $running += $account->isDebitNormal() ? $line->debit - $line->credit : $line->credit - $line->debit;
+            $rows[] = [
+                'date' => $line->entry->entry_date->format('d M Y'),
+                'entry' => $line->entry->entry_no,
+                'description' => $line->description ?: ($line->entry->description ?: '—'),
+                'debit' => $line->debit > 0 ? 'TZS '.number_format($line->debit, 2) : '—',
+                'credit' => $line->credit > 0 ? 'TZS '.number_format($line->credit, 2) : '—',
+                'balance' => 'TZS '.number_format(abs($running), 2).' '.($account->isDebitNormal() ? 'Dr' : 'Cr'),
+            ];
+        }
+
+        $mpdf = $this->brandedReport('General Ledger — '.$account->code, $account->name.' · '.($fy ? $fy->name : 'All periods'), [
+            ['label' => 'Date', 'key' => 'date'],
+            ['label' => 'Entry', 'key' => 'entry'],
+            ['label' => 'Description', 'key' => 'description'],
+            ['label' => 'Debit (TZS)', 'key' => 'debit', 'align' => 'right'],
+            ['label' => 'Credit (TZS)', 'key' => 'credit', 'align' => 'right'],
+            ['label' => 'Balance (TZS)', 'key' => 'balance', 'align' => 'right'],
+        ], $rows, [
+            ['label' => 'Entries', 'value' => number_format(count($rows))],
+            ['label' => 'Closing Balance', 'value' => 'TZS '.number_format(abs($running), 2)],
+        ]);
+
+        return $this->pdfResponse($mpdf, $filestem.'-'.now()->format('Ymd-His').'.pdf');
+    }
+
+    public function exportIncomeStatementPdf()
+    {
+        [$fy, $between] = $this->fyWindow();
+
+        $income = $this->balancesByType('income', $between);
+        $expense = $this->balancesByType('expense', $between);
+
+        $rows = $income['accounts']
+            ->map(fn ($r) => ['section' => 'Income', 'code' => $r['account']->code, 'name' => $r['account']->name, 'amount' => 'TZS '.number_format($r['amount'], 2)])
+            ->concat($expense['accounts']->map(fn ($r) => ['section' => 'Expense', 'code' => $r['account']->code, 'name' => $r['account']->name, 'amount' => 'TZS '.number_format($r['amount'], 2)]))
+            ->values()->all();
+
+        $totalIncome = $income['accounts']->sum('amount');
+        $totalExpense = $expense['accounts']->sum('amount');
+
+        $mpdf = $this->brandedReport('Income & Expenditure Statement', $fy ? 'For '.$fy->name : 'For all periods', [
+            ['label' => 'Section', 'key' => 'section'],
+            ['label' => 'Code', 'key' => 'code'],
+            ['label' => 'Account', 'key' => 'name'],
+            ['label' => 'Amount (TZS)', 'key' => 'amount', 'align' => 'right'],
+        ], $rows, [
+            ['label' => 'Total Income', 'value' => 'TZS '.number_format($totalIncome, 2)],
+            ['label' => 'Total Expenses', 'value' => 'TZS '.number_format($totalExpense, 2)],
+            ['label' => 'Surplus / Deficit', 'value' => 'TZS '.number_format($totalIncome - $totalExpense, 2)],
+        ]);
+
+        return $this->pdfResponse($mpdf, 'Income-Statement-'.now()->format('Ymd-His').'.pdf');
+    }
+
+    public function exportBalanceSheetPdf()
+    {
+        [, $between] = $this->fyWindow();
+
+        $assets = $this->balancesByType('asset', $between, true);
+        $liabilities = $this->balancesByType('liability', $between, true);
+        $equity = $this->balancesByType('equity', $between, true);
+        $netResult = $this->netResult($between);
+
+        $rows = collect()
+            ->concat($assets['accounts']->map(fn ($r) => ['section' => 'Assets', 'code' => $r['account']->code, 'name' => $r['account']->name, 'amount' => 'TZS '.number_format($r['amount'], 2)]))
+            ->concat($liabilities['accounts']->map(fn ($r) => ['section' => 'Liabilities', 'code' => $r['account']->code, 'name' => $r['account']->name, 'amount' => 'TZS '.number_format($r['amount'], 2)]))
+            ->concat($equity['accounts']->map(fn ($r) => ['section' => 'Equity', 'code' => $r['account']->code, 'name' => $r['account']->name, 'amount' => 'TZS '.number_format($r['amount'], 2)]))
+            ->push(['section' => 'Equity', 'code' => '—', 'name' => 'Surplus / (Deficit) for period', 'amount' => 'TZS '.number_format($netResult, 2)])
+            ->values()->all();
+
+        $mpdf = $this->brandedReport('Balance Sheet', 'As of '.$between[1], [
+            ['label' => 'Section', 'key' => 'section'],
+            ['label' => 'Code', 'key' => 'code'],
+            ['label' => 'Account', 'key' => 'name'],
+            ['label' => 'Amount (TZS)', 'key' => 'amount', 'align' => 'right'],
+        ], $rows, [
+            ['label' => 'Total Assets', 'value' => 'TZS '.number_format($assets['accounts']->sum('amount'), 2)],
+            ['label' => 'Total Liabilities', 'value' => 'TZS '.number_format($liabilities['accounts']->sum('amount'), 2)],
+            ['label' => 'Total Equity', 'value' => 'TZS '.number_format($equity['accounts']->sum('amount') + $netResult, 2)],
+        ]);
+
+        return $this->pdfResponse($mpdf, 'Balance-Sheet-'.now()->format('Ymd-His').'.pdf');
+    }
+
+    private function documentRows(string $type, array $between): array
+    {
+        $docs = ReceiptPayment::with(['categoryAccount', 'moneyAccount'])
+            ->where('type', $type)
+            ->whereBetween('pay_date', $between)
+            ->orderByDesc('pay_date')->get();
+
+        $rows = $docs->map(fn ($d) => [
+            'doc' => $d->doc_no,
+            'date' => $d->pay_date->format('d M Y'),
+            'party' => $d->party,
+            'category' => $d->categoryAccount?->code.' — '.($d->categoryAccount?->name ?? '—'),
+            'method' => ucfirst($d->method),
+            'amount' => 'TZS '.number_format((float) $d->amount, 2),
+        ])->all();
+
+        return [$docs, $rows];
+    }
+
+    public function exportOfferingsPdf()
+    {
+        [$fy, $between] = $this->fyWindow();
+
+        [$docs, $rows] = $this->documentRows('receipt', $between);
+
+        $mpdf = $this->brandedReport('Offerings, Contributions & Donations', $fy ? 'Period: '.$fy->name : 'All periods', [
+            ['label' => 'Doc No', 'key' => 'doc'],
+            ['label' => 'Date', 'key' => 'date'],
+            ['label' => 'From / Source', 'key' => 'party'],
+            ['label' => 'Category', 'key' => 'category'],
+            ['label' => 'Method', 'key' => 'method'],
+            ['label' => 'Amount (TZS)', 'key' => 'amount', 'align' => 'right'],
+        ], $rows, [
+            ['label' => 'Receipts', 'value' => number_format(count($docs))],
+            ['label' => 'Total Received', 'value' => 'TZS '.number_format($docs->sum('amount'), 2)],
+        ]);
+
+        return $this->pdfResponse($mpdf, 'Offering-Receipts-'.now()->format('Ymd-His').'.pdf');
+    }
+
+    public function exportPaymentsPdf()
+    {
+        [$fy, $between] = $this->fyWindow();
+
+        [$docs, $rows] = $this->documentRows('payment', $between);
+
+        $mpdf = $this->brandedReport('Payments & Expenses', $fy ? 'Period: '.$fy->name : 'All periods', [
+            ['label' => 'Voucher', 'key' => 'doc'],
+            ['label' => 'Date', 'key' => 'date'],
+            ['label' => 'Paid To', 'key' => 'party'],
+            ['label' => 'Expense Account', 'key' => 'category'],
+            ['label' => 'Method', 'key' => 'method'],
+            ['label' => 'Amount (TZS)', 'key' => 'amount', 'align' => 'right'],
+        ], $rows, [
+            ['label' => 'Payments', 'value' => number_format(count($docs))],
+            ['label' => 'Total Paid', 'value' => 'TZS '.number_format($docs->sum('amount'), 2)],
+        ]);
+
+        return $this->pdfResponse($mpdf, 'Payment-Expenses-'.now()->format('Ymd-His').'.pdf');
+    }
+
+    public function exportCashBankPdf()
+    {
+        [$fy, $between] = $this->fyWindow();
+
+        $cashAccounts = Account::where('is_cash', true)->orderBy('code')->get();
+
+        $balances = collect();
+        foreach ($cashAccounts as $a) {
+            $d = (float) $this->baseLineQuery($between)->clone()->where('account_id', $a->id)->sum('debit');
+            $c = (float) $this->baseLineQuery($between)->clone()->where('account_id', $a->id)->sum('credit');
+            $balances->push([
+                'account' => $a,
+                'debit' => round($d, 2),
+                'credit' => round($c, 2),
+                'balance' => round($d - $c, 2),
+            ]);
+        }
+
+        $rows = $balances->map(fn ($b) => [
+            'code' => $b['account']->code,
+            'name' => $b['account']->name,
+            'in' => 'TZS '.number_format($b['debit'], 2),
+            'out' => 'TZS '.number_format($b['credit'], 2),
+            'balance' => 'TZS '.number_format($b['balance'], 2),
+        ])->all();
+
+        $mpdf = $this->brandedReport('Cash & Bank Management', $fy ? 'Period: '.$fy->name : 'All periods', [
+            ['label' => 'Code', 'key' => 'code'],
+            ['label' => 'Account', 'key' => 'name'],
+            ['label' => 'Inflows (TZS)', 'key' => 'in', 'align' => 'right'],
+            ['label' => 'Outflows (TZS)', 'key' => 'out', 'align' => 'right'],
+            ['label' => 'Net Balance (TZS)', 'key' => 'balance', 'align' => 'right'],
+        ], $rows, [
+            ['label' => 'Total Cash', 'value' => 'TZS '.number_format($balances->sum('balance'), 2)],
+            ['label' => 'Total Inflows', 'value' => 'TZS '.number_format($balances->sum('debit'), 2)],
+            ['label' => 'Total Outflows', 'value' => 'TZS '.number_format($balances->sum('credit'), 2)],
+        ]);
+
+        return $this->pdfResponse($mpdf, 'Cash-Bank-'.now()->format('Ymd-His').'.pdf');
+    }
+
+    public function exportBudgetsPdf(Request $request)
+    {
+        [$fy, $between] = $this->fyWindow();
+        $eventId = $request->query('event_id');
+
+        $budgets = Budget::with(['account', 'fy', 'event'])
+            ->when($fy, fn ($q) => $q->where('fy_id', $fy?->id))
+            ->when($eventId, fn ($q) => $q->where('event_id', $eventId))
+            ->orderBy('id')->get();
+
+        $budgets->each(function ($b) use ($between) {
+            $d = (float) $this->baseLineQuery($between)->clone()->where('account_id', $b->account_id)->sum('debit');
+            $c = (float) $this->baseLineQuery($between)->clone()->where('account_id', $b->account_id)->sum('credit');
+            $b->actual = round($d - $c, 2);
+        });
+
+        $rows = $budgets->map(fn ($b) => [
+            'account' => $b->account->code.' — '.$b->account->name,
+            'event' => $b->event?->title ?? 'General',
+            'budget' => 'TZS '.number_format((float) $b->amount, 2),
+            'actual' => 'TZS '.number_format((float) $b->actual, 2),
+            'variance' => 'TZS '.number_format((float) $b->amount - (float) $b->actual, 2),
+        ])->all();
+
+        $filters = $eventId ? ['Event' => $budgets->first()?->event?->title ?? $eventId] : [];
+
+        $mpdf = $this->brandedReport('Budget Management', $fy ? 'Period: '.$fy->name : 'Select a financial year', [
+            ['label' => 'Account', 'key' => 'account'],
+            ['label' => 'Event', 'key' => 'event'],
+            ['label' => 'Budget (TZS)', 'key' => 'budget', 'align' => 'right'],
+            ['label' => 'Actual (TZS)', 'key' => 'actual', 'align' => 'right'],
+            ['label' => 'Variance (TZS)', 'key' => 'variance', 'align' => 'right'],
+        ], $rows, [
+            ['label' => 'Budget Lines', 'value' => number_format(count($budgets))],
+            ['label' => 'Total Budget', 'value' => 'TZS '.number_format($budgets->sum('amount'), 2)],
+            ['label' => 'Total Actual', 'value' => 'TZS '.number_format($budgets->sum('actual'), 2)],
+        ], $filters);
+
+        return $this->pdfResponse($mpdf, 'Budgets-'.now()->format('Ymd-His').'.pdf');
+    }
+
+    public function exportTransactionsPdf(Request $request)
+    {
+        [$fy, $between] = $this->fyWindow();
+        $q = trim((string) $request->query('q'));
+        $accountId = $request->query('account');
+
+        $lines = JournalLine::with(['entry.lines.account', 'account'])
+            ->whereHas('entry', fn ($e) => $e
+                ->where('status', 'posted')
+                ->when($fy, fn ($ee) => $ee->whereBetween('entry_date', $between))
+                ->when($q !== '', fn ($w) => $w->where(fn ($x) => $x
+                    ->where('description', 'like', "%{$q}%")
+                    ->orWhere('reference', 'like', "%{$q}%")
+                    ->orWhere('entry_no', 'like', "%{$q}%"))))
+            ->when($accountId, fn ($qq) => $qq->where('account_id', $accountId))
+            ->latest('journal_lines.id')
+            ->get();
+
+        $rows = $lines->map(fn ($l) => [
+            'entry' => $l->entry->entry_no,
+            'date' => $l->entry->entry_date->format('d M Y'),
+            'account' => $l->account->code.' — '.$l->account->name,
+            'description' => $l->description ?: ($l->entry->description ?: '—'),
+            'debit' => $l->debit > 0 ? 'TZS '.number_format($l->debit, 2) : '—',
+            'credit' => $l->credit > 0 ? 'TZS '.number_format($l->credit, 2) : '—',
+        ])->all();
+
+        $filters = [];
+        if ($fy) {
+            $filters['Period'] = $fy->name;
+        }
+        if ($q !== '') {
+            $filters['Search'] = $q;
+        }
+        if ($accountId) {
+            $filters['Account'] = $accountId;
+        }
+
+        $mpdf = $this->brandedReport('Transaction History', $fy ? 'Period: '.$fy->name : 'All periods', [
+            ['label' => 'Entry No', 'key' => 'entry'],
+            ['label' => 'Date', 'key' => 'date'],
+            ['label' => 'Account', 'key' => 'account'],
+            ['label' => 'Description', 'key' => 'description'],
+            ['label' => 'Debit (TZS)', 'key' => 'debit', 'align' => 'right'],
+            ['label' => 'Credit (TZS)', 'key' => 'credit', 'align' => 'right'],
+        ], $rows, [
+            ['label' => 'Transactions', 'value' => number_format(count($lines))],
+            ['label' => 'Total Debits', 'value' => 'TZS '.number_format($lines->sum('debit'), 2)],
+            ['label' => 'Total Credits', 'value' => 'TZS '.number_format($lines->sum('credit'), 2)],
+        ], $filters);
+
+        return $this->pdfResponse($mpdf, 'Transactions-'.now()->format('Ymd-His').'.pdf');
+    }
+
     /**
      * Determine who the money came from for a posted journal entry.
      * Prefers registrations, then pledges, then manual receipts; falls back to the
@@ -884,7 +1336,7 @@ class AccountingController extends Controller
             ]);
 
         return response()->json([
-            'account' => ['id' => $account->id, 'code' => $account->code, 'name' => $account->name, 'type' => $account->type],
+            'account' => ['id' => $account->id, 'ref' => $account->ref(), 'code' => $account->code, 'name' => $account->name, 'type' => $account->type],
             'debit' => round($debit, 2),
             'credit' => round($credit, 2),
             'net' => round($debit - $credit, 2),
@@ -946,7 +1398,7 @@ class AccountingController extends Controller
             ]);
 
         return response()->json([
-            'account' => ['id' => $account->id, 'code' => $account->code, 'name' => $account->name, 'type' => $account->type],
+            'account' => ['id' => $account->id, 'ref' => $account->ref(), 'code' => $account->code, 'name' => $account->name, 'type' => $account->type],
             'debit' => round($debit, 2),
             'credit' => round($credit, 2),
             'net' => round($debit - $credit, 2),
@@ -998,7 +1450,7 @@ class AccountingController extends Controller
             ]);
 
         return response()->json([
-            'account' => ['id' => $budget->account_id, 'code' => $budget->account->code, 'name' => $budget->account->name],
+            'account' => ['id' => $budget->account_id, 'ref' => $budget->account->ref(), 'code' => $budget->account->code, 'name' => $budget->account->name],
             'account_id' => $budget->account_id,
             'event' => $budget->event ? $budget->event->title : null,
             'event_id' => $budget->event_id,

@@ -16,7 +16,10 @@
 <div class="fade-in">
   <div class="section-head">
     <div><h2>Offerings, Contributions &amp; Donations</h2><div class="sub">@if($fy) Period: {{ $fy->name }}. @else All periods. @endif Every receipt posts a balanced double entry automatically.</div></div>
-    <button type="button" class="btn btn-accent" data-drawer-open="receiptModal">+ Record Receipt</button>
+    <div style="display:flex;gap:10px">
+      <a href="{{ route('accounting.offerings.export') }}" class="btn btn-secondary btn-sm">Export PDF</a>
+      <button type="button" class="btn btn-accent" data-drawer-open="receiptModal">+ Record Receipt</button>
+    </div>
   </div>
 
   <div class="table-card">
@@ -44,7 +47,7 @@
                   <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><circle cx="12" cy="5" r=".6"/><circle cx="12" cy="12" r=".6"/><circle cx="12" cy="19" r=".6"/></svg>
                 </button>
                 <div class="action-menu" id="am-rcp-{{ $d->id }}">
-                  <a href="{{ route('accounting.ledger', ['account' => $d->category_account_id]) }}">View Category Ledger</a>
+                  <a href="{{ route('accounting.ledger', ['account' => $d->categoryAccount?->ref()]) }}">View Category Ledger</a>
                   @if(!$isCommittee)
                   <form method="POST" action="{{ route('accounting.documents.destroy', $d) }}"
                         data-confirm data-confirm-title="Delete this receipt?"
@@ -117,7 +120,7 @@
         <div class="form-grid">
           <div class="field"><label>Date *</label><input type="date" name="pay_date" value="{{ old('pay_date', now()->toDateString()) }}" required></div>
           <div class="field"><label>Amount (TZS) *</label><input type="number" step="0.01" min="0.01" name="amount" required placeholder="0.00"></div>
-          <div class="field full"><label>From / Source *</label><input name="party" required placeholder="e.g. Sunday congregation, donor name"></div>
+          <div class="field full"><label>From / Source</label><input name="party" placeholder="Optional — defaults to Other Income. e.g. Sunday congregation, donor name"></div>
           <div class="field full"><label>Income Category *</label>
             <select name="category_account_id" required>
               @foreach($presetCategories as [$code,$label])

@@ -6,13 +6,16 @@
 
 @section('content')
 <div class="fade-in">
-  <div class="section-head"><div><h2>General Ledger</h2><div class="sub">@if($fy) Period: {{ $fy->name }}. @else All periods. @endif</div></div></div>
+  <div class="section-head">
+    <div><h2>General Ledger</h2><div class="sub">@if($fy) Period: {{ $fy->name }}. @else All periods. @endif</div></div>
+    <a href="{{ route('accounting.ledger.export', ['account' => $account?->ref()]) }}" class="btn btn-secondary btn-sm">Export PDF</a>
+  </div>
 
   <form class="toolbar" method="GET" action="{{ url('/accounting/ledger') }}">
     <select class="filter-select" name="account" style="min-width:280px" onchange="this.form.submit()">
       <option value="">— Select an account —</option>
       @foreach($accounts as $a)
-        <option value="{{ $a->id }}" {{ $account?->id===$a->id ? 'selected' : '' }}>{{ $a->code }} — {{ $a->name }}</option>
+        <option value="{{ $a->ref() }}" {{ $account?->id===$a->id ? 'selected' : '' }}>{{ $a->code }} — {{ $a->name }}</option>
       @endforeach
     </select>
   </form>

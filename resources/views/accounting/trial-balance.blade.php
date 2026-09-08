@@ -8,7 +8,10 @@
 <div class="fade-in">
   <div class="section-head">
     <div><h2>Trial Balance</h2><div class="sub">@if($fy) Period: {{ $fy->name }}. @else All periods. @endif Debits must equal credits.</div></div>
-    <button type="button" class="btn btn-secondary btn-sm" onclick="window.print()">Print</button>
+    <div style="display:flex;gap:10px">
+      <button type="button" class="btn btn-secondary btn-sm" onclick="window.print()">Print</button>
+      <a href="{{ route('accounting.trial-balance.export') }}" class="btn btn-secondary btn-sm">Export PDF</a>
+    </div>
   </div>
 
   <div class="table-card">
@@ -118,7 +121,7 @@ document.addEventListener('DOMContentLoaded', function(){
             });
           }
 
-          document.getElementById('tbLedgerLink').href = '{{ url("/accounting/ledger") }}?account=' + a.id;
+          document.getElementById('tbLedgerLink').href = '{{ url("/accounting/ledger") }}?account=' + encodeURIComponent(a.ref);
           openDrawerById('tbDetailDrawer');
         });
     });

@@ -259,6 +259,19 @@ Route::middleware(['auth', 'committee.readonly'])->group(function () {
         Route::get('/accounting/transactions', [AccountingController::class, 'transactions'])->name('accounting.transactions');
         Route::get('/accounting/transactions/{entry}/receipt', [AccountingController::class, 'receiptPdf'])->name('accounting.transactions.receipt');
 
+        // PDF report exports
+        Route::get('/accounting/accounts/export', [AccountingController::class, 'exportAccountsPdf'])->name('accounting.accounts.export');
+        Route::get('/accounting/journal/export', [AccountingController::class, 'exportJournalPdf'])->name('accounting.journal.export');
+        Route::get('/accounting/trial-balance/export', [AccountingController::class, 'exportTrialBalancePdf'])->name('accounting.trial-balance.export');
+        Route::get('/accounting/ledger/export', [AccountingController::class, 'exportLedgerPdf'])->name('accounting.ledger.export');
+        Route::get('/accounting/income-statement/export', [AccountingController::class, 'exportIncomeStatementPdf'])->name('accounting.income-statement.export');
+        Route::get('/accounting/balance-sheet/export', [AccountingController::class, 'exportBalanceSheetPdf'])->name('accounting.balance-sheet.export');
+        Route::get('/accounting/offerings/export', [AccountingController::class, 'exportOfferingsPdf'])->name('accounting.offerings.export');
+        Route::get('/accounting/payments/export', [AccountingController::class, 'exportPaymentsPdf'])->name('accounting.payments.export');
+        Route::get('/accounting/cash-bank/export', [AccountingController::class, 'exportCashBankPdf'])->name('accounting.cash-bank.export');
+        Route::get('/accounting/budgets/export', [AccountingController::class, 'exportBudgetsPdf'])->name('accounting.budgets.export');
+        Route::get('/accounting/transactions/export', [AccountingController::class, 'exportTransactionsPdf'])->name('accounting.transactions.export');
+
         // JSON detail endpoints for drawers
         Route::get('/accounting/api/overview', [AccountingController::class, 'apiOverview'])->name('accounting.api.overview');
         Route::get('/accounting/api/receipts/{doc}', [AccountingController::class, 'offeringDetail'])->name('accounting.api.receipt');

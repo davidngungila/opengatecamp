@@ -8,7 +8,10 @@
 <div class="fade-in">
   <div class="section-head">
     <div><h2>Income Statement</h2><div class="sub">@if($fy) For {{ $fy->name }}. @else For all periods. @endif Accrual, double-entry basis.</div></div>
-    <button type="button" class="btn btn-secondary btn-sm" onclick="window.print()">Print</button>
+    <div style="display:flex;gap:10px">
+      <button type="button" class="btn btn-secondary btn-sm" onclick="window.print()">Print</button>
+      <a href="{{ route('accounting.income-statement.export') }}" class="btn btn-secondary btn-sm">Export PDF</a>
+    </div>
   </div>
 
   <div class="two-col" style="grid-template-columns:1fr 1fr;margin-bottom:0">
@@ -111,7 +114,7 @@ document.addEventListener('DOMContentLoaded', function(){
             });
           }
 
-          document.getElementById('isLedgerLink').href = '{{ url("/accounting/ledger") }}?account=' + a.id;
+          document.getElementById('isLedgerLink').href = '{{ url("/accounting/ledger") }}?account=' + encodeURIComponent(a.ref);
           openDrawerById('isDetailDrawer');
         });
     });
