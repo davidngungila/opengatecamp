@@ -21,9 +21,9 @@ class ReportPdfService
     public function generate(array $meta, array $columns, array $rows, array $totals = []): Mpdf
     {
         $orgMain = \App\Models\Setting::get('org.name', 'UMOJA WA VYUO KARISMATIKI KATOLIKI TANZANIA');
-        $orgSub = \App\Models\Setting::get('org.sub', 'OPEN GATE CAMP CONNECT');
+        $orgSub = \App\Models\Setting::get('org.sub', 'JIMBO KUU KATOLIKI LA ARUSHA NA JIMBO LA MOSHI');
         $campaign = \App\Models\Setting::get('event.name', 'Open Gate Camp');
-        $orgLine = \App\Models\Setting::get('org.line', 'JIMBO LA MOSHI NA ARUSHA');
+        $orgLine = \App\Models\Setting::get('org.line', 'JIMBO KUU KATOLIKI LA ARUSHA NA JIMBO LA MOSHI');
 
         $html = view('reports.pdf', [
             'meta' => $meta,

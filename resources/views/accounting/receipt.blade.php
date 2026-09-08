@@ -46,8 +46,9 @@
   @endif
   <div class="center org">UMOJA WA VYUO</div>
   <div class="center org-sub">KARISMATIKI KATOLIKI TANZANIA</div>
-  <div class="center org-line">JIMBO LA MOSHI NA ARUSHA</div>
-  <div class="center org-tag">OPEN GATE SEASON THREE</div>
+  <div class="center org-line">JIMBO KUU KATOLIKI</div>
+  <div class="center org-line">LA ARUSHA NA JIMBO LA MOSHI</div>
+  <div class="center org-tag">OPEN GATE CAMP</div>
 
   <div class="title">RECEIPT</div>
 

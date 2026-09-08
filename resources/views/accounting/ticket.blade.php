@@ -39,8 +39,9 @@
   @endif
   <div class="center org">UMOJA WA VYUO</div>
   <div class="center org-sub">KARISMATIKI KATOLIKI TANZANIA</div>
-  <div class="center org-line">JIMBO LA MOSHI NA ARUSHA</div>
-  <div class="center org-tag">OPEN GATE SEASON THREE</div>
+  <div class="center org-line">JIMBO KUU KATOLIKI</div>
+  <div class="center org-line">LA ARUSHA NA JIMBO LA MOSHI</div>
+  <div class="center org-tag">OPEN GATE CAMP</div>
   @php
   $eventDate = $event->start_date ? $event->start_date->format('d M Y') : '—';
   $eventYear = $event->start_date ? $event->start_date->format('Y') : date('Y');
