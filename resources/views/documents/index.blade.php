@@ -136,7 +136,7 @@
       <div><h3>Upload Document</h3><p>PDF, DOCX, XLSX, JPG, PNG &mdash; up to 2MB</p></div>
       <button type="button" class="modal-close" data-drawer-close><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><path d="M18 6L6 18M6 6l12 12"/></svg></button>
     </div>
-    <form method="POST" action="{{ route('documents.store') }}" enctype="multipart/form-data">
+    <form method="POST" action="{{ route('documents.store') }}" enctype="multipart/form-data" id="docUploadForm">
       @csrf
       <div class="drawer-body">
         <div class="form-grid">
@@ -169,6 +169,15 @@
             <label>File</label>
             <input type="file" name="file" id="docFileInput" required accept=".pdf,.doc,.docx,.xls,.xlsx,.jpg,.jpeg,.png,.txt,.csv">
             <div id="docFileHint" style="font-size:12px;color:var(--text-muted);margin-top:4px">PDF, DOCX, XLSX, JPG, PNG up to 2MB</div>
+          </div>
+        </div>
+        <div id="docUploadProgress" style="display:none;margin-top:8px">
+          <div style="display:flex;align-items:center;justify-content:space-between;font-size:12.5px;font-weight:700;margin-bottom:8px">
+            <span id="docUploadStatus" style="display:flex;align-items:center;gap:8px;color:var(--text-secondary)">Uploading document…</span>
+            <span id="docUploadPct" style="font-variant-numeric:tabular-nums;color:var(--text-primary)">0%</span>
+          </div>
+          <div style="height:9px;border-radius:999px;background:rgba(15,23,42,.08);overflow:hidden">
+            <div id="docUploadBar" style="height:100%;width:0%;background:linear-gradient(90deg,#2563eb,#4f46e5);border-radius:999px;transition:width .12s ease"></div>
           </div>
         </div>
       </div>
@@ -255,6 +264,83 @@
         hint.style.color = '';
         hint.textContent = 'PDF, DOCX, XLSX, JPG, PNG up to 2MB';
       }
+    });
+  }
+
+  var form = document.getElementById('docUploadForm');
+  if(form){
+    form.addEventListener('submit', function(e){
+      if(!form.querySelector('[name="file"]').files[0]) return;
+      e.preventDefault();
+      var bar = document.getElementById('docUploadBar');
+      var pct = document.getElementById('docUploadPct');
+      var status = document.getElementById('docUploadStatus');
+      var prog = document.getElementById('docUploadProgress');
+      var submitBtn = form.querySelector('[type="submit"]');
+      var cancelBtn = form.querySelector('[data-drawer-close]');
+
+      function setP(c){
+        var v = Math.max(0, Math.min(100, c));
+        if(bar) bar.style.width = v + '%';
+        if(pct) pct.textContent = Math.round(v) + '%';
+        return v;
+      }
+      setP(0);
+      prog.style.display = 'block';
+      submitBtn.disabled = true;
+      submitBtn.textContent = 'Uploading…';
+      if(cancelBtn) cancelBtn.disabled = true;
+
+      var xhr = new XMLHttpRequest();
+      xhr.open('POST', form.action, true);
+      xhr.setRequestHeader('Accept', 'application/json');
+      xhr.setRequestHeader('X-Requested-With', 'XMLHttpRequest');
+      xhr.setRequestHeader('X-CSRF-TOKEN', document.querySelector('meta[name="csrf-token"]').content);
+
+      xhr.upload.onprogress = function(ev){
+        if(ev.lengthComputable){
+          var c = ev.loaded / ev.total * 100;
+          setP(c);
+          if(status) status.textContent = 'Uploading document… ' + Math.round(c) + '%';
+        }
+      };
+      xhr.upload.onload = function(){
+        setP(100);
+        if(status){ status.textContent = 'Upload complete — finalizing…'; status.style.color = ''; document.getElementById('docUploadBar').style.background = 'linear-gradient(90deg,#059669,#10b981)'; }
+      };
+      xhr.onload = function(){
+        if(xhr.status >= 200 && xhr.status < 400){
+          if(status){
+            status.style.color = '#059669';
+            status.innerHTML = '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6L9 17l-5-5"/></svg> Upload successful!';
+          }
+          setTimeout(function(){
+            if(toast) toast('Document uploaded successfully', 'success');
+            window.location.href = '/documents';
+          }, 500);
+        } else {
+          submitBtn.disabled = false;
+          submitBtn.textContent = 'Upload';
+          if(cancelBtn) cancelBtn.disabled = false;
+          if(status){
+            status.style.color = '#dc2626';
+            status.textContent = 'Upload failed — please try again.';
+          }
+          if(toast) toast('Upload failed — please try again.', 'error');
+        }
+      };
+      xhr.onerror = function(){
+        submitBtn.disabled = false;
+        submitBtn.textContent = 'Upload';
+        if(cancelBtn) cancelBtn.disabled = false;
+        if(status){
+          status.style.color = '#dc2626';
+          status.textContent = 'Upload failed — please try again.';
+        }
+        if(toast) toast('Upload failed — please try again.', 'error');
+      };
+
+      xhr.send(new FormData(form));
     });
   }
 })();
