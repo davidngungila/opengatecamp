@@ -27,12 +27,13 @@
     ])->values()->toJson(JSON_HEX_APOS | JSON_HEX_QUOT | JSON_HEX_TAG | JSON_HEX_AMP);
     $todayLabel = $today->format('jS F Y');
     $weekNumber = (int) $monthDate->format('W');
+    $eventName = \App\Models\Setting::get('event.name', 'Open Gate Camp');
 @endphp
 <div class="fade-in">
   <div class="section-head">
     <div>
-      <h2>Open Gate Camp Calendar</h2>
-      <div class="sub">{{ $monthDate->format('F Y') }} &middot; Week {{ $weekNumber }} &middot; {{ count($eventsByDay) }} event days &middot; {{ $allSessions->count() }} activities</div>
+      <h2>{{ $eventName }} Calendar</h2>
+      <div class="sub">{{ $monthDate->format('F Y') }} &middot; Week {{ $weekNumber }} &middot; {{ $allSessions->count() }} activities</div>
     </div>
     <div class="flex gap-8" style="flex-wrap:wrap;align-items:center">
       <div class="flex gap-8" style="align-items:center;background:var(--bg-muted,#f1f5f9);border:1px solid var(--border,#e5e7eb);border-radius:12px;padding:4px">
@@ -56,16 +57,10 @@
         @php
             $key = $monthDate->format('Y-m').'-'.str_pad((string)$d,2,'0',STR_PAD_LEFT);
             $isToday = $today->format('Y-m-d') === $key;
-            $dayEvents = $eventsByDay[$key] ?? [];
             $daySessions = $sessionsByDay[$key] ?? [];
         @endphp
         <div class="cal-cell {{ $isToday ? 'today' : '' }}">
           <div class="cal-head">{{ $d }}</div>
-          @foreach($dayEvents as $e)
-            <a href="{{ route('events.show', $e) }}" class="cal-evt type-evt" title="{{ $e->title }}">
-              {{ $e->title }} <span class="cal-count">({{ $e->registered_count }})</span>
-            </a>
-          @endforeach
           @foreach($daySessions as $s)
             <div class="cal-slot" style="cursor:pointer" title="Edit: {{ $s->title }}" onclick="openEditDrawer({{ $s->id }})">
               <span class="cal-time">{{ \Carbon\Carbon::parse($s->start_time)->format('H:i') }}{{ $s->end_time ? '-'.substr($s->end_time,0,5) : '' }}</span>
@@ -80,7 +75,6 @@
     </div>
     <div style="display:flex;flex-wrap:wrap;gap:14px;padding:12px 4px 2px;font-size:11.5px;color:var(--text-tertiary);font-weight:600">
       <span style="display:flex;align-items:center;gap:6px"><span style="width:10px;height:10px;border-radius:3px;background:var(--info-bg);display:inline-block"></span> Planned activity (click to edit)</span>
-      <span style="display:flex;align-items:center;gap:6px"><span style="width:10px;height:10px;border-radius:3px;background:var(--blue-accent);display:inline-block"></span> Camp event</span>
       <span style="display:flex;align-items:center;gap:6px"><span style="width:10px;height:10px;border-radius:3px;background:var(--blue-light);border:1px solid var(--blue-accent);display:inline-block"></span> Today</span>
     </div>
   </div>

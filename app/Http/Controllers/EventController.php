@@ -562,17 +562,6 @@ class EventController extends Controller
         $start = (clone $date)->modify('first day of this month');
         $end = (clone $date)->modify('last day of this month');
 
-        $events = Event::where('event_type', 'camp')
-            ->whereBetween('start_date', [$start, $end])
-            ->withCount('attendees as registered_count')
-            ->orderBy('start_date')
-            ->get();
-
-        $eventsByDay = [];
-        foreach ($events as $e) {
-            $eventsByDay[$e->start_date->format('Y-m-d')][] = $e;
-        }
-
         // Time-slotted agenda items (sessions) for the displayed month.
         $sessions = EventSession::with('event')
             ->whereBetween('session_date', [$start, $end])
@@ -584,7 +573,6 @@ class EventController extends Controller
         }
 
         return view('calendar.index', [
-            'eventsByDay' => $eventsByDay,
             'sessionsByDay' => $sessionsByDay,
             'today' => now()->startOfDay(),
             'monthDate' => $date,
