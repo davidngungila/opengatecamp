@@ -17,16 +17,6 @@
             <option value="digital_card">Digital Cards</option>
             <option value="manual">Individual / Manual Number</option>
             <option value="all_active" selected>All Active Members</option>
-            <option value="all">All Members</option>
-            <option value="group">By Group</option>
-            <option value="ministry">By Ministry</option>
-            <option value="member_type">By Member Type</option>
-            <option value="staff_type">By Staff Type</option>
-            <option value="status">By Status</option>
-            <option value="students_activated">Students — Activated This Year</option>
-            <option value="students_not_activated">Students — Not Yet Activated</option>
-            <option value="inactive">Inactive Members</option>
-            <option value="new">New Members</option>
           </select>
           <div id="filterValueWrap" style="display:none;margin-top:8px">
             <select id="filterValue" style="width:100%" onchange="loadRecipients()"><option value="">— Select —</option></select>
@@ -127,8 +117,6 @@
 
 <script>
 var recipientsData = [];
-var groupOptions = @json($groups->map(fn($g) => ['id'=>$g->id,'name'=>$g->name])->toArray());
-var ministryOptions = @json($ministries->map(fn($m) => ['id'=>$m->id,'name'=>$m->name])->toArray());
 var smsTemplates = @json($templates->map(fn($t) => ['id'=>$t->id,'name'=>$t->name,'message'=>$t->message])->values()->toArray());
 var recipientDrawer = document.getElementById('recipientDrawer');
 
@@ -197,40 +185,10 @@ function onRecipientTypeChange(sel) {
     return;
   }
 
-  if (f === 'group') {
-    valSel.innerHTML = '<option value="">— Select Group —</option>';
-    groupOptions.forEach(function(g) { valSel.innerHTML += '<option value="'+g.id+'">'+g.name+'</option>'; });
-    wrap.style.display = 'block';
-    manualWrap.style.display = 'none';
-    document.getElementById('manualPhone').value = '';
-  } else if (f === 'ministry') {
-    valSel.innerHTML = '<option value="">— Select Ministry —</option>';
-    ministryOptions.forEach(function(m) { valSel.innerHTML += '<option value="'+m.id+'">'+m.name+'</option>'; });
-    wrap.style.display = 'block';
-    manualWrap.style.display = 'none';
-    document.getElementById('manualPhone').value = '';
-  } else if (f === 'member_type') {
-    valSel.innerHTML = '<option value="">— Select Type —</option><option value="student">Student</option><option value="non_student">Non-Student</option>';
-    wrap.style.display = 'block';
-    manualWrap.style.display = 'none';
-    document.getElementById('manualPhone').value = '';
-  } else if (f === 'staff_type') {
-    valSel.innerHTML = '<option value="">— Select Staff Type —</option><option value="staff">Staff</option><option value="non_staff">Non-Staff</option>';
-    wrap.style.display = 'block';
-    manualWrap.style.display = 'none';
-    document.getElementById('manualPhone').value = '';
-  } else if (f === 'status') {
-    valSel.innerHTML = '<option value="">— Select Status —</option><option value="Active">Active</option><option value="Inactive">Inactive</option><option value="New">New</option>';
-    wrap.style.display = 'block';
-    manualWrap.style.display = 'none';
-    document.getElementById('manualPhone').value = '';
-  } else {
-    wrap.style.display = 'none';
-    manualWrap.style.display = 'none';
-    document.getElementById('manualPhone').value = '';
-    loadRecipients();
-    return;
-  }
+  wrap.style.display = 'none';
+  manualWrap.style.display = 'none';
+  document.getElementById('manualPhone').value = '';
+  loadRecipients();
 }
 
 function loadRecipients() {
@@ -238,7 +196,7 @@ function loadRecipients() {
   var value = document.getElementById('filterValue') ? document.getElementById('filterValue').value : '';
   document.getElementById('recipientValue').value = value;
 
-  if (['group','ministry','member_type','staff_type','status'].indexOf(filter) !== -1 && !value) { resetRecipients(); return; }
+  if (['admission','registration','pledge','digital_card'].indexOf(filter) !== -1 && !value) { resetRecipients(); return; }
 
   document.getElementById('recipientSummary').style.display = 'none';
   document.getElementById('recipientLoading').style.display = 'block';
