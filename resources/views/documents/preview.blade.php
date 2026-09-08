@@ -11,10 +11,6 @@
       <div class="sub">{{ $document->file_name }} &middot; {{ $document->file_size_formatted }} &middot; {{ $document->category?->name ?? '—' }}</div>
     </div>
     <div style="display:flex;gap:8px">
-      <a href="{{ route('documents.download', rtrim(strtr(\Illuminate\Support\Facades\Crypt::encryptString($document->id), '+/', '-_'), '=')) }}" class="btn btn-secondary">
-        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
-        Download
-      </a>
       <a href="{{ route('documents.index') }}" class="btn btn-ghost">
         <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M19 12H5"/><polyline points="12 19 5 12 12 5"/></svg>
         Back to Documents
