@@ -7,7 +7,7 @@
 <div class="fade-in">
   <div class="section-head">
     <div><h2>Document Categories</h2><div class="sub">{{ $totalCats }} categories</div></div>
-    <button type="button" class="btn btn-accent" data-modal-open="catModal">
+    <button type="button" class="btn btn-accent" data-drawer-open="catDrawer">
       <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
       Add Category
     </button>
@@ -90,15 +90,15 @@
   </div>
 </div>
 
-<div class="modal-overlay" id="catModal">
-  <div class="modal-box sm">
-    <div class="modal-head">
-      <div><h3 id="catModalTitle">Add Category</h3></div>
-      <button type="button" class="modal-close" data-modal-close><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><path d="M18 6L6 18M6 6l12 12"/></svg></button>
+<div class="drawer-overlay" id="catDrawer">
+  <div class="drawer-panel">
+    <div class="drawer-head">
+      <div><h3 id="catModalTitle">Add Category</h3><p id="catDrawerSub">Create or edit a document category</p></div>
+      <button type="button" class="modal-close" data-drawer-close><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><path d="M18 6L6 18M6 6l12 12"/></svg></button>
     </div>
     <form id="catForm" method="POST" action="{{ route('documents.categories.store') }}">
       @csrf
-      <div class="modal-body">
+      <div class="drawer-body">
         <div class="form-grid">
           <div class="field full">
             <label>Name</label>
@@ -114,8 +114,8 @@
           </div>
         </div>
       </div>
-      <div class="modal-foot">
-        <button type="button" class="btn btn-secondary" data-modal-close>Cancel</button>
+      <div class="drawer-foot">
+        <button type="button" class="btn btn-secondary" data-drawer-close>Cancel</button>
         <button type="submit" class="btn btn-accent" id="catSubmitBtn">Create</button>
       </div>
     </form>
@@ -140,9 +140,9 @@ function openEditCat(id, name, desc, color) {
     form.appendChild(methodInput);
   }
   methodInput.value = 'PUT';
-  openModalById('catModal');
+  openDrawerById('catDrawer');
 }
-document.querySelector('[data-modal-open="catModal"]').addEventListener('click', function() {
+document.querySelector('[data-drawer-open="catDrawer"]').addEventListener('click', function() {
   document.getElementById('catModalTitle').textContent = 'Add Category';
   document.getElementById('catSubmitBtn').textContent = 'Create';
   document.getElementById('catName').value = '';
