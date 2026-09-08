@@ -189,10 +189,6 @@
     <div class="drawer-body" id="docDrawerBody"></div>
     <div class="drawer-foot">
       <a id="docDrawerPreview" href="#" class="btn btn-secondary" style="text-decoration:none">Preview</a>
-      <a id="docDrawerDownload" href="#" class="btn btn-accent" style="text-decoration:none">
-        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
-        Download
-      </a>
       <button type="button" class="btn btn-secondary" data-drawer-close>Close</button>
     </div>
   </div>
@@ -272,7 +268,6 @@ function openDocDrawer(id){
   cat.style.borderColor = tpl.dataset.color;
   document.getElementById('docDrawerBody').innerHTML = tpl.innerHTML;
   document.getElementById('docDrawerPreview').href = tpl.dataset.preview || '#';
-  document.getElementById('docDrawerDownload').href = tpl.dataset.download || '#';
   openDrawerById('docDetailDrawer');
 }
 document.addEventListener('click', function(e){
