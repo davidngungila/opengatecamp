@@ -130,7 +130,7 @@
 <div class="drawer-overlay" id="attRegisterDrawer">
   <div class="drawer-panel">
     <div class="drawer-head">
-      <div><h3>Register Attendee</h3><p>Register for an event — an SMS confirmation is sent automatically</p></div>
+      <div><h3>Register Attendee</h3><p>Register for an event — an SMS confirmation is sent automatically; a payment-received SMS follows if marked as paid</p></div>
       <button type="button" class="modal-close" data-drawer-close><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><path d="M18 6L6 18M6 6l12 12"/></svg></button>
     </div>
     <form method="POST" action="{{ route('attendees.store') }}">
@@ -149,13 +149,25 @@
             @foreach($pickupLocations ?? [] as $pk => $pl)<option value="{{ $pk }}" @if(old('pickup_location')===$pk) selected @endif>{{ $pl }}</option>@endforeach
           </select></div>
           <div class="field"><label>Amount to Pay (TZS)</label><input type="number" name="fee_amount" id="regFee" value="{{ old('fee_amount', $defaultFee ?? 10000) }}" readonly style="background:var(--blue-light);font-weight:700;color:var(--navy-900)"></div>
-          <div class="field"><label>Amount Paid (TZS)</label><input type="number" step="0.01" min="0" name="amount_paid" value="{{ old('amount_paid', 0) }}"></div>
-          <div class="field"><label>Payment Method</label><select name="payment_method">
-            <option value="">— Select —</option>
-            <option value="cash" @if(old('payment_method')==='cash') selected @endif>Cash</option>
-            <option value="bank" @if(old('payment_method')==='bank') selected @endif>Bank</option>
-            <option value="mobile" @if(old('payment_method')==='mobile') selected @endif>Mobile</option>
-          </select></div>
+          <div class="field">
+            <label>Has Paid?</label>
+            <select name="is_paid" id="regIsPaid">
+              <option value="0" @if(old('is_paid', 0) != 1) selected @endif>No — Not Paid</option>
+              <option value="1" @if(old('is_paid') == 1) selected @endif>Yes — Paid</option>
+            </select>
+            <div class="field-hint">Choose "Yes — Paid" to enter the amount received and payment method. A payment-received SMS is then sent too.</div>
+          </div>
+          <div class="full" id="regPaymentFields" @if(old('is_paid') != 1) style="display:none" @endif>
+            <div class="form-grid" style="margin:0">
+              <div class="field"><label>Amount Paid (TZS)</label><input type="number" step="0.01" min="0" name="amount_paid" id="regAmount" value="{{ old('amount_paid') }}"></div>
+              <div class="field"><label>Payment Method</label><select name="payment_method">
+                <option value="">— Select —</option>
+                <option value="cash" @if(old('payment_method')==='cash') selected @endif>Cash</option>
+                <option value="bank" @if(old('payment_method')==='bank') selected @endif>Bank</option>
+                <option value="mobile" @if(old('payment_method')==='mobile') selected @endif>Mobile</option>
+              </select></div>
+            </div>
+          </div>
           <div class="field"><label>Status</label><select name="status">
             @foreach($statuses as $k=>$s)<option value="{{ $k }}" @if(old('status')==$k) selected @endif>{{ $s }}</option>@endforeach
           </select></div>
@@ -428,6 +440,21 @@ document.addEventListener('DOMContentLoaded', function(){
       confirmAction(f, 'Send ticket by SMS', msg, 'Send SMS');
     });
   });
+
+  var regIsPaid = document.getElementById('regIsPaid');
+  var regPayFields = document.getElementById('regPaymentFields');
+  if (regIsPaid && regPayFields) {
+    function toggleRegPay(){
+      var paid = regIsPaid.value === '1';
+      regPayFields.style.display = paid ? '' : 'none';
+      if (!paid) {
+        var amt = document.getElementById('regAmount');
+        if (amt) amt.value = '';
+      }
+    }
+    regIsPaid.addEventListener('change', toggleRegPay);
+    toggleRegPay();
+  }
 });
 </script>
 @endpush

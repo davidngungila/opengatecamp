@@ -74,6 +74,7 @@ class EventController extends Controller
             'phone' => 'nullable|string|max:20',
             'email' => 'nullable|email',
             'fellowship' => 'nullable|string|max:255',
+            'is_paid' => 'nullable|in:0,1',
             'amount_paid' => 'nullable|numeric|min:0',
             'fee_amount' => 'nullable|numeric|min:0',
             'payment_method' => 'nullable|in:cash,bank,mobile',
@@ -84,7 +85,8 @@ class EventController extends Controller
         ]);
 
         $sendSms = ($data['send_sms'] ?? '') ? true : false;
-        unset($data['send_sms']);
+        $isPaid = ((string) ($data['is_paid'] ?? '0')) === '1';
+        unset($data['send_sms'], $data['is_paid']);
 
         if (empty($data['name']) && ! $request->filled('name')) {
             return back()->with('error', 'Attendee name is required.');
@@ -102,6 +104,15 @@ class EventController extends Controller
 
         if (empty($data['fee_amount'])) {
             $data['fee_amount'] = (float) $event->registration_fee > 0 ? $event->registration_fee : 10000;
+        }
+
+        if ($isPaid) {
+            if ((float) ($data['amount_paid'] ?? 0) <= 0 || empty($data['payment_method'])) {
+                return back()->with('error', 'When marking the attendee as paid, enter the amount paid and the payment method.')->withInput();
+            }
+        } else {
+            $data['amount_paid'] = 0;
+            $data['payment_method'] = null;
         }
 
         $attendee = DB::transaction(function () use ($data, $event) {
@@ -130,28 +141,54 @@ class EventController extends Controller
         if ($sendSms && ! empty($attendee->phone)) {
             $sms = new SmsService();
             if ($sms->isConfigured()) {
-                $msg = MessageTemplate::forUsage('attendee_registered', [
+                $regMsg = MessageTemplate::forUsage('attendee_registered', [
                     'name'  => $attendee->name,
                     'event' => $event->title,
                     'year'  => $event->start_date?->format('Y') ?: date('Y'),
                 ]) ?? "Hello {$attendee->name},\nYou are registered for \"{$event->title}\" at {$event->venue}. We look forward to seeing you! — OpenGate Camp Connect";
-                $result = $sms->send($attendee->phone, $msg);
+                $result = $sms->send($attendee->phone, $regMsg);
                 Message::create([
                     'channel'          => 'sms',
                     'recipients'       => $attendee->name,
                     'phone'            => $attendee->phone,
                     'subject'          => null,
-                    'message'          => $msg,
+                    'message'          => $regMsg,
                     'status'           => $result['success'] ? 'sent' : 'failed',
                     'api_message_id'   => $result['api_message_id'],
                     'api_response'     => $result['raw'],
                     'created_by'       => auth()->user()?->name,
                 ]);
                 AuditLog::record($result['success'] ? 'Sent registration SMS' : 'Failed registration SMS', 'Communication', "{$attendee->name} ({$attendee->phone})");
+
+                if ($isPaid) {
+                    $payMsg = MessageTemplate::forUsage('attendee_payment', [
+                        'name'   => $attendee->name,
+                        'event'  => $event->title,
+                        'year'   => $event->start_date?->format('Y') ?: date('Y'),
+                        'amount' => number_format((float) $data['amount_paid']),
+                    ]) ?? "Hello {$attendee->name},\nWe have received your payment of TZS ".number_format((float) $data['amount_paid'])
+                        ." for \"{$event->title}\". Thank you for your support and generosity! — OpenGate Camp Connect";
+                    $result = $sms->send($attendee->phone, $payMsg);
+                    Message::create([
+                        'channel'          => 'sms',
+                        'recipients'       => $attendee->name,
+                        'phone'            => $attendee->phone,
+                        'subject'          => null,
+                        'message'          => $payMsg,
+                        'status'           => $result['success'] ? 'sent' : 'failed',
+                        'api_message_id'   => $result['api_message_id'],
+                        'api_response'     => $result['raw'],
+                        'created_by'       => auth()->user()?->name,
+                    ]);
+                    AuditLog::record($result['success'] ? 'Sent payment-received SMS' : 'Failed payment-received SMS', 'Communication', "{$attendee->name} ({$attendee->phone})");
+                }
             }
         }
 
         $notice = "Attendee {$data['name']} registered.";
+        if ($isPaid) {
+            $notice .= ' Payment of TZS '.number_format((float) $data['amount_paid']).' recorded.';
+        }
         if ($sendSms && empty($attendee->phone)) {
             $notice .= ' SMS was skipped — no phone number on file.';
         }
