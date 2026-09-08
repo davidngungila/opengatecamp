@@ -34,12 +34,28 @@ class UserPagesSmokeTest extends TestCase
     public function test_roles_page_renders(): void
     {
         $this->adminUser();
+        $role = Role::firstOrCreate(['name' => 'Super Administrator']);
 
         $resp = $this->get(route('users.roles'));
 
         $resp->assertOk();
+        $resp->assertSee('Roles &amp; Permissions', false);
         $resp->assertSee('Super Administrator');
-        $resp->assertSee('Edit Permissions');
+        $resp->assertSee('data-view-role');
+        $resp->assertSee('roleDetailDrawer');
+    }
+
+    public function test_roles_table_shows_permissions(): void
+    {
+        $this->adminUser();
+        $role = Role::create(['name' => 'Media Officer', 'permissions' => ['finance.view', 'finance.manage']]);
+
+        $resp = $this->get(route('users.roles'));
+
+        $resp->assertOk();
+        $resp->assertSee('finance.view');
+        $resp->assertSee('finance.manage');
+        $resp->assertSee('data-permissions');
     }
 
     public function test_permissions_page_renders(): void

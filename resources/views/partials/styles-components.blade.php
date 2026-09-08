@@ -110,6 +110,9 @@ table.data-table{width:100%;border-collapse:collapse;min-width:760px;}
 .badge-neutral{background:rgba(15,23,42,.06);color:var(--text-secondary);}
 .badge-dotted::before{content:'';width:6px;height:6px;border-radius:50%;background:currentColor;}
 
+.perm-chips{display:flex;flex-wrap:wrap;gap:4px;max-width:420px;}
+.perm-chip{font-family:ui-monospace,SFMono-Regular,Menlo,Consolas,monospace;font-size:10.5px;font-weight:600;background:rgba(37,99,235,.07);color:var(--blue-accent);border:1px solid rgba(37,99,235,.16);border-radius:6px;padding:2px 7px;white-space:nowrap;}
+
 .action-menu-wrap{position:relative;display:inline-block;}
 .action-trigger{width:32px;height:32px;border-radius:8px;border:1px solid transparent;background:transparent;display:flex;align-items:center;justify-content:center;color:var(--text-tertiary);}
 .action-trigger:hover{background:rgba(15,23,42,.06);color:var(--text-primary);}

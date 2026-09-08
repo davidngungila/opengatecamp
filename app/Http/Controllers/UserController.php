@@ -27,7 +27,7 @@ class UserController extends Controller
     public function roles()
     {
         return view('users.roles', [
-            'roles' => Role::withCount('users')->orderBy('id')->get(),
+            'roles' => Role::with('users')->withCount('users')->orderBy('id')->get(),
             'permissions' => Role::PERMISSIONS,
         ]);
     }
