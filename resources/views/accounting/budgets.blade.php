@@ -49,6 +49,9 @@
                   <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><circle cx="12" cy="5" r=".6"/><circle cx="12" cy="12" r=".6"/><circle cx="12" cy="19" r=".6"/></svg>
                 </button>
                 <div class="action-menu" id="am-bud-{{ $b->id }}">
+                  @if(!$isCommittee)
+                  <a href="#" onclick="event.stopPropagation();openBudgetEdit({{ $b->id }})">Edit</a>
+                  @endif
                   <a href="{{ route('accounting.ledger', ['account' => $b->account_id]) }}">View Ledger</a>
                   @if(!$isCommittee)
                   <form method="POST" action="{{ route('accounting.budgets.destroy', $b) }}"
@@ -104,6 +107,9 @@
     </div>
     <div class="drawer-foot">
       <button type="button" class="btn btn-secondary" data-drawer-close>Close</button>
+      @if(!$isCommittee)
+      <button type="button" class="btn btn-accent" onclick="openBudgetEdit(currentBudgetId)" data-bud-drawer-edit>Edit Budget</button>
+      @endif
     </div>
   </div>
 </div>
@@ -146,18 +152,64 @@
     </form>
   </div>
 </div>
+
+<div class="drawer-overlay" id="budgetEditModal">
+  <div class="drawer-panel">
+    <div class="drawer-head">
+      <div><h3>Edit Budget Line</h3><p>Update spending limit for an expense account</p></div>
+      <button type="button" class="modal-close" data-drawer-close><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><path d="M18 6L6 18M6 6l12 12"/></svg></button>
+    </div>
+    <form method="POST" action="{{ route('accounting.budgets.store') }}">
+      @csrf
+      <div class="drawer-body">
+        <div class="form-grid">
+          <div class="field full"><label>Financial Year *</label>
+            <select name="fy_id" id="editBudgetFy" required>
+              @foreach($allYears as $y)<option value="{{ $y->id }}">{{ $y->name }}</option>@endforeach
+            </select>
+          </div>
+          <div class="field full"><label>Expense Account *</label>
+            <select name="account_id" id="editBudgetAccount" required>
+              @foreach($expenseAccounts as $a)<option value="{{ $a->id }}">{{ $a->code }} — {{ $a->name }}</option>@endforeach
+            </select>
+          </div>
+          <div class="field full"><label>Event (optional)</label>
+            <select name="event_id" id="editBudgetEvent">
+              <option value="">— General budget (organisation-wide) —</option>
+              @foreach($allEvents as $e)<option value="{{ $e->id }}">{{ $e->title }}</option>@endforeach
+            </select>
+          </div>
+          <div class="field full"><label>Budget Amount (TZS) *</label><input type="number" step="0.01" min="0.01" name="amount" id="editBudgetAmount" required placeholder="0.00"></div>
+        </div>
+      </div>
+      <div class="drawer-foot">
+        <button type="button" class="btn btn-secondary" data-drawer-close>Cancel</button>
+        <button type="submit" class="btn btn-accent"
+                data-confirm data-confirm-title="Save budget?"
+                data-confirm-label="Save Budget">Save</button>
+      </div>
+    </form>
+  </div>
+</div>
 @endsection
 
 @push('scripts')
 <script>
+var currentBudgetId = null;
 document.addEventListener('DOMContentLoaded', function(){
   document.querySelectorAll('[data-view-budget]').forEach(function(tr){
     tr.addEventListener('click', function(e){
       if(e.target.closest('a') || e.target.closest('button') || e.target.closest('form')) return;
       var id = tr.dataset.id;
-      fetch('{{ url("/accounting/api/budgets") }}/' + id)
-        .then(function(r){ return r.json(); })
-        .then(function(d){
+      openBudgetDetail(id);
+    });
+  });
+
+  function openBudgetDetail(id){
+    fetch('{{ url("/accounting/api/budgets") }}/' + id)
+      .then(function(r){ return r.json(); })
+      .then(function(d){
+        currentBudgetId = id;
           document.getElementById('budDrawerTitle').textContent = d.account.code + ' — ' + d.account.name;
           document.getElementById('budDrawerAccount').textContent = d.account.code;
           document.getElementById('budDrawerAcctName').textContent = d.account.code + ' — ' + d.account.name;
@@ -197,8 +249,20 @@ document.addEventListener('DOMContentLoaded', function(){
           document.getElementById('budLedgerLink').href = '{{ url("/accounting/ledger") }}?account=' + d.account.id;
           openDrawerById('budgetDetailDrawer');
         });
-    });
-  });
+  }
+
+  window.openBudgetEdit = function(id){
+    fetch('{{ url("/accounting/api/budgets") }}/' + id)
+      .then(function(r){ return r.json(); })
+      .then(function(d){
+        document.getElementById('editBudgetFy').value = d.fy_id || '';
+        document.getElementById('editBudgetAccount').value = d.account_id || '';
+        document.getElementById('editBudgetEvent').value = d.event_id || '';
+        document.getElementById('editBudgetAmount').value = d.amount || '';
+        closeDrawerById('budgetDetailDrawer');
+        openDrawerById('budgetEditModal');
+      });
+  };
 });
 </script>
 @endpush

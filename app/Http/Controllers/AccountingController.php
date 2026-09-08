@@ -998,9 +998,12 @@ class AccountingController extends Controller
             ]);
 
         return response()->json([
-            'account' => ['code' => $budget->account->code, 'name' => $budget->account->name],
+            'account' => ['id' => $budget->account_id, 'code' => $budget->account->code, 'name' => $budget->account->name],
+            'account_id' => $budget->account_id,
             'event' => $budget->event ? $budget->event->title : null,
+            'event_id' => $budget->event_id,
             'fy' => $budget->fy->name,
+            'fy_id' => $budget->fy_id,
             'amount' => (float) $budget->amount,
             'actual' => round($actual, 2),
             'variance' => round((float) $budget->amount - $actual, 2),
