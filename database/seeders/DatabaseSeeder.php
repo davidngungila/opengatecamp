@@ -6,6 +6,7 @@ use App\Models\Account;
 use App\Models\Event;
 use App\Models\EventAttendee;
 use App\Models\Family;
+use App\Models\Fellowship;
 use App\Models\ReceiptPayment;
 use App\Models\FinancialYear;
 use App\Models\Group;
@@ -150,6 +151,14 @@ class DatabaseSeeder extends Seeder
             'Arusha College of Administration',
             'Other',
         ]));
+
+        // Fellowships table — the entity behind the registration dropdown.
+        foreach (explode("\n", (string) Setting::get('fellowships.list')) as $name) {
+            $name = trim($name);
+            if ($name !== '') {
+                Fellowship::updateOrCreate(['name' => $name], ['active' => true]);
+            }
+        }
 
         Setting::put('sms.api_token', '8b4d46ca83411b8457e0fb8c3a77d02a');
         Setting::put('sms.sender_id', 'TMCS MoCU');

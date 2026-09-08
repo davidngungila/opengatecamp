@@ -82,6 +82,21 @@
             <span class="tt">Registrations</span>
         </div>
 
+        <!-- Fellowships -->
+        <div class="tooltip-wrap">
+            <a href="{{ route('fellowships.index') }}" class="nav-single {{ $base === 'fellowships' ? 'active' : '' }}">
+                <span class="nav-icon">
+                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round">
+                        <path d="M12 2a4 4 0 014 4v1a4 4 0 01-8 0V6a4 4 0 014-4z"/>
+                        <path d="M4 20c0-3 3.6-5 8-5s8 2 8 5v1H4z"/>
+                        <path d="M5 8a3 3 0 003 3M19 8a3 3 0 01-3 3"/>
+                    </svg>
+                </span>
+                <span class="nav-label">Fellowships</span>
+            </a>
+            <span class="tt">Fellowships</span>
+        </div>
+
         <!-- Pledges -->
         <div class="tooltip-wrap">
             <a href="{{ route('pledges.index') }}" class="nav-single {{ $base === 'pledges' ? 'active' : '' }}">

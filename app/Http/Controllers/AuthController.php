@@ -114,6 +114,11 @@ class AuthController extends Controller
             return redirect()->intended(route('portal.dashboard'))->with('success', 'Welcome back, ' . $user->name . '!');
         }
 
+        // Role-less fellowship leaders land on their delegation dashboard
+        if (! $user->role_id && $user->isFellowshipLeader()) {
+            return redirect()->intended(route('portal.fellowship.dashboard'))->with('success', 'Welcome back, ' . $user->name . '!');
+        }
+
         return redirect()->intended(route('dashboard'))->with('success', 'Welcome back, ' . $user->name . '!');
     }
 

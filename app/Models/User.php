@@ -29,6 +29,12 @@ class User extends Authenticatable
 
     public function role() { return $this->belongsTo(Role::class); }
     public function member() { return $this->belongsTo(Member::class); }
+    public function fellowships() { return $this->belongsToMany(Fellowship::class, 'fellowship_user')->withPivot(['is_primary', 'title'])->withTimestamps(); }
+
+    public function isFellowshipLeader(): bool
+    {
+        return $this->fellowships()->exists();
+    }
 
     public function hasRole(string $name): bool
     {

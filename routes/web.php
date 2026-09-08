@@ -10,6 +10,8 @@ use App\Http\Controllers\DigitalCardController;
 use App\Http\Controllers\DocumentController;
 use App\Http\Controllers\EventController;
 use App\Http\Controllers\FamilyController;
+use App\Http\Controllers\FellowshipController;
+use App\Http\Controllers\FellowshipLeaderController;
 use App\Http\Controllers\MemberController;
 use App\Http\Controllers\MemberPortalController;
 use App\Http\Controllers\MessagingController;
@@ -52,6 +54,15 @@ Route::middleware(['auth', 'committee.readonly'])->group(function () {
         Route::get('/activations', [MemberPortalController::class, 'activations'])->name('activations');
         Route::get('/settings', [MemberPortalController::class, 'settings'])->name('settings');
         Route::put('/password', [MemberPortalController::class, 'updatePassword'])->name('password.update');
+
+        // ── Fellowship Delegation (leader portal) ─────────────
+        Route::prefix('fellowship')->name('fellowship.')->group(function () {
+            Route::get('/', [FellowshipLeaderController::class, 'dashboard'])->name('dashboard');
+            Route::get('/{fellowship}/members', [FellowshipLeaderController::class, 'members'])->name('members');
+            Route::post('/{fellowship}/members', [FellowshipLeaderController::class, 'storeMember'])->name('members.store');
+            Route::put('/members/{attendee}', [FellowshipLeaderController::class, 'updateMember'])->name('members.update');
+            Route::delete('/members/{attendee}', [FellowshipLeaderController::class, 'destroyMember'])->name('members.destroy');
+        });
     });
 
     // ── User Account (Profile / Settings / Audit Logs) ──────────────────
@@ -105,6 +116,10 @@ Route::middleware(['auth', 'committee.readonly'])->group(function () {
         Route::get('/settings/audit', [SettingsController::class, 'auditPage'])->name('settings.page.audit');
         Route::get('/settings/backup/download', [SettingsController::class, 'backup'])->name('settings.backup');
 
+        Route::post('/fellowships', [FellowshipController::class, 'store'])->name('fellowships.store');
+        Route::put('/fellowships/{fellowship}', [FellowshipController::class, 'update'])->name('fellowships.update');
+        Route::delete('/fellowships/{fellowship}', [FellowshipController::class, 'destroy'])->name('fellowships.destroy');
+
         Route::post('/settings/general', [SettingsController::class, 'updateGeneral'])->name('settings.general');
         Route::post('/settings/digital-card', [SettingsController::class, 'updateDigitalCard'])->name('settings.digital-card');
         Route::post('/settings/organization', [SettingsController::class, 'updateOrganization'])->name('settings.organization');
@@ -141,6 +156,10 @@ Route::middleware(['auth', 'committee.readonly'])->group(function () {
     Route::post('/attendees/{attendee}/sms', [EventController::class, 'sendAttendeeSms'])->name('attendees.sms');
     Route::get('/attendees/{attendee}/ticket', [EventController::class, 'ticketPdf'])->name('attendees.ticket.pdf');
     Route::post('/attendees/{attendee}/ticket/sms', [EventController::class, 'sendTicketSms'])->name('attendees.ticket.sms');
+
+    // ── Fellowships & Delegations ───────────────────────
+    Route::get('/fellowships', [FellowshipController::class, 'index'])->name('fellowships.index');
+    Route::get('/fellowships/{fellowship}/delegation', [FellowshipController::class, 'members'])->name('fellowships.members');
 
     Route::get('/pledges', [PledgeController::class, 'index'])->name('pledges.index');
     Route::get('/pledges/export', [PledgeController::class, 'exportPledgesPdf'])->name('pledges.export');

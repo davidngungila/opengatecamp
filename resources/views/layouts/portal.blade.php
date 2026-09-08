@@ -85,6 +85,9 @@
   <div class="portal-nav-links">
     <a href="{{ route('portal.dashboard') }}" class="{{ request()->routeIs('portal.dashboard') ? 'active' : '' }}">Dashboard</a>
     <a href="{{ route('portal.registrations') }}" class="{{ request()->routeIs('portal.registrations') ? 'active' : '' }}">Registrations</a>
+    @if(isset($isLeader) && $isLeader)
+    <a href="{{ route('portal.fellowship.dashboard') }}" class="{{ request()->routeIs('portal.fellowship.*') ? 'active' : '' }}">Fellowship</a>
+    @endif
     <a href="{{ route('portal.pledges') }}" class="{{ request()->routeIs('portal.pledges') ? 'active' : '' }}">Pledges</a>
     <a href="{{ route('portal.profile') }}" class="{{ request()->routeIs('portal.profile') ? 'active' : '' }}">Profile</a>
     <a href="{{ route('portal.family') }}" class="{{ request()->routeIs('portal.family') ? 'active' : '' }}">Family</a>

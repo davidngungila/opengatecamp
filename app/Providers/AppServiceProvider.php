@@ -23,6 +23,7 @@ class AppServiceProvider extends ServiceProvider
             $user = auth()->user();
             $view->with('isCommittee', $user ? $user->isCommitteeMember() : false);
             $view->with('isAdmin', $user ? in_array($user->role?->name, ['Super Administrator', 'Chairperson']) : false);
+            $view->with('isLeader', $user ? $user->isFellowshipLeader() : false);
         });
     }
 }

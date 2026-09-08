@@ -10,7 +10,7 @@ class EventAttendee extends Model
     use EncryptedRouteKey;
 
     protected $fillable = [
-        'event_id', 'member_id', 'name', 'phone', 'email', 'fellowship', 'status',
+        'event_id', 'member_id', 'name', 'phone', 'email', 'fellowship', 'fellowship_id', 'status',
         'amount_paid', 'fee_amount', 'payment_method', 'pickup_location', 'notes', 'registered_on',
         'registered_by', 'checked_in_by', 'checked_in_at', 'ticket_no', 'ticket_sent_at', 'journal_entry_id',
     ];
@@ -26,6 +26,7 @@ class EventAttendee extends Model
     public function event() { return $this->belongsTo(Event::class); }
     public function member() { return $this->belongsTo(Member::class); }
     public function journalEntry() { return $this->belongsTo(JournalEntry::class); }
+    public function fellowship() { return $this->belongsTo(Fellowship::class); }
 
     public function hasCompletedContribution(): bool
     {

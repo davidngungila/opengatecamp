@@ -6,6 +6,7 @@ use App\Models\AuditLog;
 use App\Models\Event;
 use App\Models\EventAttendee;
 use App\Models\EventSession;
+use App\Models\Fellowship;
 use App\Models\Member;
 use App\Models\Message;
 use App\Models\MessageTemplate;
@@ -149,6 +150,7 @@ class EventController extends Controller
             'phone' => 'nullable|string|max:20',
             'email' => 'nullable|email',
             'fellowship' => 'nullable|string|max:255',
+            'fellowship_id' => 'nullable|exists:fellowships,id',
             'is_paid' => 'nullable|in:0,1',
             'amount_paid' => 'nullable|numeric|min:0',
             'fee_amount' => 'nullable|numeric|min:0',
@@ -165,6 +167,10 @@ class EventController extends Controller
 
         if (empty($data['name']) && ! $request->filled('name')) {
             return back()->with('error', 'Attendee name is required.');
+        }
+
+        if (! empty($data['fellowship_id']) && empty($data['fellowship'])) {
+            $data['fellowship'] = Fellowship::find($data['fellowship_id'])?->name;
         }
 
         $event = Event::find($data['event_id'] ?? null) ?? Event::currentCamp();
@@ -644,6 +650,12 @@ class EventController extends Controller
 
     private function fellowshipList(): array
     {
+        $fellowships = Fellowship::active()->orderBy('name')->pluck('name')->all();
+
+        if ($fellowships) {
+            return $fellowships;
+        }
+
         $raw = (string) \App\Models\Setting::get('fellowships.list', '');
         $list = collect(explode("\n", $raw))
             ->map(fn ($f) => trim($f))
