@@ -206,7 +206,9 @@
                 <span class="tt">Administration</span>
             </div>
             <div class="nav-children {{ $isSystem ? 'open' : '' }}">
-                <a href="{{ url('/users') }}" class="nav-child {{ $p === 'users' ? 'active' : '' }}">Users &amp; Roles</a>
+                <a href="{{ url('/users') }}" class="nav-child {{ $p === 'users' ? 'active' : '' }}">Users</a>
+                <a href="{{ url('/users/roles') }}" class="nav-child {{ $p === 'users/roles' ? 'active' : '' }}">Roles</a>
+                <a href="{{ url('/users/permissions') }}" class="nav-child {{ $p === 'users/permissions' ? 'active' : '' }}">Permissions</a>
             </div>
         </div>
 

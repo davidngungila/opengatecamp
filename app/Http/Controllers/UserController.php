@@ -15,16 +15,28 @@ use Illuminate\Support\Str;
 
 class UserController extends Controller
 {
-    public function index(Request $request)
+    public function index()
     {
-        $tab = $request->query('tab', 'users');
-
         return view('users.index', [
-            'tab' => in_array($tab, ['users', 'roles', 'permissions']) ? $tab : 'users',
             'users' => User::with('role')->orderBy('name')->get(),
             'roles' => Role::withCount('users')->orderBy('id')->get(),
-            'permissions' => Role::PERMISSIONS,
             'welcomeMessage' => (string) Setting::get('users.welcome_message', (string) MessageTemplate::render('member_welcome')),
+        ]);
+    }
+
+    public function roles()
+    {
+        return view('users.roles', [
+            'roles' => Role::withCount('users')->orderBy('id')->get(),
+            'permissions' => Role::PERMISSIONS,
+        ]);
+    }
+
+    public function permissions()
+    {
+        return view('users.permissions', [
+            'roles' => Role::withCount('users')->orderBy('id')->get(),
+            'permissions' => Role::PERMISSIONS,
         ]);
     }
 
@@ -277,6 +289,6 @@ class UserController extends Controller
 
         AuditLog::record('Updated role permissions', 'Users & Roles', $role->name);
 
-        return redirect()->route('users.index', ['tab' => 'permissions'])->with('success', "Permissions for {$role->name} saved successfully.");
+        return redirect()->route('users.permissions')->with('success', "Permissions for {$role->name} saved successfully.");
     }
 }

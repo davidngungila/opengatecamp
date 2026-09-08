@@ -80,6 +80,8 @@ Route::middleware(['auth', 'committee.readonly'])->group(function () {
 
     Route::middleware('admin')->group(function () {
         Route::get('/users', [UserController::class, 'index'])->name('users.index');
+        Route::get('/users/roles', [UserController::class, 'roles'])->name('users.roles');
+        Route::get('/users/permissions', [UserController::class, 'permissions'])->name('users.permissions');
         Route::post('/users', [UserController::class, 'store'])->name('users.store');
         Route::put('/users/{user}', [UserController::class, 'update'])->name('users.update');
         Route::delete('/users/{user}', [UserController::class, 'destroy'])->name('users.destroy');

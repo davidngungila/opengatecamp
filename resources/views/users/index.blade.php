@@ -1,36 +1,28 @@
 @extends('layouts.app')
 
-@section('title', 'Users & Roles — OpenGate Camp Connect')
-@section('crumb', 'System / Users & Roles')
-@section('page_title', 'Users & Roles')
+@section('title', 'Users — OpenGate Camp Connect')
+@section('crumb', 'System / Users')
+@section('page_title', 'Users')
 
 @php
-    $tab = $tab ?? 'users';
     $initials = fn($name) => collect(explode(' ', str_replace(['Fr. ','Dr. '], '', $name)))->map(fn($w) => mb_substr($w,0,1))->take(2)->implode('');
 @endphp
 
 @section('content')
 <div class="fade-in">
   <div class="section-head">
-    <div><h2>Users &amp; Roles</h2><div class="sub">{{ $users->count() }} system users · {{ $roles->count() }} roles</div></div>
-    @if($tab === 'users')
-      <div class="flex gap-8">
-        <form method="POST" action="{{ route('users.welcome.bulk') }}" onsubmit="return confirm('Send the welcome SMS to all {{ $users->whereNotNull('phone')->where('phone','!=','')->count() }} users with a phone number? (uses saved default content)')">
-          @csrf
-          <button type="submit" class="btn btn-secondary">Send Welcome to All</button>
-        </form>
-        <button type="button" class="btn btn-accent" data-drawer-open="userModal" onclick="resetUserModal()">+ Add User</button>
-      </div>
-    @endif
+    <div><h2>System Users</h2><div class="sub">{{ $users->count() }} system users</div></div>
+    <div class="flex gap-8">
+      <a href="{{ route('users.roles') }}" class="btn btn-secondary" style="text-decoration:none">Roles</a>
+      <a href="{{ route('users.permissions') }}" class="btn btn-secondary" style="text-decoration:none">Permissions</a>
+      <form method="POST" action="{{ route('users.welcome.bulk') }}" onsubmit="return confirm('Send the welcome SMS to all {{ $users->whereNotNull('phone')->where('phone','!=','')->count() }} users with a phone number? (uses saved default content)')">
+        @csrf
+        <button type="submit" class="btn btn-secondary">Send Welcome to All</button>
+      </form>
+      <button type="button" class="btn btn-accent" data-drawer-open="userModal" onclick="resetUserModal()">+ Add User</button>
+    </div>
   </div>
 
-  <div class="tabs-bar">
-    <a href="{{ route('users.index', ['tab' => 'users']) }}" class="tab-btn {{ $tab==='users' ? 'active' : '' }}">Users</a>
-    <a href="{{ route('users.index', ['tab' => 'roles']) }}" class="tab-btn {{ $tab==='roles' ? 'active' : '' }}">Roles</a>
-    <a href="{{ route('users.index', ['tab' => 'permissions']) }}" class="tab-btn {{ $tab==='permissions' ? 'active' : '' }}">Permissions</a>
-  </div>
-
-  @if($tab === 'users')
   <div class="table-card">
     <div class="table-scroll">
       <table class="data-table">
@@ -89,54 +81,6 @@
       </table>
     </div>
   </div>
-
-  @elseif($tab === 'roles')
-  <div class="card-grid">
-    @foreach($roles as $r)
-    <div class="entity-card">
-      <div class="ec-top">
-        <div class="ec-ico" style="background:var(--purple-bg);color:var(--purple)"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg></div>
-        <div><h4>{{ $r->name }}</h4><div class="ec-sub">{{ is_array($r->permissions) ? count($r->permissions) : 0 }} permissions granted</div></div>
-      </div>
-      <div class="ec-stats">
-        <div class="ec-stat"><b>{{ $r->users_count }}</b><span>Users</span></div>
-        <div class="ec-stat"><b>{{ $r->is_super ? 'All access' : count($r->permissions ?? []).' / '.count($permissions) }}</b><span>Access</span></div>
-      </div>
-      <div class="flex gap-8" style="margin-top:14px">
-        <a class="btn btn-secondary btn-sm" style="flex:1" href="{{ route('users.index', ['tab'=>'permissions']) }}#role-{{ $r->id }}">Edit Permissions</a>
-      </div>
-    </div>
-    @endforeach
-  </div>
-
-  @else
-  <div class="glass-card">
-    <div class="section-head"><div><h2 style="font-size:15px">Role Permission Matrix</h2><div class="sub">Tick the permissions each role may use, then save.</div></div></div>
-    <div class="table-scroll" style="max-height:480px;overflow-y:auto;border:1px solid var(--border);border-radius:14px">
-      <table class="data-table">
-        <thead><tr><th>Permission</th>@foreach($roles as $r)<th style="text-align:center">{{ Str::limit($r->name, 12) }}</th>@endforeach</tr></thead>
-        <tbody>
-          @foreach($permissions as $perm)
-          <tr>
-            <td><code style="font-size:12px">{{ $perm }}</code></td>
-            @foreach($roles as $r)
-              <td style="text-align:center">
-                <input type="checkbox" class="checkbox perm-box"
-                       data-role="{{ $r->id }}" data-perm="{{ $perm }}"
-                       {{ ($r->is_super || in_array($perm, $r->permissions ?? [])) ? 'checked' : '' }}
-                       {{ $r->is_super ? 'disabled' : '' }}>
-              </td>
-            @endforeach
-          </tr>
-          @endforeach
-        </tbody>
-      </table>
-    </div>
-    <div class="flex gap-8" style="justify-content:flex-end;margin-top:14px">
-      <button type="button" class="btn btn-accent" onclick="savePermissions(this)">Save Permissions</button>
-    </div>
-  </div>
-  @endif
 </div>
 
 <div class="drawer-overlay" id="userModal">
@@ -249,44 +193,6 @@ document.addEventListener('click', function(e){
   document.getElementById('userModalTitle').textContent='Edit User';
   openDrawerById('userModal');
 });
-function savePermissions(btn){
-  var boxes=document.querySelectorAll('.perm-box:checked:not([disabled])');
-  var byRole={};
-  boxes.forEach(function(cb){
-    (byRole[cb.dataset.role]=byRole[cb.dataset.role]||[]).push(cb.dataset.perm);
-  });
-  var queue=Object.keys(byRole);
-  if(queue.length===0){ toast('No changes detected','info'); return; }
-  toast('Saving permissions for '+queue.length+' role(s)...','info');
-  (function next(){
-    var roleId=queue.shift();
-    if(roleId===undefined){ setTimeout(function(){ location.reload(); },600); return; }
-    fetch('{{ url('/roles') }}/'+roleId+'/permissions', {
-      method:'PUT',
-      headers:{
-        'Content-Type':'application/json',
-        'X-CSRF-TOKEN':'{{ csrf_token() }}',
-        'Accept':'application/json'
-      },
-      body: JSON.stringify({ permissions: byRole[roleId] })
-    }).then(next).catch(function(){ toast('Failed to save permissions','error'); });
-  })();
-}
-
-function permLabel(key){
-  var map={
-    'members.view':'View Members','members.manage':'Manage Members',
-    'events.manage':'Manage Events','events.complete':'Complete Events',
-    'pledges.manage':'Manage Pledges',
-    'finance.view':'View Finance','finance.manage':'Manage Finance','finance.approve':'Approve Finance',
-    'communication.send':'Send Communication',
-    'documents.view':'View Documents','documents.manage':'Manage Documents',
-    'reports.view':'View Reports','reports.export':'Export Reports',
-    'users.manage':'Manage Users','roles.manage':'Manage Roles','settings.manage':'Manage Settings','audit.view':'View Audit Logs'
-  };
-  return map[key]||key;
-}
-
 document.addEventListener('DOMContentLoaded', function(){
   document.querySelectorAll('[data-view-user]').forEach(function(tr){
     tr.addEventListener('click', function(e){
