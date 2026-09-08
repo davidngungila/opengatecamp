@@ -23,6 +23,95 @@ class SmsService
         return $this->token !== '';
     }
 
+    /**
+     * Query the provider account balance (remaining SMS credits).
+     *
+     * Endpoint: GET {base}/api/v2/balance with a Bearer token.
+     * Returns ['success' => bool, 'balance' => ?float, 'currency' => ?string,
+     * 'status' => string, 'raw' => array].
+     */
+    public function getBalance(): array
+    {
+        if (! $this->isConfigured()) {
+            return ['success' => false, 'balance' => null, 'currency' => null, 'status' => 'NOT_CONFIGURED', 'raw' => []];
+        }
+
+        try {
+            $response = Http::withHeaders([
+                'Authorization' => 'Bearer '.$this->token,
+                'Content-Type'  => 'application/json',
+                'Accept'        => 'application/json',
+            ])->timeout(15)->get($this->baseUrl.'/api/v2/balance');
+
+            $body = $response->json() ?: [];
+
+            if (! $response->successful() || ($body['success'] ?? true) === false) {
+                return [
+                    'success'  => false,
+                    'balance'  => $this->extractBalance($body),
+                    'currency' => $this->extractCurrency($body),
+                    'status'   => 'API_ERROR_'.$response->status(),
+                    'raw'      => $body,
+                ];
+            }
+
+            return [
+                'success'  => true,
+                'balance'  => $this->extractBalance($body),
+                'currency' => $this->extractCurrency($body),
+                'status'   => 'OK',
+                'raw'      => $body,
+            ];
+        } catch (\Exception $e) {
+            Log::error('SMS balance check failed', ['error' => $e->getMessage()]);
+
+            return ['success' => false, 'balance' => null, 'currency' => null, 'status' => 'EXCEPTION', 'raw' => ['error' => $e->getMessage()]];
+        }
+    }
+
+    private function extractBalance(array $body): ?float
+    {
+        $candidates = [
+            'data.balance',
+            'balance',
+            'data.sms_balance',
+            'data.smsBalance',
+            'sms_balance',
+            'smsBalance',
+            'remaining_balance',
+            'remainingBalance',
+            'data.remaining_balance',
+            'data.remainingBalance',
+            'credits',
+            'credit',
+            'data.credits',
+            'data.credit',
+            'data.sms_count',
+            'sms_count',
+        ];
+
+        foreach ($candidates as $key) {
+            $value = data_get($body, $key);
+            if (is_numeric($value)) {
+                return (float) $value;
+            }
+        }
+
+        return null;
+    }
+
+    private function extractCurrency(array $body): ?string
+    {
+        foreach (['currency', 'data.currency', 'data.currency_code'] as $key) {
+            $value = data_get($body, $key);
+            if (is_string($value) && $value !== '') {
+                return $value;
+            }
+        }
+
+        return null;
+    }
+
     public function send(string $phone, string $message): array
     {
         if (! $this->isConfigured()) {

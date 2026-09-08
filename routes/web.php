@@ -208,6 +208,7 @@ Route::middleware(['auth', 'committee.readonly'])->group(function () {
         Route::post('/messaging/settings/email', [MessagingController::class, 'saveEmailSettings'])->name('messaging.settings.email.save');
         Route::post('/messaging', [MessagingController::class, 'store'])->name('messaging.store');
         Route::post('/messaging/token', [MessagingController::class, 'saveToken'])->name('messaging.token');
+        Route::post('/messaging/settings/sms/balance/refresh', [MessagingController::class, 'refreshSmsBalance'])->name('messaging.settings.sms.balance.refresh');
 
         Route::post('/messaging/settings/sms/providers', [MessagingController::class, 'smsProviderStore'])->name('messaging.settings.sms.provider.store');
         Route::post('/messaging/settings/sms/providers/{key}', [MessagingController::class, 'smsProviderUpdate'])->name('messaging.settings.sms.provider.update');

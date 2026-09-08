@@ -52,6 +52,34 @@
       </div>
     </div>
 
+    @if($smsBalance && $smsBalance['success'])
+    <div style="display:flex;align-items:center;gap:16px;flex-wrap:wrap;padding:14px 18px;border-radius:12px;background:linear-gradient(135deg,#0ea5e9 0%,#2563eb 100%);color:#fff;margin-bottom:16px">
+      <svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="flex:none"><rect x="2" y="7" width="20" height="14" rx="2"/><path d="M16 21V5a2 2 0 00-2-2h-4a2 2 0 00-2 2v16"/></svg>
+      <div style="flex:1">
+        <div style="font-size:12px;font-weight:700;text-transform:uppercase;letter-spacing:.5px;opacity:.85">Remaining SMS Balance</div>
+        <div style="font-size:26px;font-weight:800;line-height:1.15">
+          {{ $smsBalance['balance'] !== null ? number_format((float) $smsBalance['balance'], 2) : '—' }}
+          @if(!empty($smsBalance['currency']))<span style="font-size:14px;font-weight:600;opacity:.85;margin-left:4px">{{ $smsBalance['currency'] }}</span>@endif
+        </div>
+      </div>
+      <div style="display:flex;flex-direction:column;align-items:flex-end;gap:4px">
+        <div style="font-size:11px;font-weight:600;opacity:.85">Remaining credits from the primary provider</div>
+        <form method="POST" action="{{ route('messaging.settings.sms.balance.refresh') }}" style="display:contents">@csrf
+          <button type="submit" class="btn btn-sm" style="background:rgba(255,255,255,.18);color:#fff;border:1px solid rgba(255,255,255,.35)">Refresh</button>
+        </form>
+      </div>
+    </div>
+    @elseif($smsBalance && !$smsBalance['success'])
+    <div style="display:flex;align-items:center;gap:12px;padding:12px 18px;border-radius:12px;background:#fff7ed;border:1px solid #fed7aa;color:#9a3412;margin-bottom:16px">
+      <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M10.29 3.86L1.82 18a2 2 0 001.71 3h16.94a2 2 0 001.71-3L13.71 3.86a2 2 0 00-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>
+      <div style="font-size:13px;font-weight:600;flex:1">SMS balance could not be retrieved from the provider ({{ $smsBalance['status'] }}).</div>
+      <form method="POST" action="{{ route('messaging.settings.sms.balance.refresh') }}" style="display:contents">@csrf
+        <button type="submit" class="btn btn-secondary btn-sm">Retry</button>
+      </form>
+    </div>
+    @endif
+
+
     <div class="table-card" style="box-shadow:none;border:1px solid var(--border,#e5e7eb)">
       <div class="table-scroll">
         <table class="data-table">

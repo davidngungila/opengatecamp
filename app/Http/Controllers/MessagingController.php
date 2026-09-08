@@ -180,9 +180,22 @@ class MessagingController extends Controller
 
     public function settings()
     {
+        $providers = $this->smsProviders();
+        $primaryKey = $this->smsPrimaryKey();
+
+        $smsBalance = null;
+        foreach ($providers as $p) {
+            if (($p['key'] ?? null) === $primaryKey && ! empty($p['api_token'])) {
+                $cacheKey = 'sms.balance.'.md5($p['api_token']);
+                $smsBalance = \Illuminate\Support\Facades\Cache::remember($cacheKey, 60, fn () => (new SmsService($p['api_token'], $p['sender_id'] ?? ''))->getBalance());
+                break;
+            }
+        }
+
         return view('messaging.settings', $this->sharedData() + [
-            'providers'  => $this->smsProviders(),
-            'primaryKey' => $this->smsPrimaryKey(),
+            'providers'  => $providers,
+            'primaryKey' => $primaryKey,
+            'smsBalance' => $smsBalance,
         ]);
     }
 
@@ -192,6 +205,18 @@ class MessagingController extends Controller
             'providers'  => $this->emailProviders(),
             'primaryKey' => $this->emailPrimaryKey(),
         ]);
+    }
+
+    public function refreshSmsBalance()
+    {
+        foreach ($this->smsProviders() as $p) {
+            if (($p['key'] ?? null) === $this->smsPrimaryKey() && ! empty($p['api_token'])) {
+                \Illuminate\Support\Facades\Cache::forget('sms.balance.'.md5($p['api_token']));
+                break;
+            }
+        }
+
+        return back()->with('success', 'SMS balance refreshed.');
     }
 
     public function saveEmailSettings(Request $request)
