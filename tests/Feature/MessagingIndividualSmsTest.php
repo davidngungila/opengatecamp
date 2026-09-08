@@ -22,7 +22,7 @@ class MessagingIndividualSmsTest extends TestCase
         return $user;
     }
 
-    public function test_sms_page_exposes_individual_manual_number_option(): void
+    public function test_sms_page_targets_all_active_members_without_recipient_selector(): void
     {
         $this->admin();
         Setting::put('sms.api_token', 'test-token');
@@ -30,8 +30,11 @@ class MessagingIndividualSmsTest extends TestCase
         $res = $this->get(route('messaging.sms'));
 
         $res->assertOk();
-        $res->assertSee('Individual / Manual Number');
-        $res->assertSee('manualPhone');
+        $res->assertSee('All Active Members');
+        $res->assertSee('recipient_filter" value="all_active"', false);
+        $res->assertDontSee('Individual / Manual Number');
+        $res->assertDontSee('recipientType', false);
+        $res->assertDontSee('Recipients Label');
     }
 
     public function test_sending_to_an_individual_phone_sends_one_sms(): void

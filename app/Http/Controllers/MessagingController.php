@@ -469,7 +469,7 @@ class MessagingController extends Controller
     {
         $data = $request->validate([
             'channel'    => 'required|in:sms,email',
-            'recipients' => 'required|string|max:255',
+            'recipients' => 'nullable|string|max:255',
             'recipient_filter' => 'nullable|string',
             'recipient_value'  => 'nullable|string',
             'phone'      => 'nullable|string|max:20',
@@ -477,6 +477,8 @@ class MessagingController extends Controller
             'subject'    => 'nullable|string|max:255|required_if:channel,email',
             'message'    => 'required|string|max:2000',
         ]);
+
+        $data['recipients'] = $data['recipients'] ?: ($data['channel'] === 'sms' ? 'All Active Members' : 'Email recipients');
 
         $isSend = $request->input('action') === 'send';
         $status = $isSend ? 'sending' : 'draft';

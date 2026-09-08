@@ -5,31 +5,11 @@
       @csrf
       <input type="hidden" name="channel" value="sms">
       <input type="hidden" name="phones_json" id="phonesJson" value="">
-      <input type="hidden" name="recipient_filter" id="recipientFilter" value="all_active">
-      <input type="hidden" name="recipient_value" id="recipientValue" value="">
+      <input type="hidden" name="recipients" value="{{ old('recipients', 'All Active Members') }}">
+      <input type="hidden" name="recipient_filter" value="all_active">
+      <input type="hidden" name="recipient_value" value="">
+      <input type="hidden" name="phone" id="manualPhone" value="">
       <div class="form-grid">
-        <div class="field full">
-          <label>Send To *</label>
-          <select id="recipientType" style="width:100%" onchange="onRecipientTypeChange(this)">
-            <option value="admission">Admission Desk</option>
-            <option value="registration">Registrations</option>
-            <option value="pledge">Pledges</option>
-            <option value="digital_card">Digital Cards</option>
-            <option value="manual">Individual / Manual Number</option>
-            <option value="all_active" selected>All Active Members</option>
-          </select>
-          <div id="filterValueWrap" style="display:none;margin-top:8px">
-            <select id="filterValue" style="width:100%" onchange="loadRecipients()"><option value="">— Select —</option></select>
-          </div>
-        </div>
-        <div class="field full" id="manualPhoneWrap" style="display:none">
-          <label>Recipient Phone Number *</label>
-          <input name="phone" id="manualPhone" placeholder="e.g. 0622 239 304 / 255 622 239 304 / +255 ..." style="font-size:15px;letter-spacing:0.5px" oninput="updateSmsCount()" onchange="updateSmsCount()">
-          <small style="color:var(--text-muted);margin-top:4px;display:block">Enter the individual phone number to send the SMS to. Tanzanian numbers (07x / 06x) are auto-formatted.</small>
-        </div>
-        <div class="field full"><label>Recipients Label *</label>
-          <input name="recipients" required value="{{ old('recipients', session('templateName', 'All Active Members')) }}" placeholder="e.g. Youth Group, Payment Reminders" id="recipientsLabel">
-        </div>
         <div class="field full">
           <label>Template <span style="font-weight:400;color:var(--text-tertiary)">(optional — loads a saved template)</span></label>
           <select id="templateSelect" style="width:100%" onchange="onTemplateSelect(this)">
@@ -80,7 +60,7 @@
     <div id="recipientError" style="display:none;padding:8px;font-size:12.5px;color:var(--red)"></div>
     <hr style="border:none;border-top:1px solid var(--border);margin:16px 0">
     <div style="font-size:12.5px;color:var(--text-muted)">
-      <p style="margin:0 0 6px">Recipients are loaded from the selected filter (members with a phone number).</p>
+      <p style="margin:0 0 6px">Recipients are all active members with a phone number.</p>
       <p style="margin:0">Use <b>View List</b> to confirm who will receive this message before sending.</p>
     </div>
   </div>
@@ -126,85 +106,19 @@ function onTemplateSelect(sel) {
   var tpl = smsTemplates.find(function(t){ return String(t.id) === String(id); });
   if (!tpl) return;
   var msg = document.getElementById('smsMessage');
-  var lbl = document.getElementById('recipientsLabel');
   msg.value = tpl.message;
-  if (lbl && tpl.name && String(lbl.value).trim() === '') {
-    lbl.value = tpl.name;
-  }
   sel.value = '';
   updateSmsCount();
   toast('Template loaded — review and edit before sending', 'info');
 }
 
-function onRecipientTypeChange(sel) {
-  var wrap = document.getElementById('filterValueWrap');
-  var valSel = document.getElementById('filterValue');
-  var manualWrap = document.getElementById('manualPhoneWrap');
-  var f = sel.value;
-  document.getElementById('recipientFilter').value = f;
-
-  if (f === 'manual') {
-    wrap.style.display = 'none';
-    manualWrap.style.display = 'block';
-    var p = String(document.getElementById('manualPhone').value || '').trim();
-    document.getElementById('phonesJson').value = p ? JSON.stringify([p]) : '';
-    document.getElementById('recipientCount').textContent = p ? '1' : '0';
-    document.getElementById('recipientMeta').innerHTML = p ? 'Individual recipient · ' + p : '';
-    document.getElementById('recipientSummary').style.display = 'block';
-    document.getElementById('recipientError').style.display = 'none';
-    if (p) {
-      document.getElementById('recipientTableBody').innerHTML = '<tr style="border-bottom:1px solid var(--border)"><td style="padding:8px 10px;font-weight:600">Individual Recipient</td><td style="padding:8px 10px;font-family:monospace">' + p + '</td><td style="padding:8px 10px"><span class="badge badge-info badge-dotted">Manual</span></td><td style="padding:8px 10px"><span class="badge badge-success badge-dotted">Active</span></td><td style="padding:8px 10px">—</td><td style="padding:8px 10px">—</td></tr>';
-    } else {
-      document.getElementById('recipientTableBody').innerHTML = '';
-    }
-    document.getElementById('recipientDrawerMeta').textContent = p ? ('1 recipient · Individual · ' + p) : 'Waiting for phone number';
-    document.getElementById('viewRecipientsBtn').disabled = !p;
-    var lbl = document.getElementById('recipientsLabel');
-    if (lbl && String(lbl.value).trim() === '' || (lbl && String(lbl.value).trim() === 'All Active Members')) {
-      lbl.value = 'Individual recipient';
-    }
-    updateSmsCount();
-    return;
-  }
-
-  var STATUS_MAP = {
-    admission: [['', 'All Statuses'], ['pending', 'Pending'], ['confirmed', 'Confirmed'], ['attended', 'Attended'], ['no_show', 'No Show'], ['cancelled', 'Cancelled']],
-    registration: [['', 'All Statuses'], ['pending', 'Pending'], ['confirmed', 'Confirmed'], ['attended', 'Attended'], ['no_show', 'No Show'], ['cancelled', 'Cancelled']],
-    pledge: [['', 'All Statuses'], ['pending', 'Pending'], ['partial', 'Partial'], ['fulfilled', 'Fulfilled'], ['cancelled', 'Cancelled']],
-    digital_card: [['', 'All Statuses'], ['draft', 'Draft'], ['active', 'Active'], ['closed', 'Closed']]
-  };
-
-  if (STATUS_MAP[f]) {
-    valSel.innerHTML = '';
-    STATUS_MAP[f].forEach(function(s) { valSel.innerHTML += '<option value="'+s[0]+'">'+s[1]+'</option>'; });
-    wrap.style.display = 'block';
-    manualWrap.style.display = 'none';
-    document.getElementById('manualPhone').value = '';
-    document.getElementById('recipientValue').value = '';
-    loadRecipients();
-    return;
-  }
-
-  wrap.style.display = 'none';
-  manualWrap.style.display = 'none';
-  document.getElementById('manualPhone').value = '';
-  loadRecipients();
-}
-
 function loadRecipients() {
-  var filter = document.getElementById('recipientType').value;
-  var value = document.getElementById('filterValue') ? document.getElementById('filterValue').value : '';
-  document.getElementById('recipientValue').value = value;
-
-  if (['admission','registration','pledge','digital_card'].indexOf(filter) !== -1 && !value) { resetRecipients(); return; }
-
   document.getElementById('recipientSummary').style.display = 'none';
   document.getElementById('recipientLoading').style.display = 'block';
   document.getElementById('recipientError').style.display = 'none';
   document.getElementById('viewRecipientsBtn').disabled = true;
 
-  var url = '{{ route("messaging.recipients") }}?filter=' + encodeURIComponent(filter);
-  if (value) url += '&value=' + encodeURIComponent(value);
+  var url = '{{ route("messaging.recipients") }}?filter=all_active';
 
   fetch(url).then(function(r) { return r.json(); }).then(function(data) {
     document.getElementById('recipientLoading').style.display = 'none';
@@ -214,7 +128,6 @@ function loadRecipients() {
 
     var meta = document.getElementById('recipientMeta');
     if (data.count > 0) {
-      var totalSms = 0;
       var phoneTypes = {};
       data.members.forEach(function(m){ phoneTypes[m.type] = (phoneTypes[m.type]||0)+1; });
       var summary = [];
@@ -248,7 +161,7 @@ function loadRecipients() {
     });
 
     if (data.count === 0) {
-      document.getElementById('recipientError').textContent = 'No members found with phone numbers for this filter.';
+      document.getElementById('recipientError').textContent = 'No members found with phone numbers.';
       document.getElementById('recipientError').style.display = 'block';
       document.getElementById('viewRecipientsBtn').disabled = true;
       document.getElementById('recipientSummary').style.display = 'none';
@@ -256,8 +169,7 @@ function loadRecipients() {
     } else {
       document.getElementById('recipientSummary').style.display = 'block';
       document.getElementById('viewRecipientsBtn').disabled = false;
-      var label = document.getElementById('recipientsLabel').value.trim() || 'Selected recipients';
-      document.getElementById('recipientDrawerMeta').textContent = data.count + ' recipient(s) · ' + label;
+      document.getElementById('recipientDrawerMeta').textContent = data.count + ' recipient(s) · All Active Members';
     }
     updateSmsCount();
   }).catch(function() {
@@ -269,30 +181,12 @@ function loadRecipients() {
   });
 }
 
-function resetRecipients() {
-  recipientsData = [];
-  document.getElementById('phonesJson').value = '';
-  document.getElementById('recipientCount').textContent = '0';
-  document.getElementById('recipientMeta').innerHTML = '';
-  document.getElementById('recipientSummary').style.display = 'block';
-  document.getElementById('recipientError').style.display = 'none';
-  document.getElementById('recipientTableBody').innerHTML = '';
-  document.getElementById('recipientDrawerMeta').textContent = 'No recipients';
-  document.getElementById('viewRecipientsBtn').disabled = true;
-  updateSmsCount();
-}
-
 function updateSmsCount() {
   var msg = document.getElementById('smsMessage');
   if (!msg) return;
   var len = msg.value.length;
   var parts = len === 0 ? 0 : (len <= 160 ? 1 : Math.ceil(len / 153));
-  var isManual = document.getElementById('recipientType').value === 'manual';
-  var manualPhone = document.getElementById('manualPhone').value.trim();
-  var count = isManual && manualPhone ? 1 : (recipientsData.length || 0);
-  if (isManual && manualPhone) {
-    document.getElementById('phonesJson').value = JSON.stringify([manualPhone]);
-  }
+  var count = recipientsData.length || 0;
   var el = document.getElementById('smsCount');
   if (el) el.textContent = parts + ' SMS' + (parts !== 1 ? 's' : '') + (count > 0 ? ' x ' + count + ' recipient' + (count !== 1 ? 's' : '') + ' = ' + (parts * count) + ' total' : '');
   var hint = document.getElementById('costHint');
@@ -301,26 +195,5 @@ function updateSmsCount() {
 
 document.addEventListener('DOMContentLoaded', function() {
   loadRecipients();
-  document.getElementById('manualPhone').addEventListener('input', function() {
-    var phone = this.value.trim();
-    if (phone) {
-      document.getElementById('phonesJson').value = JSON.stringify([phone]);
-      document.getElementById('recipientCount').textContent = '1';
-      document.getElementById('recipientMeta').innerHTML = 'Individual recipient · ' + phone;
-      document.getElementById('recipientSummary').style.display = 'block';
-      document.getElementById('recipientError').style.display = 'none';
-      document.getElementById('recipientDrawerMeta').textContent = '1 recipient · Individual · ' + phone;
-      document.getElementById('viewRecipientsBtn').disabled = false;
-      document.getElementById('recipientTableBody').innerHTML = '<tr style="border-bottom:1px solid var(--border)"><td style="padding:8px 10px;font-weight:600">Individual Recipient</td><td style="padding:8px 10px;font-family:monospace">' + phone + '</td><td style="padding:8px 10px"><span class="badge badge-info badge-dotted">Manual</span></td><td style="padding:8px 10px"><span class="badge badge-success badge-dotted">Active</span></td><td style="padding:8px 10px">—</td><td style="padding:8px 10px">—</td></tr>';
-    } else {
-      document.getElementById('phonesJson').value = '';
-      document.getElementById('recipientCount').textContent = '0';
-      document.getElementById('recipientMeta').innerHTML = '';
-      document.getElementById('recipientDrawerMeta').textContent = 'Waiting for phone number';
-      document.getElementById('viewRecipientsBtn').disabled = true;
-      document.getElementById('recipientTableBody').innerHTML = '';
-    }
-    updateSmsCount();
-  });
 });
 </script>
