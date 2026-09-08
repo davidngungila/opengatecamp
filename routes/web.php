@@ -128,6 +128,7 @@ Route::middleware(['auth', 'committee.readonly'])->group(function () {
     Route::get('/calendar/planner', [EventController::class, 'planner'])->name('calendar.planner');
 
     // ── Admission desk (scan ticket / enter code) ─────────
+    Route::get('/admission/export', [CheckInController::class, 'exportPdf'])->name('admission.export');
     Route::get('/admission', [CheckInController::class, 'index'])->name('admission.index');
     Route::post('/admission/lookup', [CheckInController::class, 'lookup'])->name('admission.lookup');
     Route::post('/admission/admit', [CheckInController::class, 'admit'])->name('admission.admit');

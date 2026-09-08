@@ -93,4 +93,24 @@ class ExportsReportTest extends TestCase
         $response->assertOk();
         $this->assertStringContainsString('application/pdf', $response->headers->get('Content-Type') ?? '');
     }
+
+    public function test_admission_register_export_returns_pdf(): void
+    {
+        $this->admin();
+
+        $event = Event::currentCamp();
+        EventAttendee::create([
+            'event_id' => $event->id,
+            'name' => 'Daniel Mwinuka',
+            'phone' => '+255711111111',
+            'status' => 'confirmed',
+        ]);
+
+        $response = $this->get(route('admission.export', ['tab' => 'pending']));
+
+        $response->assertOk();
+        $this->assertStringContainsString('application/pdf', $response->headers->get('Content-Type') ?? '');
+        $this->assertStringContainsString('attachment', $response->headers->get('Content-Disposition') ?? '');
+        $this->assertStringStartsWith('%PDF', $response->getContent());
+    }
 }

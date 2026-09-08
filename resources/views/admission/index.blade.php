@@ -31,17 +31,22 @@
           <a href="{{ route('admission.index', array_filter(['tab'=>'pending','q'=>$q])) }}" class="tab-btn {{ $tab==='pending' ? 'active' : '' }}">Not Admitted ({{ $notAdmitted->total() }})</a>
         </div>
       </div>
-      <form method="GET" action="{{ route('admission.index') }}" class="flex gap-8" style="align-items:center">
-        <input type="hidden" name="tab" value="{{ $tab }}">
-        <div class="tfield" style="min-width:230px">
-          <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="7"/><path d="M21 21l-4.3-4.3"/></svg>
-          <input name="q" value="{{ $q }}" placeholder="Search name, phone, ticket, fellowship...">
+      <div class="flex gap-8" style="align-items:center">
+          <form method="GET" action="{{ route('admission.index') }}" class="flex gap-8" style="align-items:center">
+            <input type="hidden" name="tab" value="{{ $tab }}">
+            <div class="tfield" style="min-width:230px">
+              <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="7"/><path d="M21 21l-4.3-4.3"/></svg>
+              <input name="q" value="{{ $q }}" placeholder="Search name, phone, ticket, fellowship...">
+            </div>
+            <button type="submit" class="btn btn-secondary btn-sm">Search</button>
+            @if($q !== '')
+            <a href="{{ route('admission.index', ['tab'=>$tab]) }}" class="btn btn-ghost btn-sm">Clear</a>
+            @endif
+          </form>
+          <a href="{{ route('admission.export', array_filter(['tab'=>$tab,'q'=>$q])) }}" class="btn btn-secondary btn-sm">
+            <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3v12"/><path d="M7 10l5 5 5-5"/><path d="M5 21h14"/></svg>
+            Export PDF</a>
         </div>
-        <button type="submit" class="btn btn-secondary btn-sm">Search</button>
-        @if($q !== '')
-        <a href="{{ route('admission.index', ['tab'=>$tab]) }}" class="btn btn-ghost btn-sm">Clear</a>
-        @endif
-      </form>
     </div>
 
     @php $list = $tab === 'pending' ? $notAdmitted : $admitted; @endphp

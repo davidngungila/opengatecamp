@@ -73,6 +73,82 @@ class CheckInController extends Controller
     }
 
     /**
+     * Export the current admission register (admitted / not admitted tab) as a branded PDF report.
+     */
+    public function exportPdf(Request $request)
+    {
+        $tab = in_array($request->query('tab', 'admitted'), ['admitted', 'pending'], true)
+            ? $request->query('tab')
+            : 'admitted';
+        $q = trim((string) $request->query('q'));
+
+        $query = EventAttendee::with('event')
+            ->when($q !== '', fn ($qr) => $qr->where(fn ($w) => $w
+                ->where('name', 'like', "%{$q}%")
+                ->orWhere('phone', 'like', "%{$q}%")
+                ->orWhere('ticket_no', 'like', "%{$q}%")
+                ->orWhere('fellowship', 'like', "%{$q}%")));
+
+        if ($tab === 'pending') {
+            $query->whereNull('checked_in_at');
+        } else {
+            $query->whereNotNull('checked_in_at');
+        }
+
+        $attendees = $query->latest()->get();
+
+        $regionOf = static fn ($a) => $a->pickup_location === 'arusha' ? 'Arusha' : ($a->pickup_location === 'moshi' ? 'Moshi' : '—');
+
+        $rows = $attendees->map(function ($a) use ($regionOf) {
+            return [
+                'name' => $a->name ?? '—',
+                'ticket' => $a->getTicketNo(),
+                'phone' => $a->phone ?? '—',
+                'fellowship' => $a->fellowship ?: '—',
+                'region' => $regionOf($a),
+                'paid' => number_format((float) $a->amount_paid, 0),
+                'status' => $a->getStatusLabel(),
+                'admitted' => $a->checked_in_at?->format('d M Y H:i') ?? '—',
+            ];
+        })->all();
+
+        $columns = [
+            ['label' => 'Attendee', 'key' => 'name'],
+            ['label' => 'Ticket', 'key' => 'ticket'],
+            ['label' => 'Contact', 'key' => 'phone'],
+            ['label' => 'Fellowship', 'key' => 'fellowship'],
+            ['label' => 'Region', 'key' => 'region'],
+            ['label' => 'Paid (TZS)', 'key' => 'paid', 'align' => 'right'],
+            ['label' => 'Status', 'key' => 'status'],
+            ['label' => 'Admitted', 'key' => 'admitted'],
+        ];
+
+        $filters = array_filter([
+            'Register' => $tab === 'pending' ? 'Not Admitted' : 'Admitted',
+            'Search' => $q !== '' ? $q : null,
+        ]);
+
+        $totals = [
+            ['label' => 'Attendees', 'value' => number_format($attendees->count())],
+            ['label' => 'Total Paid', 'value' => 'TZS '.number_format($attendees->sum('amount_paid'))],
+        ];
+
+        $mpdf = app(\App\Services\ReportPdfService::class)->generate(
+            ['title' => 'Admission Register Report', 'subtitle' => 'Gate register · '.($tab === 'pending' ? 'Not Admitted' : 'Admitted'), 'filters' => $filters],
+            $columns,
+            $rows,
+            $totals
+        );
+
+        $filename = 'Admission-Register-'.ucfirst($tab).'-'.now()->format('Ymd-His').'.pdf';
+
+        return response($mpdf->Output($filename, 'S'), 200, [
+            'Content-Type' => 'application/pdf',
+            'Content-Disposition' => 'attachment; filename="'.$filename.'"',
+        ]);
+    }
+
+    /**
      * Admit the attendee (check-in) and send a welcome SMS.
      */
     public function admit(Request $request)
