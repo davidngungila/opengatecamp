@@ -9,8 +9,8 @@
 <div class="fade-in">
   <div class="empty-state" style="padding:48px 24px">
     <h3 style="margin-bottom:8px">No event yet</h3>
-    <p>Create the Open Gate Camp event to start running your dashboard.</p>
-    <a href="{{ route('events.create') }}" class="btn btn-accent" style="margin-top:14px">Create Event</a>
+    <p>Set the current event under Settings → General to start running your dashboard.</p>
+    <a href="{{ route('settings.index') }}" class="btn btn-accent" style="margin-top:14px">Open Settings</a>
   </div>
 </div>
 @else
@@ -109,7 +109,6 @@
     <div class="glass-card">
       <div class="section-head" style="margin-bottom:10px"><h2>Quick Actions</h2></div>
       <div class="quick-actions-grid" style="grid-template-columns:repeat(2,1fr)">
-        <a class="qa-btn" href="{{ route('events.show', $event) }}"><div class="qa-ico"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="18" rx="2"/><path d="M16 2v4M8 2v4M3 10h18"/></svg></div><span>Event Details</span></a>
         <a class="qa-btn" href="{{ route('attendees.index') }}"><div class="qa-ico"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><path d="M9 11l3 3L22 4"/><path d="M21 12v7a2 2 0 01-2 2H5a2 2 0 01-2-2V5a2 2 0 012-2h11"/></svg></div><span>Registrations</span></a>
         <a class="qa-btn" href="{{ route('pledges.index', ['event' => $event->slug]) }}"><div class="qa-ico"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><path d="M12 7v10M15 9.5c0-1.4-1.3-2.5-3-2.5s-3 1-3 2.3c0 3 6 1.4 6 4.3 0 1.4-1.3 2.4-3 2.4s-3-1-3-2.4"/></svg></div><span>Record Pledge</span></a>
         <a class="qa-btn" href="{{ route('calendar.index') }}"><div class="qa-ico"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="18" rx="2"/><path d="M16 2v4M8 2v4M3 10h18M3 15h18"/></svg></div><span>Open Calendar</span></a>
@@ -147,7 +146,7 @@
 
   @if($sessions->count())
   <div class="glass-card list-card" style="margin-top:18px">
-    <div class="section-head" style="margin-bottom:8px"><h2>Sessions / Agenda</h2><a class="link-btn" href="{{ route('events.show', $event) }}">Manage</a></div>
+    <div class="section-head" style="margin-bottom:8px"><h2>Sessions / Agenda</h2><a class="link-btn" href="{{ route('calendar.index') }}">Manage</a></div>
     <div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(230px,1fr));gap:10px">
       @foreach($sessions as $s)
       <div style="background:rgba(15,23,42,.035);border:1px solid rgba(15,23,42,.07);border-radius:12px;padding:12px 14px">

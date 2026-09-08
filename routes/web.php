@@ -120,17 +120,6 @@ Route::middleware(['auth', 'committee.readonly'])->group(function () {
 
     Route::get('/settings/financial-years/{yearId}/switch', [SettingsController::class, 'switchYear'])->whereNumber('yearId')->name('settings.years.switch');
 
-    Route::get('/events', fn () => redirect()->route('dashboard'))->name('events.index');
-    Route::post('/events', [EventController::class, 'store'])->name('events.store');
-    Route::get('/events/{event:slug}', [EventController::class, 'show'])->name('events.show');
-    Route::put('/events/{event:slug}', [EventController::class, 'update'])->name('events.update');
-    Route::patch('/events/{event:slug}/status', [EventController::class, 'toggleStatus'])->name('events.status');
-    Route::delete('/events/{event:slug}', [EventController::class, 'destroy'])->name('events.destroy');
-    Route::post('/events/{event:slug}/sessions', [EventController::class, 'storeSession'])->name('events.sessions.store');
-    Route::delete('/events/{event:slug}/sessions/{session}', [EventController::class, 'destroySession'])->name('events.sessions.destroy');
-    Route::post('/events/{event:slug}/attendees', [EventController::class, 'storeAttendee'])->name('events.attendees.store');
-    Route::put('/events/{event:slug}/attendees/{attendee}', [EventController::class, 'updateAttendee'])->name('events.attendees.update');
-    Route::delete('/events/{event:slug}/attendees/{attendee}', [EventController::class, 'destroyAttendee'])->name('events.attendees.destroy');
     Route::get('/calendar', [EventController::class, 'calendar'])->name('calendar.index');
     Route::post('/calendar/sessions', [EventController::class, 'storeCalendarSession'])->name('calendar.sessions.store');
     Route::put('/calendar/sessions/{session}', [EventController::class, 'updateCalendarSession'])->name('calendar.sessions.update');

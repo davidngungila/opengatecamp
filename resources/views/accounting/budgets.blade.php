@@ -31,7 +31,7 @@
           @endphp
           <tr style="cursor:pointer" data-view-budget data-id="{{ $b->id }}">
             <td><b>{{ $b->account->code }}</b> — {{ $b->account->name }}</td>
-            <td>@if($b->event)<a href="{{ route('events.show', $b->event) }}" class="link-btn" onclick="event.stopPropagation()">{{ $b->event->title }}</a>@else<span class="badge badge-neutral badge-dotted">General</span>@endif</td>
+            <td>@if($b->event)<span class="link-btn">{{ $b->event->title }}</span>@else<span class="badge badge-neutral badge-dotted">General</span>@endif</td>
             <td style="text-align:right">TZS {{ number_format($b->amount) }}</td>
             <td style="text-align:right">TZS {{ number_format($actual) }}</td>
             <td style="text-align:right;color:{{ $variance >= 0 ? 'var(--green-accent)' : 'var(--red)' }}">

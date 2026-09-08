@@ -9,115 +9,14 @@ use App\Models\EventSession;
 use App\Models\Member;
 use App\Models\Message;
 use App\Models\MessageTemplate;
-use App\Models\Pledge;
 use App\Services\AccountingPostingService;
 use App\Services\SmsService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Carbon;
 use Illuminate\Support\Facades\DB;
-use Illuminate\Support\Str;
 
 class EventController extends Controller
 {
-    public function show(Event $event)
-    {
-        $event->load(['sessions', 'attendees', 'pledges']);
-
-        $attendeeQuery = $event->attendees()->getQuery();
-        $pledgeQuery = $event->pledges()->getQuery();
-
-        if (auth()->user()?->isCommitteeMember()) {
-            $attendeeQuery->where('registered_by', auth()->user()->name);
-            $pledgeQuery->where('created_by', auth()->user()->name);
-        }
-
-        $attendees = (clone $attendeeQuery)->with('member')->latest()->paginate(15);
-        $pledges = (clone $pledgeQuery)->latest()->take(10)->get();
-
-        $stats = [
-            'registered' => (clone $attendeeQuery)->count(),
-            'confirmed' => (clone $attendeeQuery)->whereIn('status', ['confirmed', 'attended'])->count(),
-            'attended' => (clone $attendeeQuery)->where('status', 'attended')->count(),
-            'pledged' => (clone $pledgeQuery)->whereIn('status', ['pending', 'partial', 'fulfilled'])->sum('amount'),
-            'pledgedPaid' => (clone $pledgeQuery)->whereIn('status', ['pending', 'partial', 'fulfilled'])->sum('paid_amount'),
-        ];
-
-        return view('events.show', [
-            'event' => $event,
-            'attendees' => $attendees,
-            'pledges' => $pledges,
-            'stats' => $stats,
-            'members' => Member::active()->orderBy('name')->get(),
-            'eventStatuses' => Event::statuses(),
-        ]);
-    }
-
-    public function store(Request $request)
-    {
-        $data = $this->validated($request);
-
-        $data['slug'] = Str::slug($data['title']) ?: Str::random(8);
-        $event = Event::create($data);
-
-        AuditLog::record('Created event', 'Events', "{$event->title} ({$event->event_type})");
-        return redirect()->route('events.show', $event)->with('success', "Event {$event->title} created successfully.");
-    }
-
-    public function update(Request $request, Event $event)
-    {
-        $data = $this->validated($request, $event->id);
-
-        $event->update($data);
-        AuditLog::record('Updated event', 'Events', "{$event->title} ({$event->event_type})");
-        return redirect()->route('events.show', $event)->with('success', "Event {$event->title} updated successfully.");
-    }
-
-    public function destroy(Event $event)
-    {
-        AuditLog::record('Deleted event', 'Events', $event->title);
-        $title = $event->title;
-        $event->delete();
-        return redirect()->route('dashboard')->with('success', "Event {$title} deleted successfully.");
-    }
-
-    public function toggleStatus(Event $event, Request $request)
-    {
-        $status = $request->input('status');
-        if (! array_key_exists($status, Event::statuses())) {
-            return back()->with('error', 'Invalid event status.');
-        }
-        $event->update(['status' => $status]);
-        AuditLog::record('Changed event status', 'Events', "{$event->title} → {$status}");
-        return back()->with('success', "Event status updated to {$status}.");
-    }
-
-    // ── Sessions ────────────────────────────────────────
-    public function storeSession(Request $request, Event $event)
-    {
-        $data = $request->validate([
-            'title' => 'required|string|max:255',
-            'description' => 'nullable|string',
-            'session_date' => 'nullable|date',
-            'start_time' => 'nullable',
-            'end_time' => 'nullable',
-            'venue' => 'nullable|string|max:255',
-            'speaker' => 'nullable|string|max:255',
-            'facilitator' => 'nullable|string|max:255',
-        ]);
-        $data['event_id'] = $event->id;
-        $data['sort_order'] = $event->sessions()->max('sort_order') + 1;
-        $event->sessions()->create($data);
-        AuditLog::record('Added event session', 'Events', "{$event->title} — {$data['title']}");
-        return back()->with('success', 'Session added to event.');
-    }
-
-    public function destroySession(Event $event, EventSession $session)
-    {
-        AuditLog::record('Removed event session', 'Events', "{$event->title} — {$session->title}");
-        $session->delete();
-        return back()->with('success', 'Session removed.');
-    }
-
     // ── Attendees ───────────────────────────────────────
     public function attendees(Request $request)
     {
@@ -395,88 +294,6 @@ class EventController extends Controller
         }
 
         return back()->with('error', "SMS failed ({$result['status']}). Check the number and API settings.");
-    }
-
-    public function storeAttendee(Request $request, Event $event)
-    {
-        $data = $request->validate([
-            'member_id' => 'nullable|exists:members,id',
-            'name' => 'required_without:member_id|nullable|string|max:255',
-            'phone' => 'nullable|string|max:20',
-            'email' => 'nullable|email',
-            'amount_paid' => 'nullable|numeric|min:0',
-            'fee_amount' => 'nullable|numeric|min:0',
-            'payment_method' => 'nullable|in:cash,bank,mobile',
-            'pickup_location' => 'nullable|in:arusha,moshi',
-            'status' => 'required|in:pending,confirmed,attended,no_show,cancelled',
-            'notes' => 'nullable|string',
-        ]);
-
-        if (empty($data['name']) && ! empty($data['member_id'])) {
-            $member = Member::findOrFail($data['member_id']);
-            $data['name'] = $member->name;
-            $data['phone'] = $data['phone'] ?? $member->phone;
-            $data['email'] = $data['email'] ?? $member->email;
-        }
-
-        $data['event_id'] = $event->id;
-        $data['registered_on'] = now()->toDateString();
-        $data['registered_by'] = auth()->user()?->name;
-
-        if (empty($data['fee_amount'])) {
-            $data['fee_amount'] = (float) $event->registration_fee > 0 ? $event->registration_fee : 10000;
-        }
-
-        $attendee = DB::transaction(function () use ($data, $event) {
-            $attendee = $event->attendees()->create($data);
-
-            if ((float) ($data['amount_paid'] ?? 0) > 0 && ! empty($data['payment_method'])) {
-                $posting = app(AccountingPostingService::class);
-                $entry = $posting->postMoneyIn([
-                    'date' => now()->toDateString(),
-                    'description' => 'Attendee registration payment — '.$data['name'].' ('.$event->title.')',
-                    'amount' => $data['amount_paid'],
-                    'method' => $data['payment_method'],
-                    'incomeAccount' => $posting->incomeAccount('acct.attendee_income', '4040'),
-                ]);
-
-                $attendee->update(['journal_entry_id' => $entry->id]);
-                $attendee->loadMissing('event');
-                $this->ensureTicket($attendee);
-            }
-
-            return $attendee;
-        });
-
-        AuditLog::record('Registered attendee', 'Events', "{$event->title} — {$data['name']}");
-        return back()->with('success', "Attendee {$data['name']} registered.");
-    }
-
-    public function updateAttendee(Request $request, Event $event, EventAttendee $attendee)
-    {
-        $data = $request->validate([
-            'status' => 'required|in:pending,confirmed,attended,no_show,cancelled',
-            'amount_paid' => 'nullable|numeric|min:0',
-            'payment_method' => 'nullable|in:cash,bank,mobile',
-            'notes' => 'nullable|string',
-        ]);
-
-        if ($data['status'] === 'attended' && empty($attendee->checked_in_at)) {
-            $data['checked_in_at'] = now();
-            $data['checked_in_by'] = auth()->user()?->name;
-        }
-
-        $attendee->update($data);
-        AuditLog::record('Updated attendee', 'Events', "{$event->title} — {$attendee->name}");
-        return back()->with('success', 'Attendee status updated.');
-    }
-
-    public function destroyAttendee(Event $event, EventAttendee $attendee)
-    {
-        $name = $attendee->name;
-        $attendee->delete();
-        AuditLog::record('Removed attendee', 'Events', "{$event->title} — {$name}");
-        return back()->with('success', 'Attendee removed.');
     }
 
     // ── Tickets ─────────────────────────────────────────
@@ -788,24 +605,6 @@ class EventController extends Controller
             'Other',
         ];
     }
-
-    private function validated(Request $request, ?int $ignore = null): array
-    {
-        return $request->validate([
-            'title' => 'required|string|max:255',
-            'event_type' => 'required|in:camp,conference,mission_trip,training,worship,other',
-            'description' => 'nullable|string',
-            'venue' => 'nullable|string|max:255',
-            'location' => 'nullable|string|max:255',
-            'start_date' => 'required|date',
-            'end_date' => 'nullable|date|after_or_equal:start_date',
-            'start_time' => 'nullable',
-            'end_time' => 'nullable',
-            'status' => 'required|in:draft,planned,open_registration,ongoing,completed,cancelled',
-            'capacity' => 'nullable|integer|min:0',
-            'registration_fee' => 'nullable|numeric|min:0',
-            'featured' => 'nullable|boolean',
-            'organizer' => 'nullable|string|max:255',
-        ]);
-    }
 }
+
+    
