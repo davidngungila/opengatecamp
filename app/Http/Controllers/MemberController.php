@@ -50,6 +50,83 @@ class MemberController extends Controller
         ]);
     }
 
+    public function exportMembersPdf(Request $request)
+    {
+        $status = $request->query('status');
+        $q = trim((string) $request->query('q'));
+        $groupId = $request->query('group_id');
+        $ministryId = $request->query('ministry_id');
+        $memberType = $request->query('member_type');
+        $staffType = $request->query('staff_type');
+
+        $query = Member::with(['family', 'group', 'ministry'])
+            ->when($status, fn ($qr) => $qr->where('status', $status))
+            ->when($q !== '', fn ($qr) => $qr->where(fn ($w) => $w
+                ->where('name', 'like', "%{$q}%")
+                ->orWhere('member_no', 'like', "%{$q}%")
+                ->orWhere('phone', 'like', "%{$q}%")))
+            ->when($groupId, fn ($qr) => $qr->where('group_id', $groupId))
+            ->when($ministryId, fn ($qr) => $qr->where('ministry_id', $ministryId))
+            ->when($memberType === 'student', fn ($qr) => $qr->where('member_type', 'student'))
+            ->when($memberType === 'non_student', fn ($qr) => $qr->where('member_type', 'non_student'))
+            ->when($staffType === 'staff', fn ($qr) => $qr->where('member_type', 'non_student')->where('staff_type', 'staff'))
+            ->when($staffType === 'non_staff', fn ($qr) => $qr->where('member_type', 'non_student')->where('staff_type', 'non_staff'));
+
+        $members = $query->orderBy('name')->get();
+
+        $filters = array_filter([
+            'Status' => $status ?: 'All',
+            'Group' => $groupId ? \App\Models\Group::find($groupId)?->name : 'All',
+            'Ministry' => $ministryId ? \App\Models\Ministry::find($ministryId)?->name : 'All',
+            'Search' => $q !== '' ? $q : null,
+        ]);
+
+        $rows = $members->map(function ($m) {
+            $typeLabel = $m->member_type === 'student' ? 'Student' : ucfirst(str_replace('_', '-', (string) $m->staff_type));
+            return [
+                'no' => $m->member_no ?? '—',
+                'name' => $m->name ?? '—',
+                'phone' => $m->phone ?? '—',
+                'type' => $typeLabel,
+                'group' => $m->group?->name ?? '—',
+                'ministry' => $m->ministry?->name ?? '—',
+                'status' => $m->status,
+                'joined' => $m->joined_on?->format('d M Y') ?? '—',
+            ];
+        })->all();
+
+        $columns = [
+            ['label' => 'Member #', 'key' => 'no'],
+            ['label' => 'Name', 'key' => 'name'],
+            ['label' => 'Phone', 'key' => 'phone'],
+            ['label' => 'Type', 'key' => 'type'],
+            ['label' => 'Group', 'key' => 'group'],
+            ['label' => 'Ministry', 'key' => 'ministry'],
+            ['label' => 'Status', 'key' => 'status'],
+            ['label' => 'Joined', 'key' => 'joined'],
+        ];
+
+        $totals = [
+            ['label' => 'Members', 'value' => number_format($members->count())],
+            ['label' => 'Active', 'value' => number_format($members->where('status', 'Active')->count())],
+            ['label' => 'Students', 'value' => number_format($members->where('member_type', 'student')->count())],
+        ];
+
+        $mpdf = app(\App\Services\ReportPdfService::class)->generate(
+            ['title' => 'Members Report', 'subtitle' => 'Complete member directory', 'filters' => $filters],
+            $columns,
+            $rows,
+            $totals
+        );
+
+        $filename = 'Members-Report-'.now()->format('Ymd-His').'.pdf';
+
+        return response($mpdf->Output($filename, 'S'), 200, [
+            'Content-Type' => 'application/pdf',
+            'Content-Disposition' => 'attachment; filename="'.$filename.'"',
+        ]);
+    }
+
     private function activationContext(): array
     {
         $fy = FinancialYear::current();

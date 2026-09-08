@@ -67,6 +67,7 @@ Route::middleware(['auth', 'committee.readonly'])->group(function () {
 
     Route::post('/members/activate-students', [MemberController::class, 'activateAll'])->name('members.activateAll');
     Route::get('/members', [MemberController::class, 'index'])->name('members.index');
+    Route::get('/members/export', [MemberController::class, 'exportMembersPdf'])->name('members.export');
     Route::post('/members', [MemberController::class, 'store'])->name('members.store');
     Route::patch('/members/{member}/status', [MemberController::class, 'toggleStatus'])->name('members.status');
     Route::post('/members/{member}/activate', [MemberController::class, 'activate'])->name('members.activate');
@@ -131,6 +132,7 @@ Route::middleware(['auth', 'committee.readonly'])->group(function () {
     Route::post('/admission/lookup', [CheckInController::class, 'lookup'])->name('admission.lookup');
     Route::post('/admission/admit', [CheckInController::class, 'admit'])->name('admission.admit');
     Route::get('/attendees', [EventController::class, 'attendees'])->name('attendees.index');
+    Route::get('/attendees/export', [EventController::class, 'exportAttendeesPdf'])->name('attendees.export');
     Route::post('/attendees', [EventController::class, 'storeAttendeeGlobal'])->name('attendees.store');
     Route::post('/attendees/{attendee}/payments', [EventController::class, 'recordAttendeePayment'])->name('attendees.payments');
     Route::post('/attendees/{attendee}/sms', [EventController::class, 'sendAttendeeSms'])->name('attendees.sms');
@@ -138,6 +140,7 @@ Route::middleware(['auth', 'committee.readonly'])->group(function () {
     Route::post('/attendees/{attendee}/ticket/sms', [EventController::class, 'sendTicketSms'])->name('attendees.ticket.sms');
 
     Route::get('/pledges', [PledgeController::class, 'index'])->name('pledges.index');
+    Route::get('/pledges/export', [PledgeController::class, 'exportPledgesPdf'])->name('pledges.export');
     Route::post('/pledges', [PledgeController::class, 'store'])->name('pledges.store');
     Route::put('/pledges/{pledge}', [PledgeController::class, 'update'])->name('pledges.update');
     Route::delete('/pledges/{pledge}', [PledgeController::class, 'destroy'])->name('pledges.destroy');
@@ -149,6 +152,7 @@ Route::middleware(['auth', 'committee.readonly'])->group(function () {
     // ── Activities & Tasks ───────────────────────────────
     Route::get('/activities-tasks', [ActivityTaskController::class, 'index'])->name('activities.index');
     Route::get('/activities-tasks/export', [ActivityTaskController::class, 'exportCsv'])->name('activities.export');
+    Route::get('/activities-tasks/export-pdf', [ActivityTaskController::class, 'exportPdf'])->name('activities.export.pdf');
     Route::post('/activities-tasks', [ActivityTaskController::class, 'store'])->name('activities.store');
     Route::put('/activities-tasks/{task}', [ActivityTaskController::class, 'update'])->name('activities.update');
     Route::delete('/activities-tasks/{task}', [ActivityTaskController::class, 'destroy'])->name('activities.destroy');
@@ -159,6 +163,7 @@ Route::middleware(['auth', 'committee.readonly'])->group(function () {
     // ── Digital Cards ────────────────────────────────────
     Route::get('/digital-cards', [DigitalCardController::class, 'index'])->name('cards.index');
     Route::get('/digital-cards/export', [DigitalCardController::class, 'exportCsv'])->name('cards.export');
+    Route::get('/digital-cards/export-pdf', [DigitalCardController::class, 'exportPdf'])->name('cards.export.pdf');
     Route::get('/digital-cards/{card}', [DigitalCardController::class, 'details'])->name('cards.details');
     Route::post('/digital-cards', [DigitalCardController::class, 'store'])->name('cards.store');
     Route::put('/digital-cards/{card}', [DigitalCardController::class, 'update'])->name('cards.update');

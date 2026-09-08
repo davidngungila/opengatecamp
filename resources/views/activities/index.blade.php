@@ -71,7 +71,7 @@
       <option value="">All Assignees</option>
       @foreach($assignees as $u)<option value="{{ $u->id }}" {{ $v('assignee')==(string)$u->id ? 'selected' : '' }}>{{ $u->name }}</option>@endforeach
     </select>
-    <a class="btn btn-secondary btn-sm" href="{{ route('activities.export', request()->query()) }}">Export</a>
+    <a class="btn btn-secondary btn-sm" href="{{ route('activities.export.pdf', request()->query()) }}">Export Report (PDF)</a>
   </form>
 
   <div class="table-card">

@@ -28,7 +28,7 @@
       <option value="">All Delivery</option>
       @foreach($deliveryOptions as $k=>$s)<option value="{{ $k }}" {{ $v('delivery')===$k ? 'selected' : '' }}>{{ $s }}</option>@endforeach
     </select>
-    <a class="btn btn-secondary btn-sm" href="{{ route('cards.export', array_filter($filters, fn($f) => $f !== '' && $f !== null)) }}">Export</a>
+    <a class="btn btn-secondary btn-sm" href="{{ route('cards.export.pdf', array_filter($filters, fn($f) => $f !== '' && $f !== null)) }}">Export Report (PDF)</a>
     @if(!$isCommittee && $totals['pending'] > 0)
     <form method="POST" action="{{ route('cards.sendPending', $card) }}">@csrf
       <button type="submit" class="btn btn-accent btn-sm" data-confirm

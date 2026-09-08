@@ -51,7 +51,7 @@
         <option value="{{ $g->id }}" {{ request('group_id')==($g->id) ? 'selected' : '' }}>{{ $g->name }}</option>
       @endforeach
     </select>
-    <button type="button" class="btn btn-secondary btn-sm" onclick="toast('Export started','success')">Export</button>
+    <a class="btn btn-secondary btn-sm" href="{{ route('members.export', request()->query()) }}">Export Report (PDF)</a>
   </form>
 
   <div class="table-card">

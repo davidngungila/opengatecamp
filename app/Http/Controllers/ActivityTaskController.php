@@ -312,6 +312,79 @@ class ActivityTaskController extends Controller
         return back()->with('success', "Task {$task->task_no} assigned to ".$assignees->pluck('name')->implode(', ').'.');
     }
 
+    public function exportPdf(Request $request)
+    {
+        $status = $request->query('status');
+        $priority = $request->query('priority');
+        $category = $request->query('category');
+        $assignee = $request->query('assignee');
+        $q = trim((string) $request->query('q'));
+
+        $query = ActivityTask::with(['event', 'assignees']);
+
+        $query->when($status, fn ($qr) => $qr->where('status', $status))
+            ->when($priority, fn ($qr) => $qr->where('priority', $priority))
+            ->when($category, fn ($qr) => $qr->where('category', $category))
+            ->when($assignee, fn ($qr) => $qr->whereHas('assignees', fn ($a) => $a->where('users.id', (int) $assignee)))
+            ->when($q !== '', fn ($qr) => $qr->where(fn ($w) => $w
+                ->where('title', 'like', "%{$q}%")
+                ->orWhere('task_no', 'like', "%{$q}%")
+                ->orWhere('assignee_name', 'like', "%{$q}%")));
+
+        $tasks = $query->orderBy('deadline')->get();
+
+        $filters = array_filter([
+            'Status' => $status ?: 'All',
+            'Priority' => $priority ?: 'All',
+            'Category' => $category ?: 'All',
+            'Search' => $q !== '' ? $q : null,
+        ]);
+
+        $rows = $tasks->map(function ($task) {
+            return [
+                'no' => $task->task_no,
+                'title' => $task->title,
+                'category' => $task->category ?? '—',
+                'assignee' => $task->assignee_name ?? 'Unassigned',
+                'deadline' => $task->deadline?->format('d M Y') ?? '—',
+                'priority' => ucfirst($task->priority),
+                'status' => ucfirst($task->status),
+                'progress' => ($task->progress ?? 0).'%',
+            ];
+        })->all();
+
+        $columns = [
+            ['label' => 'Task #', 'key' => 'no'],
+            ['label' => 'Title', 'key' => 'title'],
+            ['label' => 'Category', 'key' => 'category'],
+            ['label' => 'Assigned To', 'key' => 'assignee'],
+            ['label' => 'Deadline', 'key' => 'deadline'],
+            ['label' => 'Priority', 'key' => 'priority'],
+            ['label' => 'Status', 'key' => 'status'],
+            ['label' => 'Progress', 'key' => 'progress', 'align' => 'right'],
+        ];
+
+        $totals = [
+            ['label' => 'Tasks', 'value' => number_format($tasks->count())],
+            ['label' => 'Completed', 'value' => number_format($tasks->where('status', 'completed')->count())],
+            ['label' => 'In Progress', 'value' => number_format($tasks->where('status', 'in_progress')->count())],
+        ];
+
+        $mpdf = app(\App\Services\ReportPdfService::class)->generate(
+            ['title' => 'Activities & Tasks Report', 'subtitle' => 'Complete task list', 'filters' => $filters],
+            $columns,
+            $rows,
+            $totals
+        );
+
+        $filename = 'Activities-Tasks-Report-'.now()->format('Ymd-His').'.pdf';
+
+        return response($mpdf->Output($filename, 'S'), 200, [
+            'Content-Type' => 'application/pdf',
+            'Content-Disposition' => 'attachment; filename="'.$filename.'"',
+        ]);
+    }
+
     public function exportCsv(Request $request)
     {
         $status = $request->query('status');
