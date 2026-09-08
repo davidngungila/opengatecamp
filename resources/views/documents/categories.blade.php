@@ -141,6 +141,7 @@
 </div>
 
 @foreach($categories as $cat)
+@php $catEid = rtrim(strtr(\Illuminate\Support\Facades\Crypt::encryptString($cat->id), '+/', '-_'), '='); @endphp
 <div style="display:none" id="catBody{{ $cat->id }}"
      data-name="{{ $cat->name }}"
      data-slug="{{ $cat->slug }}"
@@ -149,7 +150,7 @@
      data-edit-name="{{ addslashes($cat->name) }}"
      data-edit-desc="{{ addslashes($cat->description ?? '') }}"
      data-edit-color="{{ $cat->color }}"
-     data-link="{{ route('documents.index', ['category_id' => $cat->id]) }}">
+     data-link="{{ route('documents.index', ['category_id' => $catEid]) }}">
   <div class="profile-detail">
     <div class="avatar avatar-lg" style="background:{{ $cat->color }}20;color:{{ $cat->color }}">
       <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 19a2 2 0 01-2 2H4a2 2 0 01-2-2V5a2 2 0 012-2h5l2 3h9a2 2 0 012 2z"/></svg>

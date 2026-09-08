@@ -61,7 +61,15 @@ class DocumentController extends Controller
         }
 
         if ($request->filled('category_id')) {
-            $query->where('category_id', $request->category_id);
+            $categoryId = null;
+            try {
+                $categoryId = $this->decryptId($request->category_id);
+            } catch (\Throwable $e) {
+                $categoryId = null;
+            }
+            if ($categoryId) {
+                $query->where('category_id', $categoryId);
+            }
         }
         if ($request->filled('access')) {
             $query->where('access_level', $request->access);
