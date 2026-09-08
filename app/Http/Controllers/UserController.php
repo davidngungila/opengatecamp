@@ -134,7 +134,7 @@ class UserController extends Controller
 
         $message = str_replace(
             ['{name}', '{phone}'],
-            [$user->name, $user->phone ?? ''],
+            [MessageTemplate::firstName($user->name), $user->phone ?? ''],
             $template
         );
 
@@ -235,7 +235,7 @@ class UserController extends Controller
 
         return str_replace(
             ['{name}', '{phone}'],
-            [$user->name, $user->phone ?? ''],
+            [MessageTemplate::firstName($user->name), $user->phone ?? ''],
             $template
         );
     }

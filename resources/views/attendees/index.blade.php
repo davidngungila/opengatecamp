@@ -27,7 +27,7 @@
       <option value="">All Status</option>
       @foreach($statuses as $k=>$s)<option value="{{ $k }}" {{ $v('status')===$k ? 'selected' : '' }}>{{ $s }}</option>@endforeach
     </select>
-    <button type="button" class="btn btn-secondary btn-sm" onclick="toast('Export started','success')">Export</button>
+    <a class="btn btn-secondary btn-sm" href="{{ route('attendees.export', request()->query()) }}">Export Report (PDF)</a>
   </form>
 
   <div class="table-card">
@@ -311,6 +311,14 @@
 document.addEventListener('DOMContentLoaded', function(){
   var curAtt = null;
 
+  function firstName(name){
+    var s = String(name || '').trim();
+    if (!s) return '';
+    var t = s.split(/\s+/);
+    if (/^(Dr|Fr|Rev|Mr|Mrs|Ms|Sr|Br|Prof|Hon)\.?$/i.test(t[0]) && t.length > 1) return t[1];
+    return t[0] || '';
+  }
+
   function setDetailForm(){
     document.getElementById('attPaymentName').textContent = curAtt.name || 'Attendee';
     document.getElementById('attPaymentPaid').textContent = 'TZS ' + Number(curAtt.amount || 0).toLocaleString();
@@ -321,7 +329,7 @@ document.addEventListener('DOMContentLoaded', function(){
   function setSmsForm(){
     document.getElementById('attSmsName').textContent = curAtt.name || 'Attendee';
     document.getElementById('attSmsPhone').value = curAtt.phone || '';
-    document.getElementById('attSmsMessage').value = 'Hello ' + (curAtt.name||'') + ',\\nYou are registered for {{ \App\Models\Setting::get("event.name", "Open Gate Camp") }}. We look forward to seeing you!';
+    document.getElementById('attSmsMessage').value = 'Hello ' + firstName(curAtt.name) + ',\\nYou are registered for {{ \App\Models\Setting::get("event.name", "Open Gate Camp") }}. We look forward to seeing you!';
     document.getElementById('attSmsForm').action = "{{ url('/attendees') }}/" + curAtt.id + "/sms";
   }
 
@@ -413,7 +421,7 @@ document.addEventListener('DOMContentLoaded', function(){
       var d = btn.dataset;
       document.getElementById('attSmsName').textContent = d.name || 'Attendee';
       document.getElementById('attSmsPhone').value = d.phone || '';
-      document.getElementById('attSmsMessage').value = 'Hello ' + (d.name||'') + ',\\nYou are registered for {{ \App\Models\Setting::get("event.name", "Open Gate Camp") }}. We look forward to seeing you!';
+      document.getElementById('attSmsMessage').value = 'Hello ' + firstName(d.name) + ',\\nYou are registered for {{ \App\Models\Setting::get("event.name", "Open Gate Camp") }}. We look forward to seeing you!';
       document.getElementById('attSmsForm').action = "{{ url('/attendees') }}/" + d.id + "/sms";
       openDrawerById('attSmsDrawer');
     });

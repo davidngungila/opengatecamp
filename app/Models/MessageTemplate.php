@@ -199,6 +199,47 @@ class MessageTemplate extends Model
             $replace[] = $value === null ? '' : $value;
         }
 
-        return str_replace($search, $replace, $raw);
+        $rendered = str_replace($search, $replace, $raw);
+
+        // Use only the first name whenever a full person name was supplied, so
+        // every message greets contacts by their first name only.
+        if (! empty($data['name'])) {
+            $rendered = str_replace(
+                '{name}',
+                self::firstName((string) $data['name']),
+                $rendered
+            );
+        }
+
+        return $rendered;
+    }
+
+    /**
+     * Reduce a full person name to its first name (leading tokens up to an
+     * honorific/title boundary). Falls back to the trimmed original.
+     */
+    public static function firstName(?string $name): string
+    {
+        $name = trim((string) $name);
+        if ($name === '') {
+            return '';
+        }
+
+        $tokens = preg_split('/\s+/u', $name);
+        $tokens = array_values(array_filter($tokens, fn ($t) => $t !== ''));
+
+        if (count($tokens) === 0) {
+            return $name;
+        }
+
+        $first = $tokens[0];
+
+        // Titles like "Dr.", "Fr.", "Rev.", "Mr.", "Mrs.", "Ms." are not a
+        // person's name — skip them so we greet by the actual first name.
+        if (preg_match('/^(Dr|Fr|Rev|Mr|Mrs|Ms|Sr|Br|Prof|Hon)\.?$/i', $first)) {
+            return count($tokens) > 1 ? $tokens[1] : $first;
+        }
+
+        return $first;
     }
 }

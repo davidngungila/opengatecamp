@@ -415,7 +415,7 @@ class DigitalCardController extends Controller
         $sms = app(SmsService::class);
 
         $placeholders = [
-            'name'  => $recipient->name ?? '',
+            'name'  => MessageTemplate::firstName($recipient->name ?? ''),
             'link'  => $recipient->short_link,
             'event' => (string) Setting::get('event.name', 'Open Gate Camp'),
             'year'  => (string) (Setting::get('event.start_date') ? date('Y', strtotime(Setting::get('event.start_date'))) : date('Y')),
@@ -702,7 +702,7 @@ class DigitalCardController extends Controller
             ?? '';
 
         $placeholders = [
-            'name'  => $recipient->name ?? '',
+            'name'  => MessageTemplate::firstName($recipient->name ?? ''),
             'link'  => $recipient->short_link,
             'event' => (string) Setting::get('event.name', 'Open Gate Camp'),
             'year'  => (string) (Setting::get('event.start_date') ? date('Y', strtotime(Setting::get('event.start_date'))) : date('Y')),
@@ -812,6 +812,70 @@ class DigitalCardController extends Controller
         return response($content, 200, [
             'Content-Type' => 'text/csv; charset=UTF-8',
             'Content-Disposition' => 'attachment; filename=invitations-'.now()->format('Y-m-d-His').'.csv',
+        ]);
+    }
+
+    public function exportPdf(Request $request)
+    {
+        $card = $this->currentCard();
+
+        $query = $card->recipients()->getQuery();
+        if (auth()->user()?->isCommitteeMember()) {
+            $query->where('added_by', auth()->user()->name);
+        }
+
+        $query = $this->applyInviteFilters(
+            $query,
+            $request->query('status'),
+            $request->query('delivery'),
+            trim((string) $request->query('q'))
+        );
+
+        $recipients = $query->latest('created_at')->get();
+
+        $filters = array_filter([
+            'Status' => $request->query('status') ?: 'All',
+            'Delivery' => $request->query('delivery') ?: 'All',
+        ]);
+
+        $rows = $recipients->map(function ($r) {
+            return [
+                'name' => $r->name ?? '—',
+                'phone' => $r->phone,
+                'status' => ucfirst($r->status ?: 'pending'),
+                'delivery' => ucfirst($r->delivery_status ?: '—'),
+                'sent' => $r->sent_at?->format('d M Y H:i') ?? '—',
+                'link' => $r->short_link,
+            ];
+        })->all();
+
+        $columns = [
+            ['label' => 'Name', 'key' => 'name'],
+            ['label' => 'Phone', 'key' => 'phone'],
+            ['label' => 'Invite Status', 'key' => 'status'],
+            ['label' => 'Delivery', 'key' => 'delivery'],
+            ['label' => 'Sent At', 'key' => 'sent'],
+            ['label' => 'Link', 'key' => 'link'],
+        ];
+
+        $totals = [
+            ['label' => 'Invitees', 'value' => number_format($recipients->count())],
+            ['label' => 'Invited', 'value' => number_format($recipients->where('status', 'invited')->count())],
+            ['label' => 'Pending', 'value' => number_format($recipients->where('status', 'pending')->count())],
+        ];
+
+        $mpdf = app(\App\Services\ReportPdfService::class)->generate(
+            ['title' => 'Digital Card Invites Report', 'subtitle' => 'Invitee list · '.($card->card_no ?? 'Digital Card'), 'filters' => $filters],
+            $columns,
+            $rows,
+            $totals
+        );
+
+        $filename = 'Digital-Card-Invites-Report-'.now()->format('Ymd-His').'.pdf';
+
+        return response($mpdf->Output($filename, 'S'), 200, [
+            'Content-Type' => 'application/pdf',
+            'Content-Disposition' => 'attachment; filename="'.$filename.'"',
         ]);
     }
 

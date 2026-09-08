@@ -164,7 +164,7 @@ class CheckInController extends Controller
                 'name'  => $attendee->name,
                 'event' => $attendee->event?->title,
                 'year'  => $attendee->event?->start_date?->format('Y') ?: date('Y'),
-            ]) ?? "Welcome {$attendee->name} to {$attendee->event?->title}! You have been admitted. Enjoy the camp! — OpenGate Camp Connect";
+            ]) ?? "Welcome ".MessageTemplate::firstName($attendee->name)." to {$attendee->event?->title}! You have been admitted. Enjoy the camp! — OpenGate Camp Connect";
             $result = $sms->send($attendee->phone, $msg);
 
             Message::create([

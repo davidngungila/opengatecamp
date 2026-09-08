@@ -65,6 +65,81 @@ class EventController extends Controller
         ]);
     }
 
+    public function exportAttendeesPdf(Request $request)
+    {
+        $eventSlug = (string) $request->query('event');
+        $eventId = $eventSlug !== ''
+            ? (Event::where('slug', $eventSlug)->value('id') ?? (ctype_digit($eventSlug) ? (int) $eventSlug : null))
+            : null;
+        $status = $request->query('status');
+        $q = trim((string) $request->query('q'));
+
+        $query = EventAttendee::with(['event', 'member']);
+
+        $user = auth()->user();
+        if ($user?->isCommitteeMember()) {
+            $query->where('registered_by', $user->name);
+        }
+
+        $query->when($eventId, fn ($qr) => $qr->where('event_id', $eventId))
+            ->when($status, fn ($qr) => $qr->where('status', $status))
+            ->when($q !== '', fn ($qr) => $qr->where(fn ($w) => $w
+                ->where('name', 'like', "%{$q}%")
+                ->orWhere('phone', 'like', "%{$q}%")
+                ->orWhere('email', 'like', "%{$q}%")));
+
+        $attendees = $query->orderByDesc('created_at')->get();
+
+        $statusLabel = EventAttendee::statuses()[$status] ?? null;
+        $filters = array_filter([
+            'Event' => Event::find($eventId)?->title ?? 'All',
+            'Status' => $statusLabel ?? 'All',
+            'Search' => $q !== '' ? $q : null,
+        ]);
+
+        $rows = $attendees->map(function ($a) {
+            $bal = ($a->fee_amount !== null) ? max(0, $a->fee_amount - ($a->amount_paid ?? 0)) : null;
+            return [
+                'name' => $a->name ?? '—',
+                'phone' => $a->phone ?? '—',
+                'event' => $a->event?->title ?? '—',
+                'paid' => number_format($a->amount_paid ?? 0),
+                'balance' => $bal !== null ? number_format($bal) : '—',
+                'status' => $a->getStatusLabel(),
+                'registered' => $a->registered_on?->format('d M Y') ?? '—',
+            ];
+        })->all();
+
+        $columns = [
+            ['label' => 'Attendee', 'key' => 'name'],
+            ['label' => 'Phone', 'key' => 'phone'],
+            ['label' => 'Event', 'key' => 'event'],
+            ['label' => 'Paid (TZS)', 'key' => 'paid', 'align' => 'right'],
+            ['label' => 'Balance', 'key' => 'balance', 'align' => 'right'],
+            ['label' => 'Status', 'key' => 'status'],
+            ['label' => 'Registered', 'key' => 'registered'],
+        ];
+
+        $totals = [
+            ['label' => 'Attendees', 'value' => number_format($attendees->count())],
+            ['label' => 'Total Paid', 'value' => 'TZS '.number_format($attendees->sum('amount_paid'))],
+        ];
+
+        $mpdf = app(\App\Services\ReportPdfService::class)->generate(
+            ['title' => 'Attendee Registrations Report', 'subtitle' => 'Complete registration list', 'filters' => $filters],
+            $columns,
+            $rows,
+            $totals
+        );
+
+        $filename = 'Attendee-Registrations-Report-'.now()->format('Ymd-His').'.pdf';
+
+        return response($mpdf->Output($filename, 'S'), 200, [
+            'Content-Type' => 'application/pdf',
+            'Content-Disposition' => 'attachment; filename="'.$filename.'"',
+        ]);
+    }
+
     public function storeAttendeeGlobal(Request $request)
     {
         $data = $request->validate([
@@ -145,7 +220,7 @@ class EventController extends Controller
                     'name'  => $attendee->name,
                     'event' => $event->title,
                     'year'  => $event->start_date?->format('Y') ?: date('Y'),
-                ]) ?? "Hello {$attendee->name},\nYou are registered for \"{$event->title}\" at {$event->venue}. We look forward to seeing you! — OpenGate Camp Connect";
+                ]) ?? "Hello ".MessageTemplate::firstName($attendee->name).",\nYou are registered for \"{$event->title}\" at {$event->venue}. We look forward to seeing you! — OpenGate Camp Connect";
                 $result = $sms->send($attendee->phone, $regMsg);
                 Message::create([
                     'channel'          => 'sms',
@@ -166,7 +241,7 @@ class EventController extends Controller
                         'event'  => $event->title,
                         'year'   => $event->start_date?->format('Y') ?: date('Y'),
                         'amount' => number_format((float) $data['amount_paid']),
-                    ]) ?? "Hello {$attendee->name},\nWe have received your payment of TZS ".number_format((float) $data['amount_paid'])
+                    ]) ?? "Hello ".MessageTemplate::firstName($attendee->name).",\nWe have received your payment of TZS ".number_format((float) $data['amount_paid'])
                         ." for \"{$event->title}\". Thank you for your support and generosity! — OpenGate Camp Connect";
                     $result = $sms->send($attendee->phone, $payMsg);
                     Message::create([
@@ -256,7 +331,7 @@ class EventController extends Controller
                         'event'  => $attendee->event?->title,
                         'year'   => $attendee->event?->start_date?->format('Y') ?: date('Y'),
                         'amount' => number_format($amount),
-                    ]) ?? "Hello {$attendee->name},\nWe have received your payment of TZS ".number_format($amount)
+                    ]) ?? "Hello ".MessageTemplate::firstName($attendee->name).",\nWe have received your payment of TZS ".number_format($amount)
                         ." for \"{$attendee->event?->title}\". Thank you for your support and generosity!".($remaining !== '' ? " Your remaining balance is TZS {$remaining}." : '')
                         ." — OpenGate Camp Connect";
 
@@ -382,7 +457,7 @@ class EventController extends Controller
         }
 
         $sms = new SmsService();
-        $msg = "Hello {$attendee->name}, your ticket for {$attendee->event?->title} is ready.\nTicket: {$attendee->getTicketNo()}\nComing from: {$attendee->getRegionLabel()}\nPresent this ticket at the gate. — OpenGate Camp Connect";
+        $msg = "Hello ".MessageTemplate::firstName($attendee->name).", your ticket for {$attendee->event?->title} is ready.\nTicket: {$attendee->getTicketNo()}\nComing from: {$attendee->getRegionLabel()}\nPresent this ticket at the gate. — OpenGate Camp Connect";
         $result = $sms->send($attendee->phone, $msg);
 
         $attendee->update([

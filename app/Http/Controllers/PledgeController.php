@@ -66,6 +66,85 @@ class PledgeController extends Controller
         ]);
     }
 
+    public function exportPledgesPdf(Request $request)
+    {
+        $eventSlug = (string) $request->query('event');
+        $eventId = $eventSlug !== ''
+            ? (Event::where('slug', $eventSlug)->value('id') ?? (ctype_digit($eventSlug) ? (int) $eventSlug : null))
+            : null;
+        $status = $request->query('status');
+        $q = trim((string) $request->query('q'));
+
+        $query = Pledge::with(['event', 'member']);
+
+        $user = auth()->user();
+        if ($user?->isCommitteeMember()) {
+            $query->where('created_by', $user->name);
+        }
+
+        $query->when($eventId, fn ($qr) => $qr->where('event_id', $eventId))
+            ->when($status, fn ($qr) => $qr->where('status', $status))
+            ->when($q !== '', fn ($qr) => $qr->where(fn ($w) => $w
+                ->where('name', 'like', "%{$q}%")
+                ->orWhere('pledge_no', 'like', "%{$q}%")
+                ->orWhere('phone', 'like', "%{$q}%")));
+
+        $pledges = $query->orderByDesc('pledge_date')->get();
+
+        $statusLabel = Pledge::statuses()[$status] ?? null;
+        $filters = array_filter([
+            'Event' => Event::find($eventId)?->title ?? 'All',
+            'Status' => $statusLabel ?? 'All',
+            'Search' => $q !== '' ? $q : null,
+        ]);
+
+        $rows = $pledges->map(function ($p) {
+            return [
+                'no' => $p->pledge_no,
+                'name' => $p->name ?? '—',
+                'phone' => $p->phone ?? '—',
+                'event' => $p->event?->title ?? '—',
+                'amount' => number_format($p->amount),
+                'paid' => number_format($p->paid_amount),
+                'remaining' => number_format(max(0, (float) $p->amount - (float) $p->paid_amount)),
+                'status' => $p->status,
+                'date' => $p->pledge_date?->format('d M Y') ?? '—',
+            ];
+        })->all();
+
+        $columns = [
+            ['label' => 'Pledge #', 'key' => 'no'],
+            ['label' => 'Name', 'key' => 'name'],
+            ['label' => 'Phone', 'key' => 'phone'],
+            ['label' => 'Event', 'key' => 'event'],
+            ['label' => 'Amount', 'key' => 'amount', 'align' => 'right'],
+            ['label' => 'Paid', 'key' => 'paid', 'align' => 'right'],
+            ['label' => 'Remaining', 'key' => 'remaining', 'align' => 'right'],
+            ['label' => 'Status', 'key' => 'status'],
+            ['label' => 'Date', 'key' => 'date'],
+        ];
+
+        $totals = [
+            ['label' => 'Pledges', 'value' => number_format($pledges->count())],
+            ['label' => 'Total Pledged', 'value' => 'TZS '.number_format($pledges->sum('amount'))],
+            ['label' => 'Total Paid', 'value' => 'TZS '.number_format($pledges->sum('paid_amount'))],
+        ];
+
+        $mpdf = app(\App\Services\ReportPdfService::class)->generate(
+            ['title' => 'Pledges Report', 'subtitle' => 'Complete pledge list', 'filters' => $filters],
+            $columns,
+            $rows,
+            $totals
+        );
+
+        $filename = 'Pledges-Report-'.now()->format('Ymd-His').'.pdf';
+
+        return response($mpdf->Output($filename, 'S'), 200, [
+            'Content-Type' => 'application/pdf',
+            'Content-Disposition' => 'attachment; filename="'.$filename.'"',
+        ]);
+    }
+
     public function store(Request $request)
     {
         $data = $request->validate([
@@ -143,13 +222,13 @@ class PledgeController extends Controller
                 $fulfilled ? 'pledge_fulfilled' : 'pledge_reminder',
                 $placeholders
             ) ?? ($fulfilled
-                ? "Asante {$pledge->name}! Umekamilisha ahadi yako ya TZS ".number_format($pledge->amount)." kwa \"{$event}\". Mungu akubariki, na asante kwa moyo wako wa kutoa. — OpenGate Camp Connect"
-                : "Reminder {$pledge->name}: ahadi yako ya TZS ".number_format($pledge->amount)." kwa \"{$event}\" ina salio la TZS ".number_format($remaining).". Tunakuomba ukamilishe ahadi yako. Asante! — OpenGate Camp Connect");
+                ? "Asante ".MessageTemplate::firstName($pledge->name)."! Umekamilisha ahadi yako ya TZS ".number_format($pledge->amount)." kwa \"{$event}\". Mungu akubariki, na asante kwa moyo wako wa kutoa. — OpenGate Camp Connect"
+                : "Reminder ".MessageTemplate::firstName($pledge->name).": ahadi yako ya TZS ".number_format($pledge->amount)." kwa \"{$event}\" ina salio la TZS ".number_format($remaining).". Tunakuomba ukamilishe ahadi yako. Asante! — OpenGate Camp Connect");
         } else {
             $msg = MessageTemplate::forUsage(
                 $fulfilled ? 'pledge_fulfilled' : 'pledge_received',
                 $placeholders
-            ) ?? "Shukrani {$pledge->name}, tumepokea ahadi yako ya TZS ".number_format($pledge->amount)." kwa \"{$event}\". Tunakushukuru kwa moyo wako wa kutoa! Mungu akubariki. — OpenGate Camp Connect";
+            ) ?? "Shukrani ".MessageTemplate::firstName($pledge->name).", tumepokea ahadi yako ya TZS ".number_format($pledge->amount)." kwa \"{$event}\". Tunakushukuru kwa moyo wako wa kutoa! Mungu akubariki. — OpenGate Camp Connect";
         }
 
         $result = $sms->send($pledge->phone, $msg);
@@ -241,7 +320,7 @@ class PledgeController extends Controller
                 $msg = MessageTemplate::forUsage(
                     $fulfilled ? 'pledge_fulfilled' : 'pledge_received',
                     $placeholders
-                ) ?? "Asante {$pledge->name}, tumepokea mchango wako wa TSH ".number_format($payment->amount)
+                ) ?? "Asante ".MessageTemplate::firstName($pledge->name).", tumepokea mchango wako wa TSH ".number_format($payment->amount)
                     ." kuongezea ahadi yako. Kwaajili ya \"{$event}\". Mungu akubariki. — OpenGate Camp Connect";
 
                 $result = $sms->send($pledge->phone, $msg);
