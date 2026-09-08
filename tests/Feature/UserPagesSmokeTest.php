@@ -69,8 +69,12 @@ class UserPagesSmokeTest extends TestCase
         $resp = $this->get(route('users.permissions'));
 
         $resp->assertOk();
-        $resp->assertSee('Role Permission Matrix');
-        $resp->assertSee('Save Permissions');
+        $resp->assertSee('Permissions');
+        $resp->assertSee('data-perm-open');
+        $resp->assertSee('permDetailDrawer');
+        $resp->assertSee('Granted to');
+        $resp->assertSee('members.view');
+        $resp->assertSee('View Members');
     }
 
     public function test_sidebar_lists_users_roles_permissions(): void
