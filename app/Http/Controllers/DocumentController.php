@@ -23,9 +23,42 @@ class DocumentController extends Controller
         return rtrim(strtr(Crypt::encryptString((string) $id), '+/', '-_'), '=');
     }
 
+    private function canManageDocuments(): bool
+    {
+        $role = auth()->user()?->role;
+        if (! $role) return false;
+        if ($role->is_super) return true;
+        return in_array('documents.manage', $role->permissions ?? []);
+    }
+
+    private function canViewLevel(?string $level = null): bool
+    {
+        $user = auth()->user();
+        $level = $level ?? 'all_staff';
+
+        if ($user && $user->role?->is_super) return true;
+        if ($level === 'all_staff') return true;
+        if (! $user) return false;
+        if ($level === 'restricted') return $this->canManageDocuments();
+        if ($level === 'admin_only') return in_array($user->role?->name, ['Super Administrator', 'Chairperson']);
+
+        return false;
+    }
+
+    private function canViewDocument(Document $document): bool
+    {
+        return $this->canViewLevel($document->access_level);
+    }
+
     public function index(Request $request)
     {
         $query = Document::with('category');
+
+        if (! $this->canViewLevel('admin_only')) {
+            $allowed = ['all_staff'];
+            if ($this->canManageDocuments()) $allowed[] = 'restricted';
+            $query->whereIn('access_level', $allowed);
+        }
 
         if ($request->filled('category_id')) {
             $query->where('category_id', $request->category_id);
@@ -46,17 +79,23 @@ class DocumentController extends Controller
         $categories = DocumentCategory::orderBy('name')->get();
         $totalDocs = Document::count();
 
-        return view('documents.index', compact('documents', 'categories', 'totalDocs'));
+        return view('documents.index', compact('documents', 'categories', 'totalDocs') + [
+            'canManage' => $this->canManageDocuments(),
+        ]);
     }
 
     public function store(Request $request)
     {
+        if (! $this->canManageDocuments()) {
+            abort(403, 'You do not have permission to upload documents.');
+        }
+
         $request->validate([
             'title' => 'required|string|max:255',
             'description' => 'nullable|string|max:1000',
             'category_id' => 'required|exists:document_categories,id',
             'access_level' => 'required|in:all_staff,restricted,admin_only',
-            'file' => 'required|file|max:20480',
+            'file' => 'required|file|max:2048',
         ]);
 
         $file = $request->file('file');
@@ -83,6 +122,9 @@ class DocumentController extends Controller
     public function download(string $encrypted)
     {
         $document = Document::findOrFail($this->decryptId($encrypted));
+        if (! $this->canViewDocument($document)) {
+            abort(403, 'You do not have access to this document.');
+        }
         $path = storage_path('app/public/' . $document->file_path);
         if (!file_exists($path)) {
             abort(404, 'File not found');
@@ -93,6 +135,9 @@ class DocumentController extends Controller
     public function preview(string $encrypted)
     {
         $document = Document::findOrFail($this->decryptId($encrypted));
+        if (! $this->canViewDocument($document)) {
+            abort(403, 'You do not have access to this document.');
+        }
         $path = storage_path('app/public/' . $document->file_path);
         if (!file_exists($path)) {
             abort(404, 'File not found');
@@ -116,6 +161,9 @@ class DocumentController extends Controller
     public function previewFile(string $encrypted)
     {
         $document = Document::findOrFail($this->decryptId($encrypted));
+        if (! $this->canViewDocument($document)) {
+            abort(403, 'You do not have access to this document.');
+        }
         $path = storage_path('app/public/' . $document->file_path);
         if (!file_exists($path)) {
             abort(404, 'File not found');
@@ -130,6 +178,10 @@ class DocumentController extends Controller
 
     public function destroy(string $encrypted)
     {
+        if (! $this->canManageDocuments()) {
+            abort(403, 'You do not have permission to delete documents.');
+        }
+
         $document = Document::findOrFail($this->decryptId($encrypted));
         $categoryId = $document->category_id;
 
@@ -147,14 +199,26 @@ class DocumentController extends Controller
 
     public function categories()
     {
+        if (! $this->canManageDocuments()) {
+            abort(403, 'You do not have permission to manage document categories.');
+        }
+
         $categories = DocumentCategory::withCount('documents')->orderBy('name')->paginate(15);
         $totalCats = DocumentCategory::count();
 
-        return view('documents.categories', compact('categories', 'totalCats'));
+        return view('documents.categories', [
+            'categories' => $categories,
+            'totalCats' => $totalCats,
+            'canManage' => true,
+        ]);
     }
 
     public function storeCategory(Request $request)
     {
+        if (! $this->canManageDocuments()) {
+            abort(403, 'You do not have permission to manage document categories.');
+        }
+
         $request->validate([
             'name' => 'required|string|max:100|unique:document_categories,name',
             'description' => 'nullable|string|max:500',
@@ -172,6 +236,10 @@ class DocumentController extends Controller
 
     public function updateCategory(Request $request, DocumentCategory $category)
     {
+        if (! $this->canManageDocuments()) {
+            abort(403, 'You do not have permission to manage document categories.');
+        }
+
         $request->validate([
             'name' => 'required|string|max:100|unique:document_categories,name,' . $category->id,
             'description' => 'nullable|string|max:500',
@@ -189,6 +257,10 @@ class DocumentController extends Controller
 
     public function destroyCategory(DocumentCategory $category)
     {
+        if (! $this->canManageDocuments()) {
+            abort(403, 'You do not have permission to manage document categories.');
+        }
+
         if ($category->documents_count > 0) {
             return redirect()->route('documents.categories')->with('error', 'Cannot delete category with existing documents. Move or delete them first.');
         }

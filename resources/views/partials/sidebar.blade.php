@@ -5,6 +5,7 @@
     $isFinance = $base === 'accounting';
     $isComms = $base === 'messaging';
     $isSystem = $base === 'users';
+    $isDocs = $base === 'documents';
     $isSettings = $base === 'settings' || str_starts_with($p, 'messaging/settings');
 @endphp
 
@@ -122,6 +123,28 @@
                 <span class="nav-label">Digital Cards</span>
             </a>
             <span class="tt">Digital Cards</span>
+        </div>
+
+        <!-- Documents Group -->
+        <div class="nav-group">
+            <div class="tooltip-wrap">
+                <button type="button" class="nav-parent {{ $isDocs ? 'expanded' : '' }}" onclick="toggleNavGroup(this)">
+                    <span class="nav-icon">
+                        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round">
+                            <path d="M22 19a2 2 0 01-2 2H4a2 2 0 01-2-2V5a2 2 0 012-2h5l2 3h9a2 2 0 012 2z"/>
+                        </svg>
+                    </span>
+                    <span class="nav-label">Documents</span>
+                    <svg class="chevron" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4">
+                        <path d="M9 18l6-6-6-6"/>
+                    </svg>
+                </button>
+                <span class="tt">Documents</span>
+            </div>
+            <div class="nav-children {{ $isDocs ? 'open' : '' }}">
+                <a href="{{ url('/documents') }}" class="nav-child {{ $p === 'documents' ? 'active' : '' }}">Document Center</a>
+                <a href="{{ url('/documents/categories') }}" class="nav-child {{ $p === 'documents/categories' ? 'active' : '' }}">Categories</a>
+            </div>
         </div>
 
         <!-- Communication Group -->

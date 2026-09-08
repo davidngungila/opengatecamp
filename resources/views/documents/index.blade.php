@@ -7,10 +7,12 @@
 <div class="fade-in">
   <div class="section-head">
     <div><h2>Document Center</h2><div class="sub">{{ $totalDocs }} documents</div></div>
+    @if($canManage)
     <button type="button" class="btn btn-accent" data-modal-open="documentModal">
       <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
       Upload Document
     </button>
+    @endif
   </div>
 
   <div class="glass-card" style="margin-bottom:18px">
@@ -63,7 +65,7 @@
         <tbody>
           @forelse($documents as $d)
           @php $eid = rtrim(strtr(Crypt::encryptString($d->id), '+/', '-_'), '='); @endphp
-          <tr>
+          <tr style="cursor:pointer" data-view-doc="docBody{{ $d->id }}">
             <td>
               <div class="cell-user">
                 <div class="cell-avatar" style="background:{{ $d->getFileIconBg() }};color:{{ $d->getFileIconColor() }}">
@@ -94,7 +96,7 @@
                     <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
                     Download
                   </a>
-                  @if(!$isCommittee)
+                  @if($canManage)
                   <form method="POST" action="{{ route('documents.destroy', $eid) }}" onsubmit="return confirm('Delete this document?')">
                     @csrf @method('DELETE')
                     <button type="submit" class="action-menu-item danger">
@@ -165,8 +167,8 @@
           </div>
           <div class="field full">
             <label>File</label>
-            <input type="file" name="file" required accept=".pdf,.doc,.docx,.xls,.xlsx,.jpg,.jpeg,.png,.txt,.csv">
-            <div style="font-size:12px;color:var(--text-muted);margin-top:4px">PDF, DOCX, XLSX, JPG, PNG up to 20MB</div>
+            <input type="file" name="file" id="docFileInput" required accept=".pdf,.doc,.docx,.xls,.xlsx,.jpg,.jpeg,.png,.txt,.csv">
+            <div id="docFileHint" style="font-size:12px;color:var(--text-muted);margin-top:4px">PDF, DOCX, XLSX, JPG, PNG up to 2MB</div>
           </div>
         </div>
       </div>
@@ -177,4 +179,107 @@
     </form>
   </div>
 </div>
+
+<div class="drawer-overlay" id="docDetailDrawer">
+  <div class="drawer-panel">
+    <div class="drawer-head">
+      <div><h3 id="docDrawerTitle">Document Details</h3><p id="docDrawerCat" class="badge badge-dotted">—</p></div>
+      <button type="button" class="modal-close" data-drawer-close><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><path d="M18 6L6 18M6 6l12 12"/></svg></button>
+    </div>
+    <div class="drawer-body" id="docDrawerBody"></div>
+    <div class="drawer-foot">
+      <a id="docDrawerPreview" href="#" class="btn btn-secondary" style="text-decoration:none">Preview</a>
+      <a id="docDrawerDownload" href="#" class="btn btn-accent" style="text-decoration:none">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+        Download
+      </a>
+      <button type="button" class="btn btn-secondary" data-drawer-close>Close</button>
+    </div>
+  </div>
+</div>
+
+@foreach($documents as $d)
+@php $deid = rtrim(strtr(Crypt::encryptString($d->id), '+/', '-_'), '='); @endphp
+<div style="display:none" id="docBody{{ $d->id }}"
+     data-name="{{ $d->title }}"
+     data-cat="{{ $d->category?->name ?? 'Uncategorized' }}"
+     data-color="{{ $d->category?->color ?? '#2563EB' }}"
+     data-preview="{{ route('documents.preview', $deid) }}"
+     data-download="{{ route('documents.download', $deid) }}">
+  <div class="profile-detail">
+    <div class="avatar avatar-lg" style="background:{{ $d->getFileIconBg() }};color:{{ $d->getFileIconColor() }}">
+      <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z"/><path d="M14 2v6h6"/></svg>
+    </div>
+    <div>
+      <div style="font-size:16px;font-weight:800">{{ $d->title }}</div>
+      <div style="font-size:12.5px;color:var(--text-tertiary);font-weight:600">{{ $d->file_name }}</div>
+    </div>
+  </div>
+
+  @if($d->description)
+  <div style="background:rgba(15,23,42,.03);border-radius:12px;padding:12px 14px;margin-bottom:16px;font-size:13px;color:var(--text-secondary);line-height:1.5">{{ $d->description }}</div>
+  @endif
+
+  <div class="info-grid">
+    <div class="info-row"><span>Category</span><b>{{ $d->category?->name ?? '—' }}</b></div>
+    <div class="info-row"><span>Access Level</span><b><span class="badge badge-{{ $d->access_level==='admin_only' ? 'danger' : ($d->access_level==='restricted' ? 'warning' : 'success') }} badge-dotted" style="font-size:10px">{{ str_replace('_',' ',ucfirst($d->access_level)) }}</span></b></div>
+    <div class="info-row"><span>File Type</span><b>{{ strtoupper(pathinfo($d->file_name, PATHINFO_EXTENSION)) }}</b></div>
+    <div class="info-row"><span>File Size</span><b>{{ $d->file_size_formatted }}</b></div>
+    <div class="info-row"><span>Uploaded By</span><b>{{ $d->uploaded_by }}</b></div>
+    <div class="info-row"><span>Upload Date</span><b>{{ $d->created_at->format('d M Y H:i') }}</b></div>
+  </div>
+
+  @if($canManage)
+  <div style="margin-top:16px">
+    <form method="POST" action="{{ route('documents.destroy', $deid) }}" onsubmit="return confirm('Delete this document?')">
+      @csrf @method('DELETE')
+      <button type="submit" class="btn btn-danger btn-sm">Delete Document</button>
+    </form>
+  </div>
+  @endif
+</div>
+@endforeach
 @endsection
+
+@push('scripts')
+<script>
+(function(){
+  var fence = 2 * 1024 * 1024;
+  var input = document.getElementById('docFileInput');
+  var hint = document.getElementById('docFileHint');
+  if(input && hint){
+    input.addEventListener('change', function(){
+      if(this.files[0] && this.files[0].size > fence){
+        this.setCustomValidity('File must be 2MB or smaller.');
+        hint.style.color = '#dc2626';
+        hint.textContent = 'Selected file is ' + Math.round(this.files[0].size/1024).toLocaleString() + ' KB — ' +
+          'the maximum is 2MB. Please choose a smaller file.';
+      } else {
+        this.setCustomValidity('');
+        hint.style.color = '';
+        hint.textContent = 'PDF, DOCX, XLSX, JPG, PNG up to 2MB';
+      }
+    });
+  }
+})();
+function openDocDrawer(id){
+  var tpl = document.getElementById(id);
+  if(!tpl) return;
+  document.getElementById('docDrawerTitle').textContent = tpl.dataset.name || 'Document';
+  var cat = document.getElementById('docDrawerCat');
+  cat.textContent = tpl.dataset.cat || '—';
+  cat.style.color = tpl.dataset.color;
+  cat.style.borderColor = tpl.dataset.color;
+  document.getElementById('docDrawerBody').innerHTML = tpl.innerHTML;
+  document.getElementById('docDrawerPreview').href = tpl.dataset.preview || '#';
+  document.getElementById('docDrawerDownload').href = tpl.dataset.download || '#';
+  openDrawerById('docDetailDrawer');
+}
+document.addEventListener('click', function(e){
+  var el = e.target.closest('[data-view-doc]');
+  if(!el) return;
+  if(e.target.closest('a') || e.target.closest('button') || e.target.closest('form') || e.target.closest('input')) return;
+  openDocDrawer(el.getAttribute('data-view-doc'));
+});
+</script>
+@endpush
