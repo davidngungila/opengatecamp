@@ -87,4 +87,19 @@ class DigitalCardRecipient extends Model
             default      => 'neutral',
         };
     }
+
+    /**
+     * Render the current digital-card invitation message for this recipient from
+     * the `card_invite` message template, rather than the historically stored value.
+     */
+    public function getInviteMessageAttribute(): string
+    {
+        return MessageTemplate::forUsage('card_invite', [
+            'name'  => $this->name ?? '',
+            'link'  => $this->short_link,
+            'event' => (string) Setting::get('event.name', 'Open Gate Camp'),
+            'year'  => (string) (Setting::get('event.start_date') ? date('Y', strtotime(Setting::get('event.start_date'))) : date('Y')),
+            'venue' => (string) Setting::get('event.venue', 'Arusha'),
+        ]) ?? '';
+    }
 }

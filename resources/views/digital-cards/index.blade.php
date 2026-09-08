@@ -55,7 +55,7 @@
             data-delivery-label="{{ $r->delivery_status ? ucfirst(str_replace('_',' ',$r->delivery_status)) : ($r->message_id ? 'Unchecked' : '—') }}"
             data-delivery-color="{{ $r->getDeliveryStatusColor() }}"
             data-mid="{{ $r->message_id }}"
-            data-message="{{ e($r->message) }}"
+            data-message="{{ e($r->invite_message) }}"
             data-sent-at="{{ $r->sent_at?->format('d M Y H:i') }}"
             data-added-by="{{ $r->added_by ?? '—' }}"
             data-checked-at="{{ $r->delivery_checked_at?->format('d M Y H:i') }}"
