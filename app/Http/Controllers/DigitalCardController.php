@@ -329,7 +329,7 @@ class DigitalCardController extends Controller
         }
 
         $template = MessageTemplate::forUsage('card_invite', ['name' => '', 'link' => ''])
-            ?? 'You are invited! View your digital card and contribute: {link}';
+            ?? '';
         $success = 0;
         $fail = 0;
         $messageIds = [];
@@ -427,10 +427,6 @@ class DigitalCardController extends Controller
             array_values($placeholders),
             $template
         );
-
-        if ($recipient->name && ! str_contains($template, '{name}')) {
-            $msg = 'Shukurani '.$recipient->name.', '.$msg;
-        }
 
         $result = $sms->send($recipient->phone, $msg);
 
@@ -550,7 +546,7 @@ class DigitalCardController extends Controller
         }
 
         $template = MessageTemplate::forUsage('card_invite', ['name' => '', 'link' => ''])
-            ?? 'You are invited! View your digital card and contribute: {link}';
+            ?? '';
         $success = 0;
         $fail = 0;
         $messageIds = [];
@@ -703,7 +699,7 @@ class DigitalCardController extends Controller
         }
 
         $template = MessageTemplate::forUsage('card_invite', ['name' => '', 'link' => ''])
-            ?? 'You are invited! View your digital card and contribute: {link}';
+            ?? '';
 
         $placeholders = [
             'name'  => $recipient->name ?? '',
@@ -718,9 +714,6 @@ class DigitalCardController extends Controller
             array_values($placeholders),
             $template
         );
-        if (($recipient->name ?? '') !== '' && ! str_contains($template, '{name}')) {
-            $msg = 'Shukurani '.$recipient->name.', '.$msg;
-        }
 
         $result = $sms->send($recipient->phone, $msg);
 
