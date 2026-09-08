@@ -24,11 +24,11 @@ class SmsService
     }
 
     /**
-     * Query the provider account balance (remaining SMS credits).
+     * Query the provider account message count (remaining SMS/messages).
      *
-     * Endpoint: GET {base}/api/v2/balance with a Bearer token.
-     * Returns ['success' => bool, 'balance' => ?float, 'currency' => ?string,
-     * 'status' => string, 'raw' => array].
+     * Endpoint: GET {base}/api/v2/balance returns the account message count
+     * (e.g. field "sms_balance"/"balance"). Returns ['success' => bool, 'balance' => ?float,
+     * 'currency' => ?string, 'status' => string, 'raw' => array].
      */
     public function getBalance(): array
     {
