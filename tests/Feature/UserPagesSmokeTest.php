@@ -41,8 +41,9 @@ class UserPagesSmokeTest extends TestCase
         $resp->assertOk();
         $resp->assertSee('Roles &amp; Permissions', false);
         $resp->assertSee('Super Administrator');
-        $resp->assertSee('role-details-row');
-        $resp->assertSee('roleDetails1');
+        $resp->assertSee('roleDetailDrawer');
+        $resp->assertSee('roleDrawerBody');
+        $resp->assertSee('roleBody1');
         $resp->assertSee('Permissions granted');
         $resp->assertSee('Users with this role');
     }
