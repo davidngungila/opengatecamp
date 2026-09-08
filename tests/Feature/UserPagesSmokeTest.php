@@ -41,8 +41,10 @@ class UserPagesSmokeTest extends TestCase
         $resp->assertOk();
         $resp->assertSee('Roles &amp; Permissions', false);
         $resp->assertSee('Super Administrator');
-        $resp->assertSee('data-view-role');
-        $resp->assertSee('roleDetailDrawer');
+        $resp->assertSee('role-details-row');
+        $resp->assertSee('roleDetails1');
+        $resp->assertSee('Permissions granted');
+        $resp->assertSee('Users with this role');
     }
 
     public function test_roles_table_shows_permissions(): void
@@ -53,9 +55,10 @@ class UserPagesSmokeTest extends TestCase
         $resp = $this->get(route('users.roles'));
 
         $resp->assertOk();
+        $resp->assertSee('Media Officer');
         $resp->assertSee('finance.view');
         $resp->assertSee('finance.manage');
-        $resp->assertSee('data-permissions');
+        $resp->assertSee('View Finance');
     }
 
     public function test_permissions_page_renders(): void
