@@ -155,7 +155,6 @@
               <option value="0" @if(old('is_paid', 0) != 1) selected @endif>No — Not Paid</option>
               <option value="1" @if(old('is_paid') == 1) selected @endif>Yes — Paid</option>
             </select>
-            <div class="field-hint">Choose "Yes — Paid" to enter the amount received and payment method. A payment-received SMS is then sent too.</div>
           </div>
           <div class="full" id="regPaymentFields" @if(old('is_paid') != 1) style="display:none" @endif>
             <div class="form-grid" style="margin:0">
@@ -174,7 +173,6 @@
           <div class="field full"><label>Notes</label><textarea name="notes" placeholder="Any notes about this attendee">{{ old('notes') }}</textarea></div>
           <div class="field full">
             <label class="check-line"><input type="checkbox" name="send_sms" value="1" checked> Send SMS confirmation to this attendee</label>
-            <div class="field-hint">Uses {{ $attendeePhoneHint ?? 'the phone number above' }} — requires SMS API token.</div>
           </div>
         </div>
       </div>
