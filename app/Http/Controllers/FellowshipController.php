@@ -124,22 +124,70 @@ class FellowshipController extends Controller
                 'university' => $fellowship->university,
                 'type' => $fellowship->getTypeLabel(),
             ],
-            'attendees' => $attendees->map(fn ($a) => [
-                'id' => $a->id,
-                'name' => $a->name,
-                'phone' => $a->phone ?: '—',
-                'status' => $a->getStatusLabel(),
-                'status_raw' => $a->status,
-                'paid' => (float) $a->amount_paid,
-                'fee_amount' => $a->fee_amount !== null ? (float) $a->fee_amount : null,
-                'balance' => $a->fee_amount !== null ? max(0, (float) $a->fee_amount - (float) $a->amount_paid) : null,
-                'journal_entry_id' => $a->journal_entry_id,
-                'receipt_url' => $a->journal_entry_id ? route('accounting.transactions.receipt', $a->journal_entry_id).'?inline=1' : null,
-                'event' => $a->event?->title ?? '—',
-                'created_at' => $a->created_at?->format('d M Y'),
-            ]),
+            'attendees' => $attendees->map(function ($a) {
+                $transactions = $this->getAttendeeTransactions($a);
+                // Fallback to single entry if no transactions found but attendee has journal_entry_id
+                if ($transactions->isEmpty() && $a->journal_entry_id) {
+                    $transactions = collect([[
+                        'entry_no' => '—',
+                        'entry_date' => $a->created_at?->format('d M Y'),
+                        'amount' => (float) $a->amount_paid,
+                        'receipt_url' => route('accounting.transactions.receipt', $a->journal_entry_id).'?inline=1',
+                    ]]);
+                }
+                return [
+                    'id' => $a->id,
+                    'name' => $a->name,
+                    'phone' => $a->phone ?: '—',
+                    'status' => $a->getStatusLabel(),
+                    'status_raw' => $a->status,
+                    'paid' => (float) $a->amount_paid,
+                    'fee_amount' => $a->fee_amount !== null ? (float) $a->fee_amount : null,
+                    'balance' => $a->fee_amount !== null ? max(0, (float) $a->fee_amount - (float) $a->amount_paid) : null,
+                    'journal_entry_id' => $a->journal_entry_id,
+                    'receipt_url' => $a->journal_entry_id ? route('accounting.transactions.receipt', $a->journal_entry_id).'?inline=1' : null,
+                    'event' => $a->event?->title ?? '—',
+                    'created_at' => $a->created_at?->format('d M Y'),
+                    'transactions' => $transactions,
+                    'transactions_count' => $transactions->count(),
+                ];
+            }),
             'stats' => $stats,
         ]);
+    }
+
+    private function getAttendeeTransactions(\App\Models\EventAttendee $attendee): \Illuminate\Support\Collection
+    {
+        $attendee->loadMissing('event');
+        $entries = \App\Models\JournalEntry::where('status', 'posted')
+            ->where(function ($q) use ($attendee) {
+                $q->where('id', $attendee->journal_entry_id)
+                  ->orWhere(function ($qq) use ($attendee) {
+                      $qq->where('description', 'like', '%'.addcslashes($attendee->name, '%_').'%');
+                      if ($attendee->event?->title) {
+                          $qq->where('description', 'like', '%'.addcslashes($attendee->event->title, '%_').'%');
+                      }
+                  });
+            })
+            ->with(['lines.account'])
+            ->orderByDesc('entry_date')
+            ->orderByDesc('id')
+            ->get()
+            ->unique('id')
+            ->values();
+
+        return $entries->map(function ($entry) {
+            $amount = max((float) $entry->lines->sum('debit'), (float) $entry->lines->sum('credit'));
+            return [
+                'id' => $entry->id,
+                'entry_no' => $entry->entry_no,
+                'entry_date' => $entry->entry_date?->format('d M Y'),
+                'description' => $entry->description,
+                'reference' => $entry->reference,
+                'amount' => round($amount, 2),
+                'receipt_url' => route('accounting.transactions.receipt', $entry).'?inline=1',
+            ];
+        });
     }
 
     private function validateData(Request $request, ?Fellowship $fellowship = null): array

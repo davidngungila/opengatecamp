@@ -489,33 +489,70 @@ function openDelegationDrawer(fellowshipId){
         return;
       }
       wrap.style.display = 'block';
-      attendees.forEach(function(a, idx){
-        var tr = document.createElement('tr');
-        tr.style.borderBottom = '1px solid var(--border)';
-        tr.style.cursor = a.receipt_url ? 'pointer' : 'default';
-        tr.dataset.attendeeId = a.id;
-        var statusColor = (a.status_raw === 'attended' || a.status === 'Attended') ? 'success' : (a.status_raw === 'confirmed' ? 'info' : (a.status_raw === 'pending' ? 'warning' : 'neutral'));
-        var bal = a.balance;
-        var balHtml = bal === null ? '<span class="badge badge-neutral" style="font-size:10px">—</span>' : (bal > 0 ? '<b style="color:var(--warning)">'+Number(bal).toLocaleString()+'</b>' : '<b style="color:var(--success)">0</b>');
-        var safeUrl = (a.receipt_url || '').replace(/'/g, "\\'");
-        var safeName = (a.name || '').replace(/'/g, "\\'");
-        var receiptBtn = a.receipt_url
-          ? '<button type="button" class="btn btn-secondary btn-sm" style="padding:4px 8px;font-size:11px" onclick="event.stopPropagation(); previewReceipt(\''+safeUrl+'\', \''+safeName+' — TZS '+Number(a.paid||0).toLocaleString()+'\')">Receipt</button>'
-          : '<span class="badge badge-neutral" style="font-size:10px">No receipt</span>';
-        if(a.receipt_url){
-          tr.title = 'Click to preview receipt';
-          tr.addEventListener('click', function(){ previewReceipt(a.receipt_url, a.name + ' — TZS ' + Number(a.paid||0).toLocaleString()); });
+      // Show all transactions: if single attendee made more transactions at different times, all must display
+      var rowNum = 0;
+      var totalTx = 0;
+      attendees.forEach(function(a){
+        var txs = a.transactions && a.transactions.length ? a.transactions : [];
+        // fallback to single receipt if no transactions array but legacy receipt_url exists
+        if(!txs.length && a.receipt_url){
+          txs = [{ receipt_url: a.receipt_url, amount: a.paid, entry_no: '—', entry_date: a.created_at || '', description: '' }];
         }
-        tr.innerHTML = '<td style="padding:8px 10px;color:var(--text-tertiary);font-weight:700;font-size:12px">'+(idx+1)+'</td>'
-          + '<td style="padding:8px 10px;font-weight:700">'+a.name+'</td>'
-          + '<td style="padding:8px 10px;font-family:ui-monospace,monospace;font-size:12.5px">'+(a.phone||'—')+'</td>'
-          + '<td style="padding:8px 10px"><span class="badge badge-'+statusColor+' badge-dotted" style="font-size:10.5px">'+a.status+'</span></td>'
-          + '<td style="padding:8px 10px;text-align:right;font-weight:700;color:var(--success)">'+Number(a.paid||0).toLocaleString()+'</td>'
-          + '<td style="padding:8px 10px;text-align:right">'+balHtml+'</td>'
-          + '<td style="padding:8px 10px;font-size:12px;color:var(--text-tertiary)">'+(a.event||'—')+'</td>'
-          + '<td style="padding:8px 10px;text-align:center">'+receiptBtn+'</td>';
-        body.appendChild(tr);
+        if(!txs.length){
+          // one row with No receipt
+          rowNum++;
+          var tr0 = document.createElement('tr');
+          tr0.style.borderBottom = '1px solid var(--border)';
+          var statusColor0 = (a.status_raw === 'attended' || a.status === 'Attended') ? 'success' : (a.status_raw === 'confirmed' ? 'info' : (a.status_raw === 'pending' ? 'warning' : 'neutral'));
+          var bal0 = a.balance;
+          var balHtml0 = bal0 === null ? '<span class="badge badge-neutral" style="font-size:10px">—</span>' : (bal0 > 0 ? '<b style="color:var(--warning)">'+Number(bal0).toLocaleString()+'</b>' : '<b style="color:var(--success)">0</b>');
+          tr0.innerHTML = '<td style="padding:8px 10px;color:var(--text-tertiary);font-weight:700;font-size:12px">'+rowNum+'</td>'
+            + '<td style="padding:8px 10px;font-weight:700">'+a.name+'</td>'
+            + '<td style="padding:8px 10px;font-family:ui-monospace,monospace;font-size:12.5px">'+(a.phone||'—')+'</td>'
+            + '<td style="padding:8px 10px"><span class="badge badge-'+statusColor0+' badge-dotted" style="font-size:10.5px">'+a.status+'</span></td>'
+            + '<td style="padding:8px 10px;text-align:right;font-weight:700;color:var(--success)">'+Number(a.paid||0).toLocaleString()+'</td>'
+            + '<td style="padding:8px 10px;text-align:right">'+balHtml0+'</td>'
+            + '<td style="padding:8px 10px;font-size:12px;color:var(--text-tertiary)">'+(a.event||'—')+'</td>'
+            + '<td style="padding:8px 10px;text-align:center"><span class="badge badge-neutral" style="font-size:10px">No receipt</span></td>';
+          body.appendChild(tr0);
+          return;
+        }
+        txs.forEach(function(tx){
+          rowNum++;
+          totalTx++;
+          var tr = document.createElement('tr');
+          tr.style.borderBottom = '1px solid var(--border)';
+          tr.style.cursor = tx.receipt_url ? 'pointer' : 'default';
+          var statusColor = (a.status_raw === 'attended' || a.status === 'Attended') ? 'success' : (a.status_raw === 'confirmed' ? 'info' : (a.status_raw === 'pending' ? 'warning' : 'neutral'));
+          var bal = a.balance;
+          var balHtml = bal === null ? '<span class="badge badge-neutral" style="font-size:10px">—</span>' : (bal > 0 ? '<b style="color:var(--warning)">'+Number(bal).toLocaleString()+'</b>' : '<b style="color:var(--success)">0</b>');
+          var safeUrl = (tx.receipt_url || '').replace(/'/g, "\\'");
+          var safeName = (a.name || '').replace(/'/g, "\\'");
+          var txAmount = Number(tx.amount || a.paid || 0).toLocaleString();
+          var txDate = tx.entry_date || a.created_at || '';
+          var receiptBtn = tx.receipt_url
+            ? '<button type="button" class="btn btn-secondary btn-sm" style="padding:4px 8px;font-size:11px" onclick="event.stopPropagation(); previewReceipt(\''+safeUrl+'\', \''+safeName+' — TZS '+txAmount+' — '+tx.entry_no+'\')">Receipt</button>'
+            : '<span class="badge badge-neutral" style="font-size:10px">No receipt</span>';
+          if(tx.receipt_url){
+            tr.title = 'Click to preview receipt ' + tx.entry_no;
+            tr.addEventListener('click', (function(u, t){ return function(){ previewReceipt(u, t); }; })(tx.receipt_url, a.name + ' — TZS ' + txAmount + ' — ' + tx.entry_no));
+          }
+          // Show transaction amount and date in Paid column, keep attendee total as well
+          tr.innerHTML = '<td style="padding:8px 10px;color:var(--text-tertiary);font-weight:700;font-size:12px">'+rowNum+'</td>'
+            + '<td style="padding:8px 10px;font-weight:700">'+a.name+' <span style="font-size:10px;color:var(--text-tertiary)">'+txDate+'</span></td>'
+            + '<td style="padding:8px 10px;font-family:ui-monospace,monospace;font-size:12.5px">'+(a.phone||'—')+'</td>'
+            + '<td style="padding:8px 10px"><span class="badge badge-'+statusColor+' badge-dotted" style="font-size:10.5px">'+a.status+'</span></td>'
+            + '<td style="padding:8px 10px;text-align:right;font-weight:700;color:var(--success)">'+txAmount+'</td>'
+            + '<td style="padding:8px 10px;text-align:right">'+balHtml+'</td>'
+            + '<td style="padding:8px 10px;font-size:12px;color:var(--text-tertiary)">'+(a.event||'—')+'<br><span style="font-size:10px">'+tx.entry_no+'</span></td>'
+            + '<td style="padding:8px 10px;text-align:center">'+receiptBtn+'</td>';
+          body.appendChild(tr);
+        });
       });
+      // Update hint to show total transactions, not just attendees
+      if(totalTx > attendees.length){
+        hint.textContent = attendees.length + ' member(s) · ' + totalTx + ' transaction(s) — all shown';
+      }
     })
     .catch(function(err){
       loading.style.display = 'none';
