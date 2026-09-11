@@ -108,7 +108,7 @@ class FellowshipController extends Controller
         $attendees = $fellowship->attendees()
             ->with('event')
             ->orderBy('name')
-            ->get(['id', 'name', 'phone', 'status', 'amount_paid', 'event_id', 'fellowship_id', 'created_at']);
+            ->get(['id', 'name', 'phone', 'status', 'amount_paid', 'fee_amount', 'journal_entry_id', 'event_id', 'fellowship_id', 'created_at']);
 
         $stats = [
             'registered' => $attendees->count(),
@@ -131,6 +131,10 @@ class FellowshipController extends Controller
                 'status' => $a->getStatusLabel(),
                 'status_raw' => $a->status,
                 'paid' => (float) $a->amount_paid,
+                'fee_amount' => $a->fee_amount !== null ? (float) $a->fee_amount : null,
+                'balance' => $a->fee_amount !== null ? max(0, (float) $a->fee_amount - (float) $a->amount_paid) : null,
+                'journal_entry_id' => $a->journal_entry_id,
+                'receipt_url' => $a->journal_entry_id ? route('accounting.transactions.receipt', $a->journal_entry_id).'?inline=1' : null,
                 'event' => $a->event?->title ?? '—',
                 'created_at' => $a->created_at?->format('d M Y'),
             ]),

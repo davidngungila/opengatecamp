@@ -241,8 +241,8 @@
       <div id="delegLoading" style="display:none;padding:18px;text-align:center;color:var(--text-tertiary);font-size:13px">Loading delegation…</div>
       <div id="delegEmpty" style="display:none;padding:22px;text-align:center;color:var(--text-tertiary);font-size:13px;border:1px dashed var(--border-strong);border-radius:10px">No members registered yet for this fellowship.</div>
       <div class="table-scroll" id="delegTableWrap" style="display:none;border:1px solid var(--border);border-radius:12px;overflow:hidden">
-        <table class="data-table compact" style="min-width:600px">
-          <thead><tr><th>#</th><th>Name</th><th>Phone</th><th>Status</th><th style="text-align:right">Paid</th><th>Event</th></tr></thead>
+        <table class="data-table compact" style="min-width:760px">
+          <thead><tr><th>#</th><th>Name</th><th>Phone</th><th>Status</th><th style="text-align:right">Paid</th><th style="text-align:right">Balance</th><th>Event</th><th style="width:90px;text-align:center">Receipt</th></tr></thead>
           <tbody id="delegTableBody"></tbody>
         </table>
       </div>
@@ -250,6 +250,23 @@
     <div class="drawer-foot">
       <span id="delegCountHint" style="margin-right:auto;font-size:12px;font-weight:700;color:var(--text-tertiary)"></span>
       <button type="button" class="btn btn-secondary" data-drawer-close>Close</button>
+    </div>
+  </div>
+</div>
+
+<div class="drawer-overlay" id="receiptPreviewDrawer">
+  <div class="drawer-panel" style="max-width:820px">
+    <div class="drawer-head">
+      <div><h3>Payment Receipt</h3><p id="receiptPreviewMeta" style="font-size:12.5px;color:var(--text-tertiary);margin:4px 0 0">Preview</p></div>
+      <button type="button" class="modal-close" data-drawer-close><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><path d="M18 6L6 18M6 6l12 12"/></svg></button>
+    </div>
+    <div class="drawer-body" style="padding:0;overflow:hidden;display:flex;flex-direction:column">
+      <iframe id="receiptPreviewFrame" style="width:100%;height:72vh;border:none;background:#f8fafc" src="about:blank"></iframe>
+      <div id="receiptPreviewFallback" style="display:none;padding:16px;text-align:center;font-size:13px;color:var(--text-tertiary)"><span id="receiptFallbackText">Receipt not available.</span> <a id="receiptPreviewLink" href="#" target="_blank" style="color:var(--blue-accent)">Open in new tab</a></div>
+    </div>
+    <div class="drawer-foot">
+      <button type="button" class="btn btn-secondary" data-drawer-close>Close</button>
+      <a id="receiptPreviewOpenNew" href="#" target="_blank" class="btn btn-accent">Open in new tab</a>
     </div>
   </div>
 </div>
@@ -413,13 +430,28 @@ function openDelegationDrawer(fellowshipId){
       attendees.forEach(function(a, idx){
         var tr = document.createElement('tr');
         tr.style.borderBottom = '1px solid var(--border)';
+        tr.style.cursor = a.receipt_url ? 'pointer' : 'default';
+        tr.dataset.attendeeId = a.id;
         var statusColor = (a.status_raw === 'attended' || a.status === 'Attended') ? 'success' : (a.status_raw === 'confirmed' ? 'info' : (a.status_raw === 'pending' ? 'warning' : 'neutral'));
+        var bal = a.balance;
+        var balHtml = bal === null ? '<span class="badge badge-neutral" style="font-size:10px">—</span>' : (bal > 0 ? '<b style="color:var(--warning)">'+Number(bal).toLocaleString()+'</b>' : '<b style="color:var(--success)">0</b>');
+        var safeUrl = (a.receipt_url || '').replace(/'/g, "\\'");
+        var safeName = (a.name || '').replace(/'/g, "\\'");
+        var receiptBtn = a.receipt_url
+          ? '<button type="button" class="btn btn-secondary btn-sm" style="padding:4px 8px;font-size:11px" onclick="event.stopPropagation(); previewReceipt(\''+safeUrl+'\', \''+safeName+' — TZS '+Number(a.paid||0).toLocaleString()+'\')">Receipt</button>'
+          : '<span class="badge badge-neutral" style="font-size:10px">No receipt</span>';
+        if(a.receipt_url){
+          tr.title = 'Click to preview receipt';
+          tr.addEventListener('click', function(){ previewReceipt(a.receipt_url, a.name + ' — TZS ' + Number(a.paid||0).toLocaleString()); });
+        }
         tr.innerHTML = '<td style="padding:8px 10px;color:var(--text-tertiary);font-weight:700;font-size:12px">'+(idx+1)+'</td>'
           + '<td style="padding:8px 10px;font-weight:700">'+a.name+'</td>'
           + '<td style="padding:8px 10px;font-family:ui-monospace,monospace;font-size:12.5px">'+(a.phone||'—')+'</td>'
           + '<td style="padding:8px 10px"><span class="badge badge-'+statusColor+' badge-dotted" style="font-size:10.5px">'+a.status+'</span></td>'
           + '<td style="padding:8px 10px;text-align:right;font-weight:700;color:var(--success)">'+Number(a.paid||0).toLocaleString()+'</td>'
-          + '<td style="padding:8px 10px;font-size:12px;color:var(--text-tertiary)">'+(a.event||'—')+'</td>';
+          + '<td style="padding:8px 10px;text-align:right">'+balHtml+'</td>'
+          + '<td style="padding:8px 10px;font-size:12px;color:var(--text-tertiary)">'+(a.event||'—')+'</td>'
+          + '<td style="padding:8px 10px;text-align:center">'+receiptBtn+'</td>';
         body.appendChild(tr);
       });
     })
@@ -431,6 +463,27 @@ function openDelegationDrawer(fellowshipId){
       toast('Could not load delegation: ' + (err.message||''), 'error');
     });
 }
+
+function previewReceipt(url, title){
+  var frame = document.getElementById('receiptPreviewFrame');
+  var meta = document.getElementById('receiptPreviewMeta');
+  var link = document.getElementById('receiptPreviewLink');
+  var openNew = document.getElementById('receiptPreviewOpenNew');
+  var fallback = document.getElementById('receiptPreviewFallback');
+  if(!url){
+    if(frame) frame.style.display = 'none';
+    if(fallback) fallback.style.display = 'block';
+    if(meta) meta.textContent = title || 'No receipt available';
+    return;
+  }
+  if(fallback) fallback.style.display = 'none';
+  if(frame){ frame.style.display = 'block'; frame.src = url; }
+  if(meta) meta.textContent = title || 'Receipt preview';
+  if(link) link.href = url;
+  if(openNew) openNew.href = url;
+  openDrawerById('receiptPreviewDrawer');
+}
+window.previewReceipt = previewReceipt;
 
 document.addEventListener('click', function(e){
   var tr = e.target.closest('[data-view-fellowship]');
