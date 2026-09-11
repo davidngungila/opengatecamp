@@ -1,7 +1,18 @@
+<style>
+.info-wrap{position:relative;display:inline-flex;align-items:center;justify-content:center;vertical-align:middle}
+.info-wrap .info-ico{width:16px;height:16px;border-radius:50%;background:var(--blue-light);color:var(--blue-accent);display:inline-flex;align-items:center;justify-content:center;font-size:10px;font-weight:900;border:1px solid rgba(37,99,235,.18);cursor:help;flex-shrink:0}
+.info-bubble{position:absolute;left:50%;bottom:calc(100% + 8px);transform:translateX(-50%);background:#0f172a;color:#fff;font-size:11.5px;line-height:1.5;font-weight:500;padding:10px 12px;border-radius:9px;min-width:240px;max-width:320px;white-space:normal;box-shadow:0 10px 28px rgba(0,0,0,.22);opacity:0;visibility:hidden;transition:opacity .15s,visibility .15s;z-index:50;text-align:left;pointer-events:none}
+.info-bubble::after{content:'';position:absolute;top:100%;left:50%;transform:translateX(-50%);border:6px solid transparent;border-top-color:#0f172a}
+.info-wrap:hover .info-bubble{opacity:1;visibility:visible}
+.info-bubble code{background:rgba(255,255,255,.12);padding:1px 5px;border-radius:4px;font-family:ui-monospace,monospace;font-size:11px}
+</style>
 <div style="display:flex; flex-direction:column; gap:20px; margin-bottom:22px">
   {{-- ── Row 1: Compose (independent full-width) ───────────────────────────── --}}
   <div class="glass-card">
-    <h2 style="font-size:14.5px;margin:0 0 14px">Compose SMS</h2>
+    <div style="display:flex;align-items:center;gap:8px;margin:0 0 14px">
+      <h2 style="font-size:14.5px;margin:0">Compose SMS</h2>
+      <span class="info-wrap" tabindex="0" aria-label="Compose help"><span class="info-ico">i</span><span class="info-bubble">Bulk send uses <code>POST /api/sms/v2/text/multi</code> · <code>flash:0</code> · one message object per recipient. Same message is sent to all selected recipients.</span></span>
+    </div>
     <form method="POST" action="{{ route('messaging.store') }}" id="composeForm">
       @csrf
       <input type="hidden" name="channel" value="sms">
@@ -36,16 +47,19 @@
                 data-confirm-message="SMS messages will be sent via the multi API and your account will be charged per recipient."
                 data-confirm-label="Send SMS">Send SMS</button>
       </div>
-      <p style="margin:8px 0 0;font-size:11px;color:var(--text-tertiary);text-align:right">Bulk send uses <code>POST /api/sms/v2/text/multi</code> · flash=0 · one message object per recipient.</p>
     </form>
   </div>
 
   {{-- ── Row 2: Recipients (independent full-width row) ───────────────────── --}}
   <div class="glass-card" id="recipientsCard">
     <div class="flex" style="align-items:center;justify-content:space-between;margin-bottom:14px;gap:10px;flex-wrap:wrap">
-      <div>
-        <h2 style="font-size:14.5px;margin:0">Recipients</h2>
-        <small style="color:var(--text-tertiary);font-weight:600"><span id="recipientCountBadge">0</span> selected · each recipient is its own row, independent</small>
+      <div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap">
+        <div>
+          <h2 style="font-size:14.5px;margin:0;display:flex;align-items:center;gap:7px">Recipients
+            <span class="info-wrap" tabindex="0" aria-label="Recipients help"><span class="info-ico">i</span><span class="info-bubble">Recipients are displayed as <b>independent rows</b> — each row is one <code>messages[]</code> object for <code>POST /api/sms/v2/text/multi</code> (<code>flash:0</code>). Same text sent to all, duplicates removed. Use the <b>Remove</b> button on any row to drop that recipient without affecting others. Use <b>View in Drawer</b> for a larger preview. Type at least 2 characters to search across Users · Members · Pledges · Registrations — tap a result to add.</span></span>
+          </h2>
+          <small style="color:var(--text-tertiary);font-weight:600"><span id="recipientCountBadge">0</span> selected</small>
+        </div>
       </div>
       <div style="display:flex;gap:6px">
         <button type="button" class="btn btn-secondary btn-sm" id="viewRecipientsBtn" data-drawer-open="recipientDrawer" style="padding:4px 10px;font-size:12px" disabled>View in Drawer</button>
@@ -55,7 +69,7 @@
 
     {{-- Search box + source filter --}}
     <div style="position:relative;margin-bottom:10px">
-      <div style="display:flex;gap:8px">
+      <div style="display:flex;gap:8px;align-items:center">
         <div class="tfield" style="flex:1;position:relative">
           <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
           <input type="text" id="recipientSearch" placeholder="Search users, members, pledges, registrations by name or phone…" autocomplete="off" style="padding-left:38px;padding-right:30px">
@@ -68,10 +82,11 @@
           <option value="pledge">Pledges</option>
           <option value="registration">Registrations</option>
         </select>
+        <span class="info-wrap" tabindex="0" aria-label="Search help"><span class="info-ico">i</span><span class="info-bubble">Type at least 2 characters. Searches across <b>Users</b> · <b>Members</b> · <b>Pledges</b> · <b>Registrations</b>. Tap a result to add — each added recipient appears as its own independent row below.</span></span>
       </div>
       {{-- Results dropdown --}}
       <div id="searchResults" style="display:none;position:absolute;left:0;right:0;top:calc(100% + 6px);z-index:30;background:var(--white);border:1px solid var(--border);border-radius:12px;box-shadow:var(--shadow-lg);max-height:360px;overflow-y:auto"></div>
-      <div id="searchHint" style="margin-top:6px;font-size:11px;color:var(--text-tertiary)">Type at least 2 characters. Searches across <b>Users</b> · <b>Members</b> · <b>Pledges</b> · <b>Registrations</b>. Tap a result to add — each added recipient appears as its own independent row below.</div>
+      <div id="searchHint" style="display:none"></div>
       <div id="searchLoading" style="display:none;margin-top:6px;font-size:11.5px;color:var(--text-tertiary)">Searching…</div>
     </div>
 
@@ -133,8 +148,10 @@
       <div style="width:42px;height:42px;border-radius:12px;background:var(--blue-light);color:var(--blue-accent);display:flex;align-items:center;justify-content:center;margin:0 auto 10px">
         <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M17 21v-2a4 4 0 00-4-4H5a4 4 0 00-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 00-3-3.87"/><path d="M16 3.13a4 4 0 010 7.75"/></svg>
       </div>
-      No recipients selected.<br>Search above or add a group — each selection becomes its own independent row in the table below.<br>
-      <span style="font-size:11px">You can mix Users, Members, Pledges, Registrations. Duplicates by phone are auto-removed.</span>
+      <div style="display:flex;align-items:center;justify-content:center;gap:6px;flex-wrap:wrap">
+        <span>No recipients selected.</span>
+        <span class="info-wrap" tabindex="0" aria-label="Empty help"><span class="info-ico">i</span><span class="info-bubble">Search above or add a group — each selection becomes its own independent row in the table below. You can mix Users, Members, Pledges, Registrations. Duplicates by phone are auto-removed.</span></span>
+      </div>
     </div>
     <div id="selectedListWrap" style="display:none">
       <div class="table-scroll" style="border:1px solid var(--border);border-radius:12px;overflow:hidden">
@@ -176,9 +193,9 @@
     </details>
 
     <hr style="border:none;border-top:1px solid var(--border);margin:14px 0">
-    <div style="font-size:11.5px;color:var(--text-muted);line-height:1.6">
-      <p style="margin:0 0 4px">Recipients are displayed as <b>independent rows</b> — each row is one <code>messages[]</code> object for <code>POST /api/sms/v2/text/multi</code> (<code>flash:0</code>). Same text sent to all, duplicates removed.</p>
-      <p style="margin:0">Use the <b>Remove</b> button on any row to drop that recipient without affecting others. Use <b>View in Drawer</b> for a larger preview.</p>
+    <div style="display:flex;align-items:center;gap:6px;font-size:11.5px;color:var(--text-muted)">
+      <span>Recipients are shown below</span>
+      <span class="info-wrap" tabindex="0" aria-label="Recipients details"><span class="info-ico">i</span><span class="info-bubble">Recipients are displayed as <b>independent rows</b> — each row is one <code>messages[]</code> object for <code>POST /api/sms/v2/text/multi</code> (<code>flash:0</code>). Same text sent to all, duplicates removed. Use the <b>Remove</b> button on any row to drop that recipient without affecting others. Use <b>View in Drawer</b> for a larger preview.</span></span>
     </div>
   </div>
 </div>
@@ -272,10 +289,8 @@ if (searchInput) {
       searchResults.style.display = 'none';
       searchResults.innerHTML = '';
       searchLoading.style.display = 'none';
-      searchHint.style.display = 'block';
       return;
     }
-    searchHint.style.display = 'none';
     searchLoading.style.display = 'block';
     searchDebounceTimer = setTimeout(function(){ doSearch(q); }, 300);
   });
@@ -294,7 +309,6 @@ function clearSearch(){
   searchResults.style.display = 'none';
   searchResults.innerHTML = '';
   searchLoading.style.display = 'none';
-  searchHint.style.display = 'block';
   lastSearchQuery = '';
   searchInput.focus();
 }
@@ -450,7 +464,7 @@ function renderSelected(){
     selectedRecipients.forEach(function(r){ bySource[r.source_label]=(bySource[r.source_label]||0)+1; });
     var parts = [];
     Object.keys(bySource).forEach(function(k){ parts.push(k+': '+bySource[k]); });
-    meta.innerHTML = parts.join(' &nbsp;&middot;&nbsp; ') + ' &nbsp;|&nbsp; '+count+' unique phone(s) · each row sends one <code>messages[]</code> object';
+    meta.innerHTML = parts.join(' &nbsp;&middot;&nbsp; ') + ' &nbsp;|&nbsp; '+count+' unique phone(s)';
   }
 
   renderDrawerTable();
