@@ -1,5 +1,5 @@
-<div class="two-col" style="align-items:start">
-  {{-- ── Left: Compose ─────────────────────────────────────────────────────── --}}
+<div style="display:flex; flex-direction:column; gap:20px; margin-bottom:22px">
+  {{-- ── Row 1: Compose (independent full-width) ───────────────────────────── --}}
   <div class="glass-card">
     <h2 style="font-size:14.5px;margin:0 0 14px">Compose SMS</h2>
     <form method="POST" action="{{ route('messaging.store') }}" id="composeForm">
@@ -40,15 +40,15 @@
     </form>
   </div>
 
-  {{-- ── Right: Recipient picker ─────────────────────────────────────────── --}}
+  {{-- ── Row 2: Recipients (independent full-width row) ───────────────────── --}}
   <div class="glass-card" id="recipientsCard">
     <div class="flex" style="align-items:center;justify-content:space-between;margin-bottom:14px;gap:10px;flex-wrap:wrap">
       <div>
         <h2 style="font-size:14.5px;margin:0">Recipients</h2>
-        <small style="color:var(--text-tertiary);font-weight:600"><span id="recipientCountBadge">0</span> selected</small>
+        <small style="color:var(--text-tertiary);font-weight:600"><span id="recipientCountBadge">0</span> selected · each recipient is its own row, independent</small>
       </div>
       <div style="display:flex;gap:6px">
-        <button type="button" class="btn btn-secondary btn-sm" id="viewRecipientsBtn" data-drawer-open="recipientDrawer" style="padding:4px 10px;font-size:12px" disabled>View List</button>
+        <button type="button" class="btn btn-secondary btn-sm" id="viewRecipientsBtn" data-drawer-open="recipientDrawer" style="padding:4px 10px;font-size:12px" disabled>View in Drawer</button>
         <button type="button" class="btn btn-ghost btn-sm" id="clearAllBtn" style="padding:4px 10px;font-size:12px;display:none" onclick="clearAllRecipients()">Clear all</button>
       </div>
     </div>
@@ -71,7 +71,7 @@
       </div>
       {{-- Results dropdown --}}
       <div id="searchResults" style="display:none;position:absolute;left:0;right:0;top:calc(100% + 6px);z-index:30;background:var(--white);border:1px solid var(--border);border-radius:12px;box-shadow:var(--shadow-lg);max-height:360px;overflow-y:auto"></div>
-      <div id="searchHint" style="margin-top:6px;font-size:11px;color:var(--text-tertiary)">Type at least 2 characters. Searches across <b>Users</b> · <b>Members</b> · <b>Pledges</b> · <b>Registrations</b>. Tap a result to add.</div>
+      <div id="searchHint" style="margin-top:6px;font-size:11px;color:var(--text-tertiary)">Type at least 2 characters. Searches across <b>Users</b> · <b>Members</b> · <b>Pledges</b> · <b>Registrations</b>. Tap a result to add — each added recipient appears as its own independent row below.</div>
       <div id="searchLoading" style="display:none;margin-top:6px;font-size:11.5px;color:var(--text-tertiary)">Searching…</div>
     </div>
 
@@ -128,16 +128,30 @@
       <div id="bulkHint" style="margin-top:6px;font-size:11px;color:var(--text-tertiary);min-height:16px"></div>
     </div>
 
-    {{-- Selected list --}}
+    {{-- Selected list — each recipient in its own independent row (table) --}}
     <div id="selectedEmpty" style="border:1.5px dashed var(--border-strong);border-radius:12px;padding:22px;text-align:center;color:var(--text-tertiary);font-size:12.5px;line-height:1.6">
       <div style="width:42px;height:42px;border-radius:12px;background:var(--blue-light);color:var(--blue-accent);display:flex;align-items:center;justify-content:center;margin:0 auto 10px">
         <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M17 21v-2a4 4 0 00-4-4H5a4 4 0 00-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 00-3-3.87"/><path d="M16 3.13a4 4 0 010 7.75"/></svg>
       </div>
-      No recipients selected.<br>Search above or add a group to build your list.<br>
+      No recipients selected.<br>Search above or add a group — each selection becomes its own independent row in the table below.<br>
       <span style="font-size:11px">You can mix Users, Members, Pledges, Registrations. Duplicates by phone are auto-removed.</span>
     </div>
     <div id="selectedListWrap" style="display:none">
-      <div id="selectedList" style="display:flex;flex-direction:column;gap:7px;max-height:380px;overflow-y:auto;padding-right:2px"></div>
+      <div class="table-scroll" style="border:1px solid var(--border);border-radius:12px;overflow:hidden">
+        <table class="data-table compact" style="min-width:720px">
+          <thead>
+            <tr>
+              <th style="width:40px">#</th>
+              <th>Name</th>
+              <th>Phone</th>
+              <th>Source</th>
+              <th>Details</th>
+              <th style="width:70px;text-align:center">Remove</th>
+            </tr>
+          </thead>
+          <tbody id="selectedTableBody"></tbody>
+        </table>
+      </div>
       <div id="selectedMeta" style="margin-top:10px;font-size:11.5px;color:var(--text-secondary);line-height:1.5"></div>
     </div>
 
@@ -163,17 +177,17 @@
 
     <hr style="border:none;border-top:1px solid var(--border);margin:14px 0">
     <div style="font-size:11.5px;color:var(--text-muted);line-height:1.6">
-      <p style="margin:0 0 4px">Selected recipients are sent via <code>POST /api/sms/v2/text/multi</code> as individual <code>messages[]</code> objects (same text, <code>flash:0</code>). Duplicates by phone are removed automatically.</p>
-      <p style="margin:0">Use <b>View List</b> to review the full table before sending.</p>
+      <p style="margin:0 0 4px">Recipients are displayed as <b>independent rows</b> — each row is one <code>messages[]</code> object for <code>POST /api/sms/v2/text/multi</code> (<code>flash:0</code>). Same text sent to all, duplicates removed.</p>
+      <p style="margin:0">Use the <b>Remove</b> button on any row to drop that recipient without affecting others. Use <b>View in Drawer</b> for a larger preview.</p>
     </div>
   </div>
 </div>
 
-{{-- ── Drawer: full recipient table ─────────────────────────────────────── --}}
+{{-- ── Drawer: full recipient table (also independent rows) ─────────────── --}}
 <div class="drawer-overlay" id="recipientDrawer">
-  <div class="drawer-panel" style="max-width:560px">
+  <div class="drawer-panel" style="max-width:620px">
     <div class="drawer-head">
-      <div><h3>Message Recipients</h3><p id="recipientDrawerMeta">0 selected</p></div>
+      <div><h3>Message Recipients</h3><p id="recipientDrawerMeta">0 selected · independent rows</p></div>
       <button type="button" class="modal-close" data-drawer-close><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><path d="M18 6L6 18M6 6l12 12"/></svg></button>
     </div>
     <div class="drawer-body" style="padding:0">
@@ -181,6 +195,7 @@
         <table class="data-table" style="min-width:560px">
           <thead>
             <tr>
+              <th>#</th>
               <th>Name</th>
               <th>Phone</th>
               <th>Source</th>
@@ -269,16 +284,6 @@ if (searchInput) {
     if (e.key === 'Enter') { e.preventDefault(); if (searchResults.style.display !== 'none') { var first = searchResults.querySelector('[data-add-key]'); if(first) first.click(); } }
   });
 }
-document.addEventListener('click', function(e){
-  if (!e.target.closest('#recipientsCard')) return;
-  // close dropdown if clicking outside search area but inside card? Keep open; only close when clicking outside card
-});
-document.addEventListener('click', function(e){
-  if (!e.target.closest('#searchResults') && !e.target.closest('#recipientSearch') && !e.target.closest('#sourceFilter')) {
-    // do not auto-close immediately; keep results visible until cleared – but hide if click outside card
-    if (!e.target.closest('#recipientsCard')) { /* keep */ }
-  }
-});
 function onSourceFilterChange(){
   var q = searchInput.value.trim();
   if (q.length >= 2) doSearch(q);
@@ -328,7 +333,6 @@ function renderSearchResults(results, q){
   html += '<div style="padding:8px 14px;font-size:11px;color:var(--text-tertiary);background:rgba(248,250,252,.8)">'+results.length+' result(s) · click to add · duplicates by phone blocked</div>';
   searchResults.innerHTML = html;
   searchResults.style.display = 'block';
-  // attach click handlers
   searchResults.querySelectorAll('[data-add-key]').forEach(function(el){
     el.addEventListener('click', function(){
       var key = this.getAttribute('data-add-key');
@@ -349,7 +353,6 @@ function addRecipient(obj){
     toast('Recipient limit reached (300). Remove some before adding more.', 'error');
     return;
   }
-  // normalize obj shape
   selectedRecipients.push({
     key: obj.key || ('manual_'+normPhone(obj.phone)),
     source: obj.source || 'manual',
@@ -361,18 +364,8 @@ function addRecipient(obj){
   });
   renderSelected();
   toast('Added: ' + obj.name + ' ('+normPhone(obj.phone)+')', 'success');
-  // keep search open but refresh dup states
   if (searchResults.style.display !== 'none' && lastSearchQuery) {
-    // re-render to mark new duplicate
-    var q = lastSearchQuery;
-    var source = sourceFilter.value || 'all';
-    // quick local re-render without refetch if we have results cached
-    var els = searchResults.querySelectorAll('[data-add-key]');
-    // Instead refetch to update dup visuals simply re-render last results if available
-    // We'll just call render logic again after small delay by re-searching cache
-    // For now, just update that specific row visually
     searchResults.querySelectorAll('div').forEach(function(row){
-      // crude: find row containing phone
       if (row.textContent && row.textContent.indexOf(obj.phone) !== -1) {
         row.style.opacity = '.55';
         row.style.cursor = 'not-allowed';
@@ -396,7 +389,6 @@ function clearAllRecipients(){
   toast('All recipients cleared', 'info');
 }
 function renderSelected(){
-  var list = document.getElementById('selectedList');
   var wrap = document.getElementById('selectedListWrap');
   var empty = document.getElementById('selectedEmpty');
   var countBadge = document.getElementById('recipientCountBadge');
@@ -406,11 +398,11 @@ function renderSelected(){
   var phonesJson = document.getElementById('phonesJson');
   var recipientsLabel = document.getElementById('recipientsLabel');
   var recipientFilter = document.getElementById('recipientFilter');
+  var tbody = document.getElementById('selectedTableBody');
 
   var count = selectedRecipients.length;
   if (countBadge) countBadge.textContent = count;
   if (phonesJson) phonesJson.value = JSON.stringify(selectedRecipients.map(function(r){ return r.phone; }));
-  // recipients label for backend audit log
   if (recipientsLabel) {
     if (count === 0) recipientsLabel.value = 'No recipients';
     else if (count === 1) recipientsLabel.value = selectedRecipients[0].name + ' ('+selectedRecipients[0].phone+')';
@@ -435,27 +427,30 @@ function renderSelected(){
     clearBtn.style.display = 'inline-flex';
   }
 
-  // Render chips/list
-  list.innerHTML = '';
-  selectedRecipients.forEach(function(r){
-    var row = document.createElement('div');
-    row.style.cssText = 'display:flex;align-items:center;gap:10px;padding:8px 10px;background:var(--white);border:1px solid var(--border);border-radius:10px';
-    row.innerHTML = '<div style="width:34px;height:34px;border-radius:9px;background:var(--blue-light);color:var(--blue-accent);display:flex;align-items:center;justify-content:center;font-weight:800;font-size:12px;flex-shrink:0">'+escapeHtml((r.name||'?').charAt(0).toUpperCase())+'</div>'
-      + '<div style="flex:1;min-width:0">'
-      + '<div style="font-weight:700;font-size:13px;color:var(--text-primary);white-space:nowrap;overflow:hidden;text-overflow:ellipsis">'+escapeHtml(r.name)+' <span class="badge '+badgeClass(r.badge_color)+' badge-dotted" style="font-size:10px;vertical-align:middle;margin-left:6px">'+escapeHtml(r.source_label)+'</span></div>'
-      + '<div style="font-size:11.5px;color:var(--text-tertiary);font-family:ui-monospace,monospace;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">'+escapeHtml(r.phone)+' <span style="opacity:.35">·</span> '+escapeHtml(r.extra||'—')+'</div>'
-      + '</div>'
-      + '<button type="button" onclick="removeRecipientByPhone(\''+escapeHtml(r.phone).replace(/'/g,"\\'")+'\')" style="width:28px;height:28px;border-radius:8px;border:1px solid var(--border);background:var(--white);color:var(--text-tertiary);display:flex;align-items:center;justify-content:center;flex-shrink:0" title="Remove">✕</button>';
-    list.appendChild(row);
-  });
+  // Render independent rows — each recipient in its own <tr>
+  if (tbody) {
+    tbody.innerHTML = '';
+    selectedRecipients.forEach(function(r, idx){
+      var tr = document.createElement('tr');
+      tr.style.borderBottom = '1px solid var(--border)';
+      // independent row: index, name, phone, source badge, details, remove
+      var badge = '<span class="badge '+badgeClass(r.badge_color)+' badge-dotted" style="font-size:10.5px">'+escapeHtml(r.source_label)+'</span>';
+      tr.innerHTML = '<td style="padding:8px 10px;color:var(--text-tertiary);font-weight:700;font-size:12px">'+(idx+1)+'</td>'
+        + '<td style="padding:8px 10px;font-weight:700;max-width:180px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">'+escapeHtml(r.name)+'</td>'
+        + '<td style="padding:8px 10px;font-family:ui-monospace,monospace;font-size:12.5px">'+escapeHtml(r.phone)+'</td>'
+        + '<td style="padding:8px 10px">'+badge+'</td>'
+        + '<td style="padding:8px 10px;font-size:12px;color:var(--text-tertiary);max-width:200px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">'+escapeHtml(r.extra||'—')+'</td>'
+        + '<td style="padding:8px 10px;text-align:center"><button type="button" onclick="removeRecipientByPhone(\''+escapeHtml(r.phone).replace(/'/g,"\\'")+'\')" style="width:28px;height:28px;border-radius:8px;border:1px solid var(--border);background:var(--white);color:var(--danger);display:flex;align-items:center;justify-content:center" title="Remove this row">✕</button></td>';
+      tbody.appendChild(tr);
+    });
+  }
 
-  // Meta summary
   if (count > 0 && meta) {
     var bySource = {};
     selectedRecipients.forEach(function(r){ bySource[r.source_label]=(bySource[r.source_label]||0)+1; });
     var parts = [];
     Object.keys(bySource).forEach(function(k){ parts.push(k+': '+bySource[k]); });
-    meta.innerHTML = parts.join(' &nbsp;&middot;&nbsp; ') + ' &nbsp;|&nbsp; '+count+' unique phone(s)';
+    meta.innerHTML = parts.join(' &nbsp;&middot;&nbsp; ') + ' &nbsp;|&nbsp; '+count+' unique phone(s) · each row sends one <code>messages[]</code> object';
   }
 
   renderDrawerTable();
@@ -470,18 +465,19 @@ function renderDrawerTable(){
   if (!tbody) return;
   tbody.innerHTML = '';
   var count = selectedRecipients.length;
-  if (meta) meta.textContent = count ? count + ' recipient(s) selected · duplicates removed' : 'No recipients';
+  if (meta) meta.textContent = count ? count + ' recipient(s) · each in its own independent row' : 'No recipients';
   if (hint) hint.textContent = count ? count + ' recipient(s)' : '';
   if (count === 0) {
     empty.style.display = 'block';
     return;
   }
   empty.style.display = 'none';
-  selectedRecipients.forEach(function(r){
+  selectedRecipients.forEach(function(r, idx){
     var tr = document.createElement('tr');
     tr.style.borderBottom = '1px solid var(--border)';
     var badge = '<span class="badge '+badgeClass(r.badge_color)+' badge-dotted" style="font-size:10.5px">'+escapeHtml(r.source_label)+'</span>';
-    tr.innerHTML = '<td style="padding:8px 10px;font-weight:600;max-width:160px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">'+escapeHtml(r.name)+'</td>'
+    tr.innerHTML = '<td style="padding:8px 10px;color:var(--text-tertiary);font-weight:700;font-size:12px">'+(idx+1)+'</td>'
+      + '<td style="padding:8px 10px;font-weight:600;max-width:160px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">'+escapeHtml(r.name)+'</td>'
       + '<td style="padding:8px 10px;font-family:ui-monospace,monospace;font-size:12.5px">'+escapeHtml(r.phone)+'</td>'
       + '<td style="padding:8px 10px">'+badge+'</td>'
       + '<td style="padding:8px 10px;font-size:12px;color:var(--text-tertiary);max-width:160px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">'+escapeHtml(r.extra||'—')+'</td>'
@@ -524,12 +520,10 @@ function bulkAddGroup(){
       var phone = m.phone;
       if (!phone) return;
       if (isDuplicatePhone(phone)) { skipped++; return; }
-      // map to uniform object
       var source = 'member';
       var source_label = m.type ? (m.type==='student'?'Student': m.type==='non_student'?'Member': m.type) : 'Member';
       var extra = m.status || '';
       var badge = 'neutral';
-      // detect module types
       if (filter === 'pledge' || m.type === 'Pledge') { source='pledge'; source_label='Pledge'; badge='purple'; extra = (m.status||'') + (m.group?' · '+m.group:''); }
       else if (filter === 'registration' || filter === 'admission' || m.type==='Registration' || m.type==='Admission') { source='registration'; source_label='Registration'; badge='warning'; }
       else if (m.type==='student') badge='info';
@@ -541,10 +535,9 @@ function bulkAddGroup(){
         phone: phone,
         extra: (m.group && m.group!=='—' ? m.group : extra) + (m.ministry && m.ministry!=='—' ? ' · '+m.ministry : ''),
         badge_color: badge
-      }, true); // silent
+      }, true);
       added++;
     });
-    // batch render once
     renderSelected();
     hint.textContent = 'Added ' + added + ' recipient(s)' + (skipped ? ' ('+skipped+' duplicates skipped)' : '') + ' from selected group.';
     toast('Added ' + added + ' from group' + (skipped ? ' ('+skipped+' duplicates skipped)' : ''), 'success');
@@ -575,9 +568,7 @@ function manualAdd(){
   var name = nameEl.value.trim() || phoneEl.value.trim();
   var phone = phoneEl.value.trim();
   if (!phone) { toast('Enter a phone number', 'warning'); phoneEl.focus(); return; }
-  // support comma-separated in single input
   if (phone.indexOf(',') !== -1 || phone.indexOf(' ') !== -1) {
-    // if multiple numbers pasted into phone input, delegate to bulk
     var parts = phone.split(/[\n,;]+/).map(function(s){return s.trim();}).filter(Boolean);
     if (parts.length > 1) {
       var added=0, dup=0;
@@ -635,7 +626,6 @@ function updateSmsCount() {
 
 // ── Form validation & hydration ────────────────────────────────────────
 document.addEventListener('DOMContentLoaded', function(){
-  // Hydrate from old input (validation failure) — phones_json may contain JSON array of phones
   (function hydrateFromOld(){
     var el = document.getElementById('phonesJson');
     var raw = el ? el.value : '';
@@ -649,24 +639,19 @@ document.addEventListener('DOMContentLoaded', function(){
         if (isDuplicatePhone(ph)) return;
         addRecipientDirect({key:'restore_'+normPhone(ph),source:'manual',source_label:'Restored',name:ph,phone:normPhone(ph),extra:'From previous input',badge_color:'neutral'}, true);
       });
-      // keep el value as-is; render will refresh it
     } catch(e) {}
   })();
   updateSmsCount();
-  renderSelected(); // init (or hydrated)
-  // intercept send button
+  renderSelected();
   var sendBtn = document.getElementById('sendSmsBtn');
   var form = document.getElementById('composeForm');
   if (sendBtn && form) {
     sendBtn.addEventListener('click', function(e){
-      // allow draft path to pass; check which button was clicked via event
-      // This click fires before submit; we can block if no recipients
       var msg = document.getElementById('smsMessage').value.trim();
       if (!msg) { toast('Message cannot be empty', 'error'); e.preventDefault(); e.stopPropagation(); return; }
       if (selectedRecipients.length === 0) {
         toast('Select at least one recipient before sending', 'error');
         e.preventDefault(); e.stopPropagation();
-        // prevent confirm modal from opening by temporarily disabling data-confirm
         return false;
       }
     });
@@ -680,18 +665,14 @@ document.addEventListener('DOMContentLoaded', function(){
         toast('Select at least one recipient', 'error');
         return false;
       }
-      // ensure hidden fields are fresh
       renderSelected();
     });
   }
-  // allow Enter on manual bulk paste? already handled
-  // autofocus search on desktop
   if (window.innerWidth > 860) {
     setTimeout(function(){ var el=document.getElementById('recipientSearch'); if(el) el.focus(); }, 400);
   }
 });
 
-// Expose for inline handlers
 window.removeRecipientByPhone = removeRecipientByPhone;
 window.clearAllRecipients = clearAllRecipients;
 window.clearSearch = clearSearch;
