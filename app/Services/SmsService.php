@@ -168,12 +168,22 @@ class SmsService
             return ['success_count' => 0, 'fail_count' => count($phones), 'results' => []];
         }
 
+        // Normalize & deduplicate phones early to avoid wasted API cost
+        $phones = array_values(array_unique(array_map(fn ($p) => $this->formatPhone(trim((string) $p)), $phones)));
+        $phones = array_filter($phones, fn ($p) => $p !== '');
+
+        if (empty($phones)) {
+            return ['success_count' => 0, 'fail_count' => 0, 'results' => []];
+        }
+
         $messages = array_map(fn ($phone) => [
             'from'  => $this->senderId,
-            'to'    => $this->formatPhone($phone),
+            'to'    => $phone,
             'text'  => $message,
-            'smsCount' => 1,
         ], $phones);
+
+        // Reference per batch — useful for provider logs; matches spec example
+        $reference = bin2hex(random_bytes(4));
 
         try {
             $response = Http::withHeaders([
@@ -181,7 +191,9 @@ class SmsService
                 'Content-Type'  => 'application/json',
                 'Accept'        => 'application/json',
             ])->timeout(30)->post($this->baseUrl.'/api/sms/v2/text/multi', [
-                'messages' => $messages,
+                'messages'  => $messages,
+                'flash'     => 0,
+                'reference' => $reference,
             ]);
 
             $body = $response->json();

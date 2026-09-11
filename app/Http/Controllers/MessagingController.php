@@ -3,12 +3,15 @@
 namespace App\Http\Controllers;
 
 use App\Models\AuditLog;
+use App\Models\EventAttendee;
 use App\Models\Group;
 use App\Models\Member;
 use App\Models\Message;
 use App\Models\MessageTemplate;
 use App\Models\Ministry;
+use App\Models\Pledge;
 use App\Models\Setting;
+use App\Models\User;
 use App\Services\SmsService;
 use Illuminate\Http\Request;
 
@@ -321,6 +324,146 @@ class MessagingController extends Controller
         $key = Setting::get('mail.primary', '');
 
         return $key !== '' ? $key : null;
+    }
+
+    /**
+     * AJAX: Unified search across Users, Members, Pledges and Registrations (EventAttendee).
+     * Powers the SMS compose recipient picker: search by name / phone / email / pledge_no / ticket_no.
+     * Returns unified list with source badges, deduped by phone so bulk send does not duplicate.
+     */
+    public function searchRecipients(Request $request)
+    {
+        $q = trim((string) $request->input('q', ''));
+        $sourceFilter = $request->input('source', 'all'); // all | user | member | pledge | registration
+        $limit = (int) $request->input('limit', 20);
+        $limit = max(1, min(50, $limit));
+
+        if (mb_strlen($q) < 2) {
+            return response()->json(['results' => [], 'count' => 0, 'query' => $q]);
+        }
+
+        $like = '%'.$q.'%';
+        $results = collect();
+        $perSource = max(5, (int) ceil($limit / 2));
+
+        // ── Users (system users) ───────────────────────────────────────────
+        if (in_array($sourceFilter, ['all', 'user'], true)) {
+            try {
+                $users = User::whereNotNull('phone')->where('phone', '!=', '')
+                    ->where(function ($qq) use ($like) {
+                        $qq->where('name', 'like', $like)
+                            ->orWhere('phone', 'like', $like)
+                            ->orWhere('email', 'like', $like);
+                    })
+                    ->limit($perSource)
+                    ->get(['id', 'name', 'phone', 'email', 'status', 'role_id'])
+                    ->map(fn ($u) => [
+                        'key'          => 'user_'.$u->id,
+                        'id'           => $u->id,
+                        'source'       => 'user',
+                        'source_label' => 'User',
+                        'name'         => $u->name,
+                        'phone'        => $u->phone,
+                        'extra'        => $u->email ?: ($u->status ?? '—'),
+                        'badge_color'  => 'info',
+                    ]);
+                $results = $results->concat($users);
+            } catch (\Throwable $e) { /* table missing – ignore */ }
+        }
+
+        // ── Members ────────────────────────────────────────────────────────
+        if (in_array($sourceFilter, ['all', 'member'], true)) {
+            $members = Member::whereNotNull('phone')->where('phone', '!=', '')
+                ->where(function ($qq) use ($like) {
+                    $qq->where('name', 'like', $like)
+                        ->orWhere('phone', 'like', $like)
+                        ->orWhere('member_no', 'like', $like);
+                })
+                ->limit($perSource)
+                ->get(['id', 'name', 'phone', 'member_type', 'status', 'member_no'])
+                ->map(fn ($m) => [
+                    'key'          => 'member_'.$m->id,
+                    'id'           => $m->id,
+                    'source'       => 'member',
+                    'source_label' => $m->member_type === 'student' ? 'Student' : 'Member',
+                    'name'         => $m->name,
+                    'phone'        => $m->phone,
+                    'extra'        => trim(($m->member_no ? $m->member_no.' · ' : '').($m->status ?? '')) ?: '—',
+                    'badge_color'  => $m->member_type === 'student' ? 'info' : 'neutral',
+                ]);
+            $results = $results->concat($members);
+        }
+
+        // ── Pledges ────────────────────────────────────────────────────────
+        if (in_array($sourceFilter, ['all', 'pledge'], true)) {
+            $pledges = Pledge::whereNotNull('phone')->where('phone', '!=', '')
+                ->where(function ($qq) use ($like) {
+                    $qq->where('name', 'like', $like)
+                        ->orWhere('phone', 'like', $like)
+                        ->orWhere('pledge_no', 'like', $like);
+                })
+                ->orderByDesc('id')
+                ->limit($perSource)
+                ->get(['id', 'name', 'phone', 'status', 'pledge_no', 'amount'])
+                ->map(fn ($p) => [
+                    'key'          => 'pledge_'.$p->id,
+                    'id'           => $p->id,
+                    'source'       => 'pledge',
+                    'source_label' => 'Pledge',
+                    'name'         => $p->name,
+                    'phone'        => $p->phone,
+                    'extra'        => trim(($p->pledge_no ? $p->pledge_no.' · ' : '').$p->getStatusLabel()) ?: '—',
+                    'badge_color'  => 'purple',
+                ]);
+            $results = $results->concat($pledges);
+        }
+
+        // ── Registrations / Admission (EventAttendee) ─────────────────────
+        if (in_array($sourceFilter, ['all', 'registration', 'admission', 'attendee'], true)) {
+            $attendees = EventAttendee::whereNotNull('phone')->where('phone', '!=', '')
+                ->where(function ($qq) use ($like) {
+                    $qq->where('name', 'like', $like)
+                        ->orWhere('phone', 'like', $like)
+                        ->orWhere('ticket_no', 'like', $like);
+                })
+                ->orderByDesc('id')
+                ->limit($perSource)
+                ->get(['id', 'name', 'phone', 'status', 'ticket_no', 'fellowship'])
+                ->map(fn ($a) => [
+                    'key'          => 'attendee_'.$a->id,
+                    'id'           => $a->id,
+                    'source'       => 'registration',
+                    'source_label' => 'Registration',
+                    'name'         => $a->name,
+                    'phone'        => $a->phone,
+                    'extra'        => trim($a->getStatusLabel().($a->ticket_no ? ' · '.$a->ticket_no : '').($a->fellowship ? ' · '.$a->fellowship : '')) ?: '—',
+                    'badge_color'  => 'warning',
+                ]);
+            $results = $results->concat($attendees);
+        }
+
+        // Deduplicate by normalized phone (keep first occurrence), then limit
+        $seen = [];
+        $deduped = collect();
+        foreach ($results as $row) {
+            $norm = preg_replace('/[^0-9]/', '', (string) $row['phone']);
+            // normalize 0-prefixed to 255
+            if (str_starts_with($norm, '0')) { $norm = '255'.substr($norm, 1); }
+            if (isset($seen[$norm])) { continue; }
+            $seen[$norm] = true;
+            $deduped->push($row);
+            if ($deduped->count() >= $limit) { break; }
+        }
+
+        // Simple relevance sort: prefix match first
+        $lowerQ = mb_strtolower($q);
+        $sorted = $deduped->sortBy(fn ($r) => (mb_stripos($r['name'], $q) === 0 || mb_stripos($r['phone'], $q) === 0) ? 0 : 1)->values();
+
+        return response()->json([
+            'results' => $sorted,
+            'count'   => $sorted->count(),
+            'query'   => $q,
+        ]);
     }
 
     /**

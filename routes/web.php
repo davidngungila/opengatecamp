@@ -237,6 +237,7 @@ Route::middleware(['auth', 'committee.readonly'])->group(function () {
         Route::post('/messaging/settings/email/providers/{key}/primary', [MessagingController::class, 'emailProviderPrimary'])->name('messaging.settings.email.provider.primary');
         Route::delete('/messaging/settings/email/providers/{key}', [MessagingController::class, 'emailProviderDelete'])->name('messaging.settings.email.provider.delete');
         Route::get('/messaging/recipients', [MessagingController::class, 'getRecipients'])->name('messaging.recipients');
+        Route::get('/messaging/search-recipients', [MessagingController::class, 'searchRecipients'])->name('messaging.search-recipients');
         Route::post('/messaging/use-template', [MessagingController::class, 'useTemplate'])->name('messaging.use-template');
     });
 
