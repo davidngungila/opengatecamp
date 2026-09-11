@@ -153,6 +153,7 @@ Route::middleware(['auth', 'committee.readonly'])->group(function () {
     Route::get('/attendees/{attendee}/ticket', [EventController::class, 'ticketPdf'])->name('attendees.ticket.pdf');
     Route::post('/attendees/{attendee}/ticket/sms', [EventController::class, 'sendTicketSms'])->name('attendees.ticket.sms');
     Route::patch('/attendees/{attendee}/status', [EventController::class, 'updateAttendeeStatus'])->name('attendees.status');
+    Route::get('/api/attendees/{attendee}/transactions', [EventController::class, 'apiAttendeeTransactions'])->name('api.attendees.transactions');
 
     // ── Fellowships & Delegations (admin, secretary, treasurer only) ───────────────────────
     Route::middleware('fellowship.manage')->group(function () {

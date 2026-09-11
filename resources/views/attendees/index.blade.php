@@ -5,6 +5,14 @@
 @section('page_title', 'Registrations')
 
 @section('content')
+<style>
+.info-wrap{position:relative;display:inline-flex;align-items:center;justify-content:center;vertical-align:middle}
+.info-wrap .info-ico{width:16px;height:16px;border-radius:50%;background:var(--blue-light);color:var(--blue-accent);display:inline-flex;align-items:center;justify-content:center;font-size:10px;font-weight:900;border:1px solid rgba(37,99,235,.18);cursor:help;flex-shrink:0}
+.info-bubble{position:absolute;left:50%;bottom:calc(100% + 8px);transform:translateX(-50%);background:#0f172a;color:#fff;font-size:11.5px;line-height:1.5;font-weight:500;padding:10px 12px;border-radius:9px;min-width:240px;max-width:320px;white-space:normal;box-shadow:0 10px 28px rgba(0,0,0,.22);opacity:0;visibility:hidden;transition:opacity .15s,visibility .15s;z-index:50;text-align:left;pointer-events:none}
+.info-bubble::after{content:'';position:absolute;top:100%;left:50%;transform:translateX(-50%);border:6px solid transparent;border-top-color:#0f172a}
+.info-wrap:hover .info-bubble,.info-wrap:focus-within .info-bubble{opacity:1;visibility:visible}
+.info-bubble code{background:rgba(255,255,255,.12);padding:1px 5px;border-radius:4px;font-family:ui-monospace,monospace;font-size:11px}
+</style>
 @php
     $v = fn($f) => old($f, $filters[$f] ?? null);
 @endphp
@@ -216,6 +224,14 @@
         <div class="info-row full"><span>Notes</span><b id="attDetailsNotes" style="white-space:normal">—</b></div>
       </div>
 
+      <div class="payments-head" style="margin-top:18px;display:flex;align-items:center;gap:6px">
+        <span>Transactions</span><span class="payments-count" id="attDetailsTxCount">0</span>
+        <span class="info-wrap" tabindex="0" style="margin-left:4px"><span class="info-ico">i</span><span class="info-bubble">All payments linked to this attendee. Click <b>Receipt</b> to preview each transaction.</span></span>
+      </div>
+      <div id="attDetailsTxLoading" style="display:none;padding:12px;text-align:center;color:var(--text-tertiary);font-size:13px">Loading transactions…</div>
+      <div id="attDetailsTxEmpty" style="display:none;padding:12px;text-align:center;color:var(--text-tertiary);font-size:13px;border:1px dashed var(--border-strong);border-radius:10px">No transactions yet. Record a payment to see receipt.</div>
+      <div id="attDetailsTxList" class="payments-list" style="margin-bottom:14px"></div>
+
       <div class="payments-head" style="margin:18px 0 10px">
         <span>Quick Actions</span>
       </div>
@@ -346,6 +362,22 @@
     </form>
   </div>
 </div>
+<div class="drawer-overlay" id="attReceiptDrawer">
+  <div class="drawer-panel" style="max-width:820px">
+    <div class="drawer-head">
+      <div><h3>Payment Receipt</h3><p id="attReceiptMeta" style="font-size:12.5px;color:var(--text-tertiary);margin:4px 0 0">Preview</p></div>
+      <button type="button" class="modal-close" data-drawer-close><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><path d="M18 6L6 18M6 6l12 12"/></svg></button>
+    </div>
+    <div class="drawer-body" style="padding:0;overflow:hidden;display:flex;flex-direction:column">
+      <iframe id="attReceiptFrame" style="width:100%;height:72vh;border:none;background:#f8fafc" src="about:blank"></iframe>
+      <div id="attReceiptFallback" style="display:none;padding:16px;text-align:center;font-size:13px;color:var(--text-tertiary)"><span>No receipt available.</span> <a id="attReceiptLink" href="#" target="_blank" style="color:var(--blue-accent)">Open in new tab</a></div>
+    </div>
+    <div class="drawer-foot">
+      <button type="button" class="btn btn-secondary" data-drawer-close>Close</button>
+      <a id="attReceiptOpenNew" href="#" target="_blank" class="btn btn-accent">Open in new tab</a>
+    </div>
+  </div>
+</div>
 @include('partials.ticket-preview-drawer')
 @endsection
 
@@ -374,6 +406,76 @@ document.addEventListener('DOMContentLoaded', function(){
     document.getElementById('attSmsPhone').value = curAtt.phone || '';
     document.getElementById('attSmsMessage').value = 'Hello ' + firstName(curAtt.name) + ',\\nYou are registered for {{ \App\Models\Setting::get("event.name", "Open Gate Camp") }}. We look forward to seeing you!';
     document.getElementById('attSmsForm').action = "{{ url('/attendees') }}/" + curAtt.id + "/sms";
+  }
+
+  function previewAttReceipt(url, title){
+    var frame = document.getElementById('attReceiptFrame');
+    var meta = document.getElementById('attReceiptMeta');
+    var link = document.getElementById('attReceiptLink');
+    var openNew = document.getElementById('attReceiptOpenNew');
+    var fallback = document.getElementById('attReceiptFallback');
+    if(!url){
+      if(frame) frame.style.display = 'none';
+      if(fallback) fallback.style.display = 'block';
+      if(meta) meta.textContent = title || 'No receipt';
+      openDrawerById('attReceiptDrawer');
+      return;
+    }
+    if(fallback) fallback.style.display = 'none';
+    if(frame){ frame.style.display = 'block'; frame.src = url; }
+    if(meta) meta.textContent = title || 'Receipt preview';
+    if(link) link.href = url;
+    if(openNew) openNew.href = url;
+    openDrawerById('attReceiptDrawer');
+  }
+  window.previewAttReceipt = previewAttReceipt;
+
+  function loadAttendeeTransactions(hashedId){
+    var countEl = document.getElementById('attDetailsTxCount');
+    var loadingEl = document.getElementById('attDetailsTxLoading');
+    var emptyEl = document.getElementById('attDetailsTxEmpty');
+    var listEl = document.getElementById('attDetailsTxList');
+    if(!countEl || !listEl) return;
+    countEl.textContent = '…';
+    loadingEl.style.display = 'block';
+    emptyEl.style.display = 'none';
+    listEl.innerHTML = '';
+    fetch('/api/attendees/' + encodeURIComponent(hashedId) + '/transactions', {headers:{'Accept':'application/json','X-Requested-With':'XMLHttpRequest'}, credentials:'same-origin'})
+      .then(function(r){ if(!r.ok) throw new Error('HTTP '+r.status); return r.json(); })
+      .then(function(data){
+        loadingEl.style.display = 'none';
+        var txs = data.transactions || [];
+        countEl.textContent = txs.length;
+        if(!txs.length){
+          emptyEl.style.display = 'block';
+          return;
+        }
+        txs.forEach(function(tx){
+          var div = document.createElement('div');
+          div.className = 'pay-item';
+          var amount = Number(tx.amount || 0).toLocaleString();
+          var date = tx.entry_date || '';
+          var entryNo = tx.entry_no || '';
+          var desc = tx.description || '';
+          var safeUrl = (tx.receipt_url || '').replace(/'/g, "\\'");
+          var btn = tx.receipt_url ? '<button type="button" class="btn btn-secondary btn-sm" style="padding:4px 8px;font-size:11px" onclick="event.stopPropagation(); previewAttReceipt(\''+safeUrl+'\', \''+entryNo+' — TZS '+amount+'\')">Receipt</button>' : '<span class="badge badge-neutral" style="font-size:10px">No receipt</span>';
+          div.style.cursor = tx.receipt_url ? 'pointer' : 'default';
+          if(tx.receipt_url){
+            div.title = 'Click to preview receipt';
+            div.addEventListener('click', function(){ previewAttReceipt(tx.receipt_url, entryNo + ' — TZS ' + amount); });
+          }
+          div.innerHTML = '<div class="pay-ico" style="background:var(--success-bg);color:var(--success)"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="2" y="5" width="20" height="14" rx="2"/><path d="M6 10h12"/></svg></div>'
+            + '<div class="pay-main"><div class="pm-name">TZS '+amount+' <span style="font-size:11px;color:var(--text-tertiary)">· '+entryNo+'</span></div><div class="pm-sub">'+date+' · '+(desc ? desc.substring(0,70) : '')+'</div></div>'
+            + '<div class="pay-amt">'+btn+'</div>';
+          listEl.appendChild(div);
+        });
+      })
+      .catch(function(err){
+        loadingEl.style.display = 'none';
+        emptyEl.style.display = 'block';
+        emptyEl.textContent = 'Failed to load transactions: ' + (err.message||'error');
+        console.error(err);
+      });
   }
 
   document.getElementById('attActStatus').addEventListener('click', function(){
@@ -433,6 +535,9 @@ document.addEventListener('DOMContentLoaded', function(){
     document.getElementById('attDetailsRegisteredBy').textContent = d.registeredBy || '—';
     document.getElementById('attDetailsCheckedIn').textContent = d.checkedIn || '—';
     document.getElementById('attDetailsNotes').textContent = d.notes || '—';
+
+    // Load transactions with receipt preview each
+    loadAttendeeTransactions(d.id);
 
     var canTicket = d.canTicket === '1' || d.canTicket === 1;
     var ticketUrl = "{{ url('/attendees') }}/" + d.id + "/ticket";

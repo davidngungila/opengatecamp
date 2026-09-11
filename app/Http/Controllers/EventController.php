@@ -541,6 +541,79 @@ class EventController extends Controller
         return back()->with('success', "Status for {$attendee->name} updated to ".EventAttendee::statuses()[$newStatus].".");
     }
 
+    public function apiAttendeeTransactions(Request $request, EventAttendee $attendee)
+    {
+        $user = auth()->user();
+        if ($user?->isFellowshipLeader() && ! in_array($user?->role?->name, ['Super Administrator', 'Chairperson'], true)) {
+            $fIds = $user->fellowships()->pluck('fellowships.id');
+            if (! $attendee->fellowship_id || ! $fIds->contains((int) $attendee->fellowship_id)) {
+                abort(403, 'You can only view transactions for your own fellowship registrations.');
+            }
+        } elseif ($user?->isCommitteeMember()) {
+            if ($attendee->registered_by !== $user->name) {
+                abort(403, 'You can only view your own registrations.');
+            }
+        }
+
+        $attendee->loadMissing('event');
+
+        // Find all posted journal entries that belong to this attendee
+        // Primary link is journal_entry_id (latest), plus search by description containing attendee name + event
+        $entries = \App\Models\JournalEntry::where('status', 'posted')
+            ->where(function ($q) use ($attendee) {
+                $q->where('id', $attendee->journal_entry_id)
+                  ->orWhere(function ($qq) use ($attendee) {
+                      $qq->where('description', 'like', '%'.addcslashes($attendee->name, '%_').'%');
+                      if ($attendee->event?->title) {
+                          $qq->where('description', 'like', '%'.addcslashes($attendee->event->title, '%_').'%');
+                      }
+                  });
+            })
+            ->with(['lines.account'])
+            ->orderByDesc('entry_date')
+            ->orderByDesc('id')
+            ->get();
+
+        // Deduplicate by id (in case both conditions match same entry)
+        $entries = $entries->unique('id')->values();
+
+        // If no entries found but attendee has amount_paid, at least show a synthetic entry for display
+        $transactions = $entries->map(function ($entry) use ($attendee) {
+            $amount = max((float) $entry->lines->sum('debit'), (float) $entry->lines->sum('credit'));
+            // Fallback to attendee amount if entry amount is 0
+            if ($amount == 0) $amount = (float) $attendee->amount_paid;
+            return [
+                'id' => $entry->id,
+                'entry_no' => $entry->entry_no,
+                'entry_date' => $entry->entry_date?->format('d M Y'),
+                'description' => $entry->description,
+                'reference' => $entry->reference,
+                'amount' => round($amount, 2),
+                'amount_formatted' => number_format($amount),
+                'status' => $entry->status,
+                'receipt_url' => route('accounting.transactions.receipt', $entry).'?inline=1',
+                'lines' => $entry->lines->map(fn ($l) => [
+                    'account' => $l->account?->name ?? '—',
+                    'code' => $l->account?->code ?? '—',
+                    'debit' => (float) $l->debit,
+                    'credit' => (float) $l->credit,
+                ]),
+            ];
+        });
+
+        return response()->json([
+            'attendee' => [
+                'id' => $attendee->hashed_id,
+                'name' => $attendee->name,
+                'phone' => $attendee->phone,
+                'amount_paid' => (float) $attendee->amount_paid,
+                'fee_amount' => $attendee->fee_amount !== null ? (float) $attendee->fee_amount : null,
+            ],
+            'transactions' => $transactions,
+            'count' => $transactions->count(),
+        ]);
+    }
+
     // ── Tickets ─────────────────────────────────────────
     private function ensureTicket(EventAttendee $attendee): string
     {
