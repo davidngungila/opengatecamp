@@ -170,6 +170,17 @@
 
 @push('scripts')
 <script>
+var __permLabel = {
+  'members.view':'View Members','members.manage':'Manage Members',
+  'events.manage':'Manage Events','events.complete':'Complete Events',
+  'pledges.manage':'Manage Pledges',
+  'finance.view':'View Finance','finance.manage':'Manage Finance','finance.approve':'Approve Finance',
+  'communication.send':'Send Communication',
+  'documents.view':'View Documents','documents.manage':'Manage Documents',
+  'reports.view':'View Reports','reports.export':'Export Reports',
+  'users.manage':'Manage Users','roles.manage':'Manage Roles','settings.manage':'Manage Settings','audit.view':'View Audit Logs'
+};
+function permLabel(key){ return __permLabel[key] || key; }
 function resetUserModal(){
   var form=document.getElementById('userForm');
   form.reset();
