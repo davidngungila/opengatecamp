@@ -104,6 +104,7 @@
                           data-fellowship="{{ $a->fellowship ?? '—' }}"
                           data-pickup="{{ $a->pickupLocation?->name ?? '—' }}"
                           data-notes="{{ $a->notes }}">View Details</button>
+                  <button type="button" data-update-att-status data-id="{{ $a->hashed_id }}" data-name="{{ $a->name }}" data-status="{{ $a->status }}">Update Status</button>
                   <button type="button" data-record-att-payment data-id="{{ $a->hashed_id }}" data-name="{{ $a->name }}" data-amount="{{ $a->amount_paid }}">Record Payment</button>
                   <button type="button" data-send-att-sms data-id="{{ $a->hashed_id }}" data-name="{{ $a->name }}" data-phone="{{ $a->phone }}">Send SMS</button>
                   @if($a->hasCompletedContribution())
@@ -219,6 +220,13 @@
         <span>Quick Actions</span>
       </div>
       <div class="drawer-actions">
+        <button type="button" class="daction" id="attActStatus">
+          <span class="daction-ico" style="background:rgba(99,102,241,.12);color:#6366f1">
+            <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/><path d="M9 12l3 3 3-3"/></svg>
+          </span>
+          <span class="daction-txt"><b>Update Status</b><small>Change registration status</small></span>
+          <span class="daction-arrow">›</span>
+        </button>
         <button type="button" class="daction" id="attActPayment">
           <span class="daction-ico" style="background:rgba(16,185,129,.12);color:var(--success)">
             <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="5" width="20" height="14" rx="2"/><circle cx="12" cy="12" r="3"/></svg>
@@ -305,6 +313,36 @@
     </form>
   </div>
 </div>
+<div class="drawer-overlay" id="attStatusDrawer">
+  <div class="drawer-panel">
+    <div class="drawer-head">
+      <div><h3>Update Status</h3><p id="attStatusName">—</p></div>
+      <button type="button" class="modal-close" data-drawer-close><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><path d="M18 6L6 18M6 6l12 12"/></svg></button>
+    </div>
+    <form method="POST" action="" id="attStatusForm">
+      @csrf
+      @method('PATCH')
+      <div class="drawer-body">
+        <div class="form-grid">
+          <div class="field full"><label>Status</label>
+            <select name="status" id="attStatusSelect" required style="width:100%">
+              <option value="pending">Pending</option>
+              <option value="confirmed">Confirmed</option>
+              <option value="attended">Attended</option>
+              <option value="no_show">No Show</option>
+              <option value="cancelled">Cancelled</option>
+            </select>
+            <small style="color:var(--text-muted);margin-top:4px;display:block">Attended marks arrival and creates ticket if fully paid.</small>
+          </div>
+        </div>
+      </div>
+      <div class="drawer-foot">
+        <button type="button" class="btn btn-secondary" data-drawer-close>Cancel</button>
+        <button type="submit" class="btn btn-accent">Update Status</button>
+      </div>
+    </form>
+  </div>
+</div>
 @include('partials.ticket-preview-drawer')
 @endsection
 
@@ -335,6 +373,13 @@ document.addEventListener('DOMContentLoaded', function(){
     document.getElementById('attSmsForm').action = "{{ url('/attendees') }}/" + curAtt.id + "/sms";
   }
 
+  document.getElementById('attActStatus').addEventListener('click', function(){
+    closeDrawerById('attDetailDrawer');
+    document.getElementById('attStatusName').textContent = curAtt.name || 'Attendee';
+    document.getElementById('attStatusSelect').value = curAtt.statusKey || 'pending';
+    document.getElementById('attStatusForm').action = "{{ url('/attendees') }}/" + curAtt.id + "/status";
+    openDrawerById('attStatusDrawer');
+  });
   document.getElementById('attActPayment').addEventListener('click', function(){
     closeDrawerById('attDetailDrawer');
     setDetailForm();
@@ -415,6 +460,16 @@ document.addEventListener('DOMContentLoaded', function(){
       document.getElementById('attPaymentForm').reset();
       document.getElementById('attPaymentAmount').value = '';
       openDrawerById('attPaymentDrawer');
+    });
+  });
+
+  document.querySelectorAll('[data-update-att-status]').forEach(function(btn){
+    btn.addEventListener('click', function(){
+      var d = btn.dataset;
+      document.getElementById('attStatusName').textContent = d.name || 'Attendee';
+      document.getElementById('attStatusSelect').value = d.status || 'pending';
+      document.getElementById('attStatusForm').action = "{{ url('/attendees') }}/" + d.id + "/status";
+      openDrawerById('attStatusDrawer');
     });
   });
 

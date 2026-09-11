@@ -487,6 +487,49 @@ class EventController extends Controller
         return back()->with('error', "SMS failed ({$result['status']}). Check the number and API settings.");
     }
 
+    public function updateAttendeeStatus(Request $request, EventAttendee $attendee)
+    {
+        $user = auth()->user();
+        if ($user?->isFellowshipLeader() && ! in_array($user?->role?->name, ['Super Administrator', 'Chairperson'], true)) {
+            $fIds = $user->fellowships()->pluck('fellowships.id');
+            if (! $attendee->fellowship_id || ! $fIds->contains((int) $attendee->fellowship_id)) {
+                abort(403, 'You can only update status for your own fellowship registrations.');
+            }
+        } elseif ($user?->isCommitteeMember()) {
+            if ($attendee->registered_by !== $user->name) {
+                abort(403, 'You can only update your own registrations.');
+            }
+        }
+
+        $data = $request->validate([
+            'status' => 'required|in:pending,confirmed,attended,no_show,cancelled',
+        ]);
+
+        $oldStatus = $attendee->status;
+        $newStatus = $data['status'];
+
+        if ($oldStatus === $newStatus) {
+            return back()->with('info', "Status is already ".EventAttendee::statuses()[$newStatus].".");
+        }
+
+        $attendee->update(['status' => $newStatus]);
+
+        if ($newStatus === 'attended') {
+            $attendee->update(['checked_in_at' => now(), 'checked_in_by' => $user?->name]);
+        } elseif ($oldStatus === 'attended' && $newStatus !== 'attended') {
+            $attendee->update(['checked_in_at' => null, 'checked_in_by' => null]);
+        }
+
+        // If marked attended and fully paid, ensure ticket exists
+        if ($newStatus === 'attended' && $attendee->hasCompletedContribution()) {
+            $this->ensureTicket($attendee);
+        }
+
+        AuditLog::record('Updated attendee status', 'Events', "{$attendee->name} — {$oldStatus} → {$newStatus}".($attendee->fellowship ? " ({$attendee->fellowship})" : ""));
+
+        return back()->with('success', "Status for {$attendee->name} updated to ".EventAttendee::statuses()[$newStatus].".");
+    }
+
     // ── Tickets ─────────────────────────────────────────
     private function ensureTicket(EventAttendee $attendee): string
     {
