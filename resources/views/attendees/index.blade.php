@@ -140,6 +140,10 @@
           <div class="field"><label>Full Name</label><input name="name" id="regName" placeholder="Full name" value="{{ old('name') }}" required></div>
           <div class="field"><label>Phone</label><input name="phone" id="regPhone" placeholder="+255 7XX XXX XXX" value="{{ old('phone') }}"></div>
           <div class="field full"><label>Email</label><input name="email" id="regEmail" placeholder="email@example.com" value="{{ old('email') }}"></div>
+          <div class="field"><label>Coming From @if(!empty($isFellowshipLeader) && $isFellowshipLeader)<span style="font-weight:400;color:var(--text-tertiary)">— auto-filled from your fellowship</span>@endif</label><select name="pickup_location" id="regPickup" required>
+            <option value="">— Select —</option>
+            @foreach($pickupLocations ?? [] as $pk => $pl)<option value="{{ $pk }}" @if(old('pickup_location')===$pk) selected @endif>{{ $pl }}</option>@endforeach
+          </select></div>
           <div class="field"><label>University Fellowship @if(!empty($isFellowshipLeader) && $isFellowshipLeader)<span style="font-weight:400;color:var(--text-tertiary)">— auto-filled from your fellowship</span>@endif</label><select name="fellowship" id="regFellowship" @if(!empty($isFellowshipLeader) && $isFellowshipLeader && count($fellowships)===1) disabled @endif>
             <option value="">— Select —</option>
             @foreach($fellowships ?? [] as $f)<option value="{{ $f }}" @if(old('fellowship')===$f) selected @endif>{{ $f }}</option>@endforeach
@@ -148,10 +152,6 @@
               <input type="hidden" name="fellowship" id="regFellowshipHidden" value="{{ $fellowships[0] }}">
             @endif
           </div>
-          <div class="field"><label>Coming From @if(!empty($isFellowshipLeader) && $isFellowshipLeader)<span style="font-weight:400;color:var(--text-tertiary)">— auto-filled</span>@endif</label><select name="pickup_location" id="regPickup" required>
-            <option value="">— Select —</option>
-            @foreach($pickupLocations ?? [] as $pk => $pl)<option value="{{ $pk }}" @if(old('pickup_location')===$pk) selected @endif>{{ $pl }}</option>@endforeach
-          </select></div>
           <div class="field"><label>Amount to Pay (TZS)</label><input type="number" name="fee_amount" id="regFee" value="{{ old('fee_amount', $defaultFee ?? 10000) }}" readonly style="background:var(--blue-light);font-weight:700;color:var(--navy-900)"></div>
           <div class="field">
             <label>Has Paid?</label>
@@ -473,30 +473,44 @@ document.addEventListener('DOMContentLoaded', function(){
   var regFell = document.getElementById('regFellowship');
   var regFellHidden = document.getElementById('regFellowshipHidden');
   var regPickup = document.getElementById('regPickup');
-  function applyFellowshipPickup(){
+  function filterFellowshipsByPickup(){
     if(!regFell || !regPickup) return;
-    var fell = regFell.value;
-    // Leader with single fellowship -> auto-select that fellowship (University Fellowship must start auto-filled)
-    if(isLeader && !fell && leaderFellowships.length === 1){
-      fell = leaderFellowships[0];
-      regFell.value = fell;
-      if(regFellHidden) regFellHidden.value = fell;
-    }
-    // Coming From is filtered/auto-filled based on selected University Fellowship
-    if(fell && pickupMap[fell]){
-      regPickup.value = pickupMap[fell];
-    }
+    var pickup = regPickup.value;
+    Array.from(regFell.options).forEach(function(opt){
+      if(opt.value === '') return;
+      var shouldShow = !pickup || (pickupMap[opt.value] === pickup);
+      // If fellowship not in map, hide unless no pickup selected
+      opt.hidden = !shouldShow;
+      opt.disabled = !shouldShow;
+      if(!shouldShow && opt.selected){
+        opt.selected = false;
+        if(regFellHidden) regFellHidden.value = '';
+      }
+    });
     if(regFellHidden && regFell.value) regFellHidden.value = regFell.value;
   }
+  function applyInitialLeaderState(){
+    if(isLeader && leaderFellowships.length === 1){
+      var single = leaderFellowships[0];
+      var singlePickup = pickupMap[single];
+      if(singlePickup && regPickup) regPickup.value = singlePickup;
+      if(regFell){
+        regFell.value = single;
+        if(regFellHidden) regFellHidden.value = single;
+      }
+    }
+    filterFellowshipsByPickup();
+  }
   if(regFell && regPickup){
-    // initial: University Fellowship starts selected, Coming From auto-filled
-    applyFellowshipPickup();
+    applyInitialLeaderState();
+    regPickup.addEventListener('change', function(){
+      filterFellowshipsByPickup();
+    });
     regFell.addEventListener('change', function(){
       if(regFellHidden) regFellHidden.value = regFell.value;
-      applyFellowshipPickup();
     });
     document.querySelectorAll('[data-drawer-open="attRegisterDrawer"]').forEach(function(btn){
-      btn.addEventListener('click', function(){ setTimeout(applyFellowshipPickup, 80); });
+      btn.addEventListener('click', function(){ setTimeout(function(){ applyInitialLeaderState(); filterFellowshipsByPickup(); }, 80); });
     });
   }
 });
