@@ -160,6 +160,7 @@ Route::middleware(['auth', 'committee.readonly'])->group(function () {
     // ── Fellowships & Delegations ───────────────────────
     Route::get('/fellowships', [FellowshipController::class, 'index'])->name('fellowships.index');
     Route::get('/fellowships/{fellowship}/delegation', [FellowshipController::class, 'members'])->name('fellowships.members');
+    Route::get('/api/fellowships/{fellowship}/delegation', [FellowshipController::class, 'apiDelegation'])->name('api.fellowships.delegation');
 
     Route::get('/pledges', [PledgeController::class, 'index'])->name('pledges.index');
     Route::get('/pledges/export', [PledgeController::class, 'exportPledgesPdf'])->name('pledges.export');

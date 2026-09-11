@@ -103,6 +103,41 @@ class FellowshipController extends Controller
         ]);
     }
 
+    public function apiDelegation(Request $request, Fellowship $fellowship)
+    {
+        $attendees = $fellowship->attendees()
+            ->with('event')
+            ->orderBy('name')
+            ->get(['id', 'name', 'phone', 'status', 'amount_paid', 'event_id', 'fellowship_id', 'created_at']);
+
+        $stats = [
+            'registered' => $attendees->count(),
+            'confirmed' => $attendees->whereIn('status', ['confirmed', 'attended'])->count(),
+            'attended' => $attendees->where('status', 'attended')->count(),
+            'paid' => (float) $attendees->sum('amount_paid'),
+        ];
+
+        return response()->json([
+            'fellowship' => [
+                'id' => $fellowship->id,
+                'name' => $fellowship->name,
+                'university' => $fellowship->university,
+                'type' => $fellowship->getTypeLabel(),
+            ],
+            'attendees' => $attendees->map(fn ($a) => [
+                'id' => $a->id,
+                'name' => $a->name,
+                'phone' => $a->phone ?: '—',
+                'status' => $a->getStatusLabel(),
+                'status_raw' => $a->status,
+                'paid' => (float) $a->amount_paid,
+                'event' => $a->event?->title ?? '—',
+                'created_at' => $a->created_at?->format('d M Y'),
+            ]),
+            'stats' => $stats,
+        ]);
+    }
+
     private function validateData(Request $request, ?Fellowship $fellowship = null): array
     {
         $unique = $fellowship ? 'unique:fellowships,name,'.$fellowship->id : 'unique:fellowships,name';

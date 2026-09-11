@@ -90,7 +90,7 @@
                   <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><circle cx="12" cy="5" r=".6"/><circle cx="12" cy="12" r=".6"/><circle cx="12" cy="19" r=".6"/></svg>
                 </button>
                 <div class="action-menu" id="am-fell-{{ $f->id }}">
-                  <a href="{{ route('fellowships.members', $f) }}">Delegation</a>
+                  <button type="button" data-view-delegation data-id="{{ $f->id }}">Delegation</button>
                   <button type="button" data-fellowship-edit data-id="{{ $f->id }}" data-name="{{ $f->name }}" data-university="{{ $f->university }}" data-type="{{ $f->type }}" data-contact-name="{{ $f->contact_name }}" data-contact-phone="{{ $f->contact_phone }}" data-contact-email="{{ $f->contact_email }}" data-notes="{{ $f->notes }}" data-capacity="{{ $f->capacity }}" data-active="{{ $f->active ? 1 : 0 }}" data-leaders="{{ $f->leaders->pluck('id')->implode(',') }}" data-primary="{{ $f->primaryLeader()?->id }}">Edit</button>
                   @if($isAdmin)
                   <form method="POST" action="{{ route('fellowships.destroy', $f) }}" data-confirm data-confirm-title="Delete fellowship?" data-confirm-message="This removes '{{ $f->name }}' from the system. Fellowships with registered delegates cannot be deleted." data-confirm-label="Delete">
@@ -210,7 +210,7 @@
       <div id="fellDrawerNoLeaders" style="display:none;padding:12px;text-align:center;color:var(--text-tertiary);font-size:13px;border:1px dashed var(--border-strong);border-radius:10px">No leaders assigned.</div>
 
       <div class="drawer-actions" style="display:flex;flex-direction:column;gap:8px;margin-top:18px">
-        <a id="fellDrawerDelegationBtn" href="#" class="daction"><div class="daction-ico" style="background:var(--blue-light);color:var(--blue-accent)"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M17 21v-2a4 4 0 00-4-4H5a4 4 0 00-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 00-3-3.87"/><path d="M16 3.13a4 4 0 010 7.75"/></svg></div><div class="daction-txt"><b>View Delegation</b><small>See all registered members</small></div><span class="daction-arrow">›</span></a>
+        <button type="button" id="fellDrawerDelegationBtn" class="daction"><div class="daction-ico" style="background:var(--blue-light);color:var(--blue-accent)"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M17 21v-2a4 4 0 00-4-4H5a4 4 0 00-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 00-3-3.87"/><path d="M16 3.13a4 4 0 010 7.75"/></svg></div><div class="daction-txt"><b>View Delegation</b><small>See all registered members — drawer</small></div><span class="daction-arrow">›</span></button>
         <button type="button" id="fellDrawerEditBtn" class="daction"><div class="daction-ico" style="background:var(--purple-bg);color:var(--purple)"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M11 4H4a2 2 0 00-2 2v14a2 2 0 002 2h14a2 2 0 002-2v-7"/><path d="M18.5 2.5a2.12 2.12 0 013 3L12 15l-4 1 1-4 9.5-9.5z"/></svg></div><div class="daction-txt"><b>Edit Fellowship</b><small>Update details & leaders</small></div><span class="daction-arrow">›</span></button>
         @if($isAdmin)
         <form id="fellDrawerDeleteForm" method="POST" action="" data-confirm data-confirm-title="Delete fellowship?" data-confirm-message="This removes the fellowship. Fellowships with delegates cannot be deleted." data-confirm-label="Delete" style="margin:0">
@@ -221,6 +221,34 @@
       </div>
     </div>
     <div class="drawer-foot">
+      <button type="button" class="btn btn-secondary" data-drawer-close>Close</button>
+    </div>
+  </div>
+</div>
+
+<div class="drawer-overlay" id="fellowshipDelegationDrawer">
+  <div class="drawer-panel" style="max-width:720px">
+    <div class="drawer-head">
+      <div><h3 id="delegDrawerTitle">Delegation</h3><p id="delegDrawerSub" style="font-size:12.5px;color:var(--text-tertiary);margin:4px 0 0">Members registered under this fellowship</p></div>
+      <button type="button" class="modal-close" data-drawer-close><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><path d="M18 6L6 18M6 6l12 12"/></svg></button>
+    </div>
+    <div class="drawer-body">
+      <div class="kpi-grid cols-3" style="margin-bottom:16px;gap:12px">
+        <div class="kpi-card" style="padding:14px"><div class="kpi-label" style="margin:0">Registered</div><div class="kpi-value" style="font-size:18px" id="delegStatRegistered">0</div></div>
+        <div class="kpi-card" style="padding:14px"><div class="kpi-label" style="margin:0">Confirmed</div><div class="kpi-value" style="font-size:18px" id="delegStatConfirmed">0</div></div>
+        <div class="kpi-card" style="padding:14px"><div class="kpi-label" style="margin:0">Paid (TZS)</div><div class="kpi-value" style="font-size:18px;color:var(--success)" id="delegStatPaid">0</div></div>
+      </div>
+      <div id="delegLoading" style="display:none;padding:18px;text-align:center;color:var(--text-tertiary);font-size:13px">Loading delegation…</div>
+      <div id="delegEmpty" style="display:none;padding:22px;text-align:center;color:var(--text-tertiary);font-size:13px;border:1px dashed var(--border-strong);border-radius:10px">No members registered yet for this fellowship.</div>
+      <div class="table-scroll" id="delegTableWrap" style="display:none;border:1px solid var(--border);border-radius:12px;overflow:hidden">
+        <table class="data-table compact" style="min-width:600px">
+          <thead><tr><th>#</th><th>Name</th><th>Phone</th><th>Status</th><th style="text-align:right">Paid</th><th>Event</th></tr></thead>
+          <tbody id="delegTableBody"></tbody>
+        </table>
+      </div>
+    </div>
+    <div class="drawer-foot">
+      <span id="delegCountHint" style="margin-right:auto;font-size:12px;font-weight:700;color:var(--text-tertiary)"></span>
       <button type="button" class="btn btn-secondary" data-drawer-close>Close</button>
     </div>
   </div>
@@ -339,11 +367,69 @@ function openFellowshipDetailFromRow(tr){
     });
   }
 
-  document.getElementById('fellDrawerDelegationBtn').href = delegationUrl;
+  // delegation button now opens drawer via API, not navigation
+  var delegBtn = document.getElementById('fellDrawerDelegationBtn');
+  if(delegBtn) delegBtn.dataset.fellowshipId = tr.dataset.id;
+
   var delForm = document.getElementById('fellDrawerDeleteForm');
   if(delForm) delForm.action = deleteUrl;
 
   openDrawerById('fellowshipDetailDrawer');
+}
+
+function openDelegationDrawer(fellowshipId){
+  var titleEl = document.getElementById('delegDrawerTitle');
+  var subEl = document.getElementById('delegDrawerSub');
+  var body = document.getElementById('delegTableBody');
+  var wrap = document.getElementById('delegTableWrap');
+  var empty = document.getElementById('delegEmpty');
+  var loading = document.getElementById('delegLoading');
+  var hint = document.getElementById('delegCountHint');
+  if(__currentFell){
+    titleEl.textContent = (__currentFell.dataset.name || 'Delegation') + ' — Delegation';
+    subEl.textContent = __currentFell.dataset.university ? __currentFell.dataset.university + ' · ' + (__currentFell.dataset.typeLabel || '') : (__currentFell.dataset.typeLabel || 'Fellowship delegation');
+  }
+  body.innerHTML = '';
+  wrap.style.display = 'none';
+  empty.style.display = 'none';
+  loading.style.display = 'block';
+  hint.textContent = '';
+  openDrawerById('fellowshipDelegationDrawer');
+  fetch('/api/fellowships/' + encodeURIComponent(fellowshipId) + '/delegation', {headers:{'Accept':'application/json','X-Requested-With':'XMLHttpRequest'}, credentials:'same-origin'})
+    .then(function(r){ if(!r.ok) throw new Error('HTTP '+r.status); return r.json(); })
+    .then(function(data){
+      loading.style.display = 'none';
+      var attendees = data.attendees || [];
+      var stats = data.stats || {};
+      document.getElementById('delegStatRegistered').textContent = stats.registered ?? attendees.length;
+      document.getElementById('delegStatConfirmed').textContent = stats.confirmed ?? 0;
+      document.getElementById('delegStatPaid').textContent = Number(stats.paid ?? 0).toLocaleString();
+      hint.textContent = attendees.length + ' member(s)';
+      if(!attendees.length){
+        empty.style.display = 'block';
+        return;
+      }
+      wrap.style.display = 'block';
+      attendees.forEach(function(a, idx){
+        var tr = document.createElement('tr');
+        tr.style.borderBottom = '1px solid var(--border)';
+        var statusColor = (a.status_raw === 'attended' || a.status === 'Attended') ? 'success' : (a.status_raw === 'confirmed' ? 'info' : (a.status_raw === 'pending' ? 'warning' : 'neutral'));
+        tr.innerHTML = '<td style="padding:8px 10px;color:var(--text-tertiary);font-weight:700;font-size:12px">'+(idx+1)+'</td>'
+          + '<td style="padding:8px 10px;font-weight:700">'+a.name+'</td>'
+          + '<td style="padding:8px 10px;font-family:ui-monospace,monospace;font-size:12.5px">'+(a.phone||'—')+'</td>'
+          + '<td style="padding:8px 10px"><span class="badge badge-'+statusColor+' badge-dotted" style="font-size:10.5px">'+a.status+'</span></td>'
+          + '<td style="padding:8px 10px;text-align:right;font-weight:700;color:var(--success)">'+Number(a.paid||0).toLocaleString()+'</td>'
+          + '<td style="padding:8px 10px;font-size:12px;color:var(--text-tertiary)">'+(a.event||'—')+'</td>';
+        body.appendChild(tr);
+      });
+    })
+    .catch(function(err){
+      loading.style.display = 'none';
+      empty.style.display = 'block';
+      empty.textContent = 'Failed to load delegation: ' + (err.message||'error');
+      console.error(err);
+      toast('Could not load delegation: ' + (err.message||''), 'error');
+    });
 }
 
 document.addEventListener('click', function(e){
@@ -354,7 +440,7 @@ document.addEventListener('click', function(e){
   openFellowshipDetailFromRow(tr);
 });
 
-document.getElementById('fellDrawerEditBtn').addEventListener('click', function(){
+  document.getElementById('fellDrawerEditBtn').addEventListener('click', function(){
   if(!__currentFell) return;
   closeDrawerById('fellowshipDetailDrawer');
   // trigger existing edit flow using the same data-attributes as the row's edit button
@@ -403,6 +489,24 @@ document.getElementById('fellDrawerEditBtn').addEventListener('click', function(
   }
   document.getElementById('fsPrimary').value = btn.dataset.primary || '';
   setTimeout(function(){ openDrawerById('fellowshipNewDrawer'); }, 180);
+});
+
+document.getElementById('fellDrawerDelegationBtn').addEventListener('click', function(){
+  if(!__currentFell) return;
+  var fid = __currentFell.dataset.id;
+  closeDrawerById('fellowshipDetailDrawer');
+  setTimeout(function(){ openDelegationDrawer(fid); }, 180);
+});
+
+document.addEventListener('click', function(e){
+  var btn = e.target.closest('[data-view-delegation]');
+  if(!btn) return;
+  var fid = btn.dataset.id;
+  document.querySelectorAll('.action-menu.open').forEach(function(m){m.classList.remove('open');});
+  // find row to set __currentFell for header consistency if needed
+  var tr = document.querySelector('[data-view-fellowship][data-id="'+fid+'"]');
+  if(tr) __currentFell = tr;
+  openDelegationDrawer(fid);
 });
 </script>
 @endpush
