@@ -28,11 +28,15 @@ class EventController extends Controller
         $status = $request->query('status');
         $q = trim((string) $request->query('q'));
 
-        $query = EventAttendee::with(['event', 'member']);
+        $query = EventAttendee::with(['event', 'member', 'fellowship']);
 
         $user = auth()->user();
         if ($user?->isCommitteeMember()) {
             $query->where('registered_by', $user->name);
+        } elseif ($user?->isFellowshipLeader()) {
+            $fIds = $user->fellowships()->pluck('fellowships.id');
+            // Fellowship leaders see only registrations for their assigned fellowship(s) — others remain general
+            $query->whereIn('fellowship_id', $fIds);
         }
 
         $query->when($eventId, fn ($qr) => $qr->where('event_id', $eventId))
@@ -47,6 +51,9 @@ class EventController extends Controller
         $totalsQuery = EventAttendee::query();
         if ($user?->isCommitteeMember()) {
             $totalsQuery->where('registered_by', $user->name);
+        } elseif ($user?->isFellowshipLeader()) {
+            $fIds2 = $user->fellowships()->pluck('fellowships.id');
+            $totalsQuery->whereIn('fellowship_id', $fIds2);
         }
 
         return view('attendees.index', [
@@ -75,11 +82,14 @@ class EventController extends Controller
         $status = $request->query('status');
         $q = trim((string) $request->query('q'));
 
-        $query = EventAttendee::with(['event', 'member']);
+        $query = EventAttendee::with(['event', 'member', 'fellowship']);
 
         $user = auth()->user();
         if ($user?->isCommitteeMember()) {
             $query->where('registered_by', $user->name);
+        } elseif ($user?->isFellowshipLeader()) {
+            $fIds = $user->fellowships()->pluck('fellowships.id');
+            $query->whereIn('fellowship_id', $fIds);
         }
 
         $query->when($eventId, fn ($qr) => $qr->where('event_id', $eventId))
@@ -179,9 +189,31 @@ class EventController extends Controller
             return back()->with('error', 'No event configured. Set the current event under Settings → General → Event Settings.');
         }
 
+        $currentUser = auth()->user();
+        // Fellowship leaders: enforce fellowship scoping (only Registrations are per-fellowship)
+        if ($currentUser?->isFellowshipLeader() && ! in_array($currentUser?->role?->name, ['Super Administrator', 'Chairperson'], true)) {
+            $myFIds = $currentUser->fellowships()->pluck('fellowships.id');
+            if ($myFIds->isEmpty()) {
+                return back()->with('error', 'You are not assigned to any fellowship — contact the committee.')->withInput();
+            }
+            if (empty($data['fellowship_id'])) {
+                if ($myFIds->count() === 1) {
+                    $data['fellowship_id'] = $myFIds->first();
+                    $data['fellowship'] = Fellowship::find($data['fellowship_id'])?->name;
+                } else {
+                    return back()->with('error', 'Please select a fellowship for this registration.')->withInput();
+                }
+            } elseif (! $myFIds->contains((int) $data['fellowship_id'])) {
+                return back()->with('error', 'You can only register members for your assigned fellowship(s).')->withInput();
+            }
+            if (! empty($data['fellowship_id']) && empty($data['fellowship'])) {
+                $data['fellowship'] = Fellowship::find($data['fellowship_id'])?->name;
+            }
+        }
+
         $data['event_id'] = $event->id;
         $data['registered_on'] = now()->toDateString();
-        $data['registered_by'] = auth()->user()?->name;
+        $data['registered_by'] = $currentUser?->name;
 
         if (empty($data['fee_amount'])) {
             $data['fee_amount'] = (float) $event->registration_fee > 0 ? $event->registration_fee : 10000;
@@ -217,7 +249,9 @@ class EventController extends Controller
             return $attendee;
         });
 
-        AuditLog::record('Registered attendee', 'Events', "{$event->title} — {$data['name']}");
+        $fellowshipName = $data['fellowship'] ?? Fellowship::find($data['fellowship_id'] ?? null)?->name;
+        $byFrom = $fellowshipName ? "Recorded by ".($currentUser?->name ?? '—')." from {$fellowshipName} — " : "";
+        AuditLog::record('Registered attendee', 'Events', $byFrom."{$event->title} — {$data['name']}");
 
         if ($sendSms && ! empty($attendee->phone)) {
             $sms = new SmsService();

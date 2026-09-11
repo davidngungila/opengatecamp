@@ -142,13 +142,27 @@
             <select name="active" id="fsActive"><option value="1">Active</option><option value="0">Inactive</option></select>
           </div>
           <div class="field full">
-            <label>Leaders</label>
-            <select name="leader_ids[]" id="fsLeaders" multiple size="6" style="min-height:120px">
-              @foreach($users as $u)
-              <option value="{{ $u->id }}">{{ $u->name }} — {{ $u->email }}</option>
-              @endforeach
-            </select>
-            <div class="field-hint">Hold Ctrl / Cmd to select multiple. Leaders sign into the Member Portal with their normal account.</div>
+            <label style="display:flex;align-items:center;gap:6px">Leaders <small style="font-weight:400;color:var(--text-tertiary)">— select one or more (all will manage registrations for this fellowship)</small> <span class="info-wrap" tabindex="0" style="margin-left:2px"><span class="info-ico">i</span><span class="info-bubble">Assign multiple leaders — each selected leader will see only this fellowship's registrations in their portal and any registration they create is recorded as “recorded by [Name] from [Fellowship]”.</span></span></label>
+            <div style="border:1px solid var(--border);border-radius:10px;overflow:hidden">
+              <div style="padding:8px;border-bottom:1px solid var(--border);background:rgba(248,250,252,.6);display:flex;gap:8px;align-items:center">
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="color:var(--text-tertiary)"><circle cx="11" cy="11" r="7"/><path d="M21 21l-4.3-4.3"/></svg>
+                <input type="text" id="fsLeadersSearch" placeholder="Search users by name or email..." style="flex:1;height:32px;border-radius:8px;border:1px solid var(--border);padding:0 10px;font-size:13px" oninput="filterFsLeaders(this.value)">
+                <span id="fsLeadersCount" style="font-size:11px;font-weight:700;color:var(--blue-accent);white-space:nowrap">0 selected</span>
+              </div>
+              <div id="fsLeadersList" style="max-height:180px;overflow-y:auto;padding:8px;display:flex;flex-direction:column;gap:6px">
+                @foreach($users as $u)
+                <label class="fs-leader-row" data-name="{{ strtolower($u->name.' '.$u->email.' '.($u->role?->name ?? '')) }}" style="display:flex;align-items:center;gap:8px;padding:7px 8px;border-radius:8px;border:1px solid transparent;cursor:pointer;transition:.12s">
+                  <input type="checkbox" name="leader_ids[]" value="{{ $u->id }}" class="fsLeaderCheck" style="accent-color:var(--blue-accent)">
+                  <span style="flex:1;min-width:0">
+                    <b style="font-size:13px;display:block;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">{{ $u->name }}</b>
+                    <span style="font-size:11.5px;color:var(--text-tertiary);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;display:block">{{ $u->email }}</span>
+                  </span>
+                  <span class="badge badge-neutral" style="font-size:10px;white-space:nowrap">{{ $u->role?->name ?? '—' }}</span>
+                </label>
+                @endforeach
+              </div>
+            </div>
+            <div class="field-hint">Selected leaders can all record and view registrations for this fellowship. Same leader can be assigned to multiple fellowships.</div>
           </div>
           <div class="field full">
             <label>Primary Leader</label>
@@ -274,6 +288,47 @@
 
 @push('scripts')
 <script>
+function getFsSelectedLeaderIds(){ return Array.from(document.querySelectorAll('.fsLeaderCheck:checked')).map(function(cb){ return Number(cb.value); }); }
+function setFsLeadersChecked(ids){
+  document.querySelectorAll('.fsLeaderCheck').forEach(function(cb){
+    var isSel = ids.indexOf(Number(cb.value)) !== -1;
+    cb.checked = isSel;
+    var row = cb.closest('.fs-leader-row');
+    if(row){ row.style.background = isSel ? 'var(--blue-light)' : 'transparent'; row.style.borderColor = isSel ? 'rgba(37,99,235,.25)' : 'transparent'; }
+  });
+  updateFsLeadersUI();
+}
+function updateFsLeadersUI(){
+  var count = document.querySelectorAll('.fsLeaderCheck:checked').length;
+  var el = document.getElementById('fsLeadersCount');
+  if(el) el.textContent = count + ' selected';
+  var selected = getFsSelectedLeaderIds();
+  var primarySel = document.getElementById('fsPrimary');
+  if(primarySel){
+    Array.from(primarySel.options).forEach(function(opt){
+      if(opt.value === '') return;
+      var shouldShow = selected.indexOf(Number(opt.value)) !== -1;
+      opt.hidden = !shouldShow;
+      opt.disabled = !shouldShow;
+    });
+    if(primarySel.value && selected.indexOf(Number(primarySel.value)) === -1) primarySel.value = '';
+  }
+}
+function filterFsLeaders(q){
+  q = (q||'').toLowerCase().trim();
+  document.querySelectorAll('.fs-leader-row').forEach(function(row){
+    row.style.display = row.dataset.name.indexOf(q) !== -1 ? '' : 'none';
+  });
+}
+window.filterFsLeaders = filterFsLeaders;
+document.addEventListener('change', function(e){
+  if(e.target.classList.contains('fsLeaderCheck')) updateFsLeadersUI();
+});
+document.addEventListener('click', function(e){
+  var row = e.target.closest('.fs-leader-row');
+  if(row && !e.target.closest('input')){ var cb = row.querySelector('.fsLeaderCheck'); if(cb){ cb.checked = !cb.checked; cb.dispatchEvent(new Event('change', {bubbles:true})); } }
+});
+
 document.addEventListener('click', function(e){
   var btn = e.target.closest('[data-fellowship-edit]');
   if(!btn) return;
@@ -299,12 +354,11 @@ document.addEventListener('click', function(e){
   document.getElementById('fsActive').value = btn.dataset.active === '1' ? '1' : '0';
   document.getElementById('fsNotes').value = btn.dataset.notes || '';
 
-  var leaderOpts = document.getElementById('fsLeaders').options;
   var leaders = (btn.dataset.leaders || '').split(',').filter(Boolean).map(Number);
-  for (var i = 0; i < leaderOpts.length; i++) {
-    leaderOpts[i].selected = leaders.indexOf(Number(leaderOpts[i].value)) !== -1;
-  }
+  setFsLeadersChecked(leaders);
   document.getElementById('fsPrimary').value = btn.dataset.primary || '';
+  document.getElementById('fsLeadersSearch').value = '';
+  filterFsLeaders('');
 
   openDrawerById('fellowshipNewDrawer');
 });
@@ -317,6 +371,10 @@ document.addEventListener('click', function(e){
   document.getElementById('fsForm').action = "{{ route('fellowships.store') }}";
   document.getElementById('fsSubmit').textContent = 'Save Fellowship';
   document.getElementById('fsForm').reset();
+  setFsLeadersChecked([]);
+  document.getElementById('fsPrimary').value = '';
+  document.getElementById('fsLeadersSearch').value = '';
+  filterFsLeaders('');
   document.getElementById('fsActive').value = '1';
 });
 
@@ -535,12 +593,12 @@ document.addEventListener('click', function(e){
   document.getElementById('fsCapacity').value = btn.dataset.capacity || '';
   document.getElementById('fsActive').value = btn.dataset.active === '1' ? '1' : '0';
   document.getElementById('fsNotes').value = btn.dataset.notes || '';
-  var leaderOpts = document.getElementById('fsLeaders').options;
   var leaders = (btn.dataset.leaders || '').split(',').filter(Boolean).map(Number);
-  for (var i = 0; i < leaderOpts.length; i++) {
-    leaderOpts[i].selected = leaders.indexOf(Number(leaderOpts[i].value)) !== -1;
-  }
+  setFsLeadersChecked(leaders);
   document.getElementById('fsPrimary').value = btn.dataset.primary || '';
+  updateFsLeadersUI();
+  document.getElementById('fsLeadersSearch').value = '';
+  filterFsLeaders('');
   setTimeout(function(){ openDrawerById('fellowshipNewDrawer'); }, 180);
 });
 

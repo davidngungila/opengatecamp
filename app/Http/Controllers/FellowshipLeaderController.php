@@ -102,7 +102,7 @@ class FellowshipLeaderController extends Controller
             'registered_by' => auth()->user()?->name,
         ]);
 
-        AuditLog::record('Registered delegation member', 'Fellowships', "{$fellowship->name} — {$attendee->name}");
+        AuditLog::record('Registered delegation member', 'Fellowships', "Recorded by ".(auth()->user()?->name ?? '—')." from {$fellowship->name} — {$attendee->name} ({$attendee->phone})");
 
         return back()->with('success', "{$attendee->name} added to the {$fellowship->name} delegation.");
     }
