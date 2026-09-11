@@ -56,6 +56,32 @@ class EventController extends Controller
             $totalsQuery->whereIn('fellowship_id', $fIds2);
         }
 
+        $isFellowshipLeader = $user?->isFellowshipLeader() && ! in_array($user?->role?->name, ['Super Administrator', 'Chairperson'], true);
+        if ($isFellowshipLeader) {
+            $myFellowships = $user->fellowships()->orderBy('name')->get(['id', 'name', 'university']);
+            $fellowshipsForSelect = $myFellowships->pluck('name')->all();
+        } else {
+            $myFellowships = collect();
+            $fellowshipsForSelect = $this->fellowshipList();
+        }
+        // Build pickup auto-fill map: most common pickup per fellowship (so Coming From is filtered based on University Fellowship) or heuristic
+        $pickupMap = [];
+        foreach ($fellowshipsForSelect as $fname) {
+            $fellow = \App\Models\Fellowship::where('name', $fname)->first(['id', 'name', 'university']);
+            if ($fellow) {
+                $common = EventAttendee::where('fellowship_id', $fellow->id)->select('pickup_location')->groupBy('pickup_location')->selectRaw('pickup_location, COUNT(*) as c')->orderByDesc('c')->value('pickup_location');
+                if (! $common) {
+                    $hay = strtolower($fellow->university.' '.$fellow->name);
+                    $common = str_contains($hay, 'moshi') ? 'moshi' : 'arusha';
+                }
+                $pickupMap[$fname] = $common ?: 'arusha';
+            } else {
+                // No fellowship record — heuristic from name
+                $hay = strtolower($fname);
+                $pickupMap[$fname] = str_contains($hay, 'moshi') ? 'moshi' : 'arusha';
+            }
+        }
+
         return view('attendees.index', [
             'attendees' => $attendees,
             'events' => Event::orderByDesc('start_date')->get(),
@@ -63,13 +89,16 @@ class EventController extends Controller
             'statuses' => EventAttendee::statuses(),
             'defaultFee' => 10000,
             'pickupLocations' => ['arusha' => 'Arusha', 'moshi' => 'Moshi'],
-            'fellowships' => $this->fellowshipList(),
+            'fellowships' => $fellowshipsForSelect,
             'filters' => compact('eventSlug', 'status', 'q'),
             'totals' => [
                 'registered' => (clone $totalsQuery)->count(),
                 'confirmed' => (clone $totalsQuery)->whereIn('status', ['confirmed', 'attended'])->count(),
                 'attended' => (clone $totalsQuery)->where('status', 'attended')->count(),
             ],
+            'isFellowshipLeader' => $isFellowshipLeader,
+            'myFellowships' => $myFellowships,
+            'pickupMap' => $pickupMap,
         ]);
     }
 

@@ -92,11 +92,14 @@
           <div class="field full"><label>Full Name *</label><input name="name" value="{{ old('name') }}" placeholder="Full name" required></div>
           <div class="field full"><label>Phone *</label><input name="phone" value="{{ old('phone') }}" placeholder="+255 7XX XXX XXX" required></div>
           <div class="field full"><label>Email</label><input name="email" value="{{ old('email') }}" placeholder="email@example.com"></div>
-          <div class="field full"><label>Pickup Location *</label><select name="pickup_location" required>
+          <div class="field full"><label>University Fellowship</label><input value="{{ $fellowship->name }}@if($fellowship->university) — {{ $fellowship->university }}@endif" disabled style="background:var(--blue-light);font-weight:700;color:var(--navy-900)"><div class="field-hint" style="font-size:11px">Auto-filled from your assigned fellowship — University Fellowship is first, Coming From is filtered from it.</div></div>
+          <div class="field full"><label>Coming From *</label><select name="pickup_location" id="leaderPickup" required>
             <option value="">— Select —</option>
-            <option value="arusha" @if(old('pickup_location')==='arusha') selected @endif>Arusha</option>
-            <option value="moshi" @if(old('pickup_location')==='moshi') selected @endif>Moshi</option>
-          </select></div>
+            <option value="arusha" @if((old('pickup_location') ?? $defaultPickup ?? '')==='arusha') selected @endif>Arusha</option>
+            <option value="moshi" @if((old('pickup_location') ?? $defaultPickup ?? '')==='moshi') selected @endif>Moshi</option>
+          </select>
+            <div class="field-hint" style="font-size:11px">Auto-filled from your fellowship ({{ $fellowship->name }}) — change only if needed.</div>
+          </div>
           <div class="field full"><label>Notes</label><textarea name="notes" placeholder="Dietary, transport, special needs...">{{ old('notes') }}</textarea></div>
           <div class="field full" style="color:var(--text-tertiary);font-size:12px">
             Camp fee is set automatically (TZS {{ number_format($fee) }}). Payment will be recorded by the committee.

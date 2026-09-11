@@ -140,11 +140,15 @@
           <div class="field"><label>Full Name</label><input name="name" id="regName" placeholder="Full name" value="{{ old('name') }}" required></div>
           <div class="field"><label>Phone</label><input name="phone" id="regPhone" placeholder="+255 7XX XXX XXX" value="{{ old('phone') }}"></div>
           <div class="field full"><label>Email</label><input name="email" id="regEmail" placeholder="email@example.com" value="{{ old('email') }}"></div>
-          <div class="field"><label>University Fellowship</label><select name="fellowship">
+          <div class="field"><label>University Fellowship @if(!empty($isFellowshipLeader) && $isFellowshipLeader)<span style="font-weight:400;color:var(--text-tertiary)">— auto-filled from your fellowship</span>@endif</label><select name="fellowship" id="regFellowship" @if(!empty($isFellowshipLeader) && $isFellowshipLeader && count($fellowships)===1) disabled @endif>
             <option value="">— Select —</option>
             @foreach($fellowships ?? [] as $f)<option value="{{ $f }}" @if(old('fellowship')===$f) selected @endif>{{ $f }}</option>@endforeach
-          </select></div>
-          <div class="field"><label>Coming From</label><select name="pickup_location" required>
+          </select>
+            @if(!empty($isFellowshipLeader) && $isFellowshipLeader && count($fellowships)===1)
+              <input type="hidden" name="fellowship" id="regFellowshipHidden" value="{{ $fellowships[0] }}">
+            @endif
+          </div>
+          <div class="field"><label>Coming From @if(!empty($isFellowshipLeader) && $isFellowshipLeader)<span style="font-weight:400;color:var(--text-tertiary)">— auto-filled</span>@endif</label><select name="pickup_location" id="regPickup" required>
             <option value="">— Select —</option>
             @foreach($pickupLocations ?? [] as $pk => $pl)<option value="{{ $pk }}" @if(old('pickup_location')===$pk) selected @endif>{{ $pl }}</option>@endforeach
           </select></div>
@@ -460,6 +464,40 @@ document.addEventListener('DOMContentLoaded', function(){
     }
     regIsPaid.addEventListener('change', toggleRegPay);
     toggleRegPay();
+  }
+
+  // Auto-fill fellowship & pickup for leaders (University Fellowship — Select — / Coming From — Select —)
+  var isLeader = @json(!empty($isFellowshipLeader) && $isFellowshipLeader);
+  var leaderFellowships = @json($fellowships ?? []);
+  var pickupMap = @json($pickupMap ?? []);
+  var regFell = document.getElementById('regFellowship');
+  var regFellHidden = document.getElementById('regFellowshipHidden');
+  var regPickup = document.getElementById('regPickup');
+  function applyFellowshipPickup(){
+    if(!regFell || !regPickup) return;
+    var fell = regFell.value;
+    // Leader with single fellowship -> auto-select that fellowship (University Fellowship must start auto-filled)
+    if(isLeader && !fell && leaderFellowships.length === 1){
+      fell = leaderFellowships[0];
+      regFell.value = fell;
+      if(regFellHidden) regFellHidden.value = fell;
+    }
+    // Coming From is filtered/auto-filled based on selected University Fellowship
+    if(fell && pickupMap[fell]){
+      regPickup.value = pickupMap[fell];
+    }
+    if(regFellHidden && regFell.value) regFellHidden.value = regFell.value;
+  }
+  if(regFell && regPickup){
+    // initial: University Fellowship starts selected, Coming From auto-filled
+    applyFellowshipPickup();
+    regFell.addEventListener('change', function(){
+      if(regFellHidden) regFellHidden.value = regFell.value;
+      applyFellowshipPickup();
+    });
+    document.querySelectorAll('[data-drawer-open="attRegisterDrawer"]').forEach(function(btn){
+      btn.addEventListener('click', function(){ setTimeout(applyFellowshipPickup, 80); });
+    });
   }
 });
 </script>
