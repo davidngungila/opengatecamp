@@ -198,8 +198,14 @@ document.addEventListener('DOMContentLoaded', function(){
     tr.addEventListener('click', function(e){
       if(e.target.closest('a') || e.target.closest('button') || e.target.closest('form')) return;
       var id = tr.dataset.id;
-      fetch('{{ url('/api/users') }}/' + id)
-        .then(function(r){ return r.json(); })
+      fetch('/api/users/' + encodeURIComponent(id), {
+          headers: { 'Accept': 'application/json', 'X-Requested-With': 'XMLHttpRequest' },
+          credentials: 'same-origin'
+        })
+        .then(function(r){
+          if (!r.ok) throw new Error('HTTP '+r.status);
+          return r.json();
+        })
         .then(function(d){
           var u = d.user;
           document.getElementById('usrDrawerName').textContent = u.name;
@@ -246,7 +252,10 @@ document.addEventListener('DOMContentLoaded', function(){
           });
           openDrawerById('userDetailDrawer');
         })
-        .catch(function(){ toast('Could not load user details', 'error'); });
+        .catch(function(err){
+          console.error('load user failed', err);
+          toast('Could not load user details' + (err && err.message ? ': ' + err.message : ''), 'error');
+        });
     });
   });
 });
