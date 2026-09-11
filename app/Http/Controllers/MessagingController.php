@@ -327,14 +327,15 @@ class MessagingController extends Controller
     }
 
     /**
-     * AJAX: Unified search across Users, Members, Pledges and Registrations (EventAttendee).
+     * AJAX: Unified search across Users, Pledges and Registrations (EventAttendee).
      * Powers the SMS compose recipient picker: search by name / phone / email / pledge_no / ticket_no.
      * Returns unified list with source badges, deduped by phone so bulk send does not duplicate.
+     * Members are intentionally excluded per requirement.
      */
     public function searchRecipients(Request $request)
     {
         $q = trim((string) $request->input('q', ''));
-        $sourceFilter = $request->input('source', 'all'); // all | user | member | pledge | registration
+        $sourceFilter = $request->input('source', 'all'); // all | user | pledge | registration
         $limit = (int) $request->input('limit', 20);
         $limit = max(1, min(50, $limit));
 
@@ -344,7 +345,7 @@ class MessagingController extends Controller
 
         $like = '%'.$q.'%';
         $results = collect();
-        $perSource = max(5, (int) ceil($limit / 2));
+        $perSource = max(5, (int) ceil($limit / 3));
 
         // ── Users (system users) ───────────────────────────────────────────
         if (in_array($sourceFilter, ['all', 'user'], true)) {
@@ -369,29 +370,6 @@ class MessagingController extends Controller
                     ]);
                 $results = $results->concat($users);
             } catch (\Throwable $e) { /* table missing – ignore */ }
-        }
-
-        // ── Members ────────────────────────────────────────────────────────
-        if (in_array($sourceFilter, ['all', 'member'], true)) {
-            $members = Member::whereNotNull('phone')->where('phone', '!=', '')
-                ->where(function ($qq) use ($like) {
-                    $qq->where('name', 'like', $like)
-                        ->orWhere('phone', 'like', $like)
-                        ->orWhere('member_no', 'like', $like);
-                })
-                ->limit($perSource)
-                ->get(['id', 'name', 'phone', 'member_type', 'status', 'member_no'])
-                ->map(fn ($m) => [
-                    'key'          => 'member_'.$m->id,
-                    'id'           => $m->id,
-                    'source'       => 'member',
-                    'source_label' => $m->member_type === 'student' ? 'Student' : 'Member',
-                    'name'         => $m->name,
-                    'phone'        => $m->phone,
-                    'extra'        => trim(($m->member_no ? $m->member_no.' · ' : '').($m->status ?? '')) ?: '—',
-                    'badge_color'  => $m->member_type === 'student' ? 'info' : 'neutral',
-                ]);
-            $results = $results->concat($members);
         }
 
         // ── Pledges ────────────────────────────────────────────────────────

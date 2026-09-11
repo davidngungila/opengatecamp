@@ -56,7 +56,7 @@
       <div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap">
         <div>
           <h2 style="font-size:14.5px;margin:0;display:flex;align-items:center;gap:7px">Recipients
-            <span class="info-wrap" tabindex="0" aria-label="Recipients help"><span class="info-ico">i</span><span class="info-bubble">Recipients are displayed as <b>independent rows</b> — each row is one <code>messages[]</code> object for <code>POST /api/sms/v2/text/multi</code> (<code>flash:0</code>). Same text sent to all, duplicates removed. Use the <b>Remove</b> button on any row to drop that recipient without affecting others. Use <b>View in Drawer</b> for a larger preview. Type at least 2 characters to search across Users · Members · Pledges · Registrations — tap a result to add.</span></span>
+            <span class="info-wrap" tabindex="0" aria-label="Recipients help"><span class="info-ico">i</span><span class="info-bubble">Recipients are displayed as <b>independent rows</b> — each row is one <code>messages[]</code> object for <code>POST /api/sms/v2/text/multi</code> (<code>flash:0</code>). Same text sent to all, duplicates removed. Use the <b>Remove</b> button on any row to drop that recipient without affecting others. Use <b>View in Drawer</b> for a larger preview. Type at least 2 characters to search across Users · Pledges · Registrations — tap a result to add.</span></span>
           </h2>
           <small style="color:var(--text-tertiary);font-weight:600"><span id="recipientCountBadge">0</span> selected</small>
         </div>
@@ -72,17 +72,16 @@
       <div style="display:flex;gap:8px;align-items:center">
         <div class="tfield" style="flex:1;position:relative">
           <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
-          <input type="text" id="recipientSearch" placeholder="Search users, members, pledges, registrations by name or phone…" autocomplete="off" style="padding-left:38px;padding-right:30px">
+          <input type="text" id="recipientSearch" placeholder="Search users, pledges, registrations by name or phone…" autocomplete="off" style="padding-left:38px;padding-right:30px">
           <button type="button" id="clearSearchBtn" style="position:absolute;right:8px;top:50%;transform:translateY(-50%);background:transparent;border:none;color:var(--text-tertiary);display:none;cursor:pointer" onclick="clearSearch()">✕</button>
         </div>
         <select id="sourceFilter" style="height:40px;border-radius:11px;border:1px solid var(--border);background:var(--white);padding:0 10px;font-size:12.5px;font-weight:700;color:var(--text-secondary);min-width:125px" onchange="onSourceFilterChange()">
           <option value="all">All sources</option>
           <option value="user">Users</option>
-          <option value="member">Members</option>
           <option value="pledge">Pledges</option>
           <option value="registration">Registrations</option>
         </select>
-        <span class="info-wrap" tabindex="0" aria-label="Search help"><span class="info-ico">i</span><span class="info-bubble">Type at least 2 characters. Searches across <b>Users</b> · <b>Members</b> · <b>Pledges</b> · <b>Registrations</b>. Tap a result to add — each added recipient appears as its own independent row below.</span></span>
+        <span class="info-wrap" tabindex="0" aria-label="Search help"><span class="info-ico">i</span><span class="info-bubble">Type at least 2 characters. Searches across <b>Users</b> · <b>Pledges</b> · <b>Registrations</b>. Tap a result to add — each added recipient appears as its own independent row below.</span></span>
       </div>
       {{-- Results dropdown --}}
       <div id="searchResults" style="display:none;position:absolute;left:0;right:0;top:calc(100% + 6px);z-index:30;background:var(--white);border:1px solid var(--border);border-radius:12px;box-shadow:var(--shadow-lg);max-height:360px;overflow-y:auto"></div>
@@ -96,30 +95,6 @@
       <div style="display:flex;gap:8px;align-items:center">
         <select id="bulkGroupSelect" style="flex:1;height:40px;border-radius:11px;border:1px solid var(--border);background:var(--white);padding:0 12px;font-size:13px;font-weight:600;color:var(--text-primary)">
           <option value="">— Choose group —</option>
-          <optgroup label="Members">
-            <option value="all_active">All Active Members</option>
-            <option value="all">All Members</option>
-            <option value="inactive">Inactive Members</option>
-            <option value="new">New Members</option>
-            <option value="member_type:student">Students only</option>
-            <option value="member_type:non_student">Non-Students</option>
-            <option value="students_activated">Students — Activated (Current FY)</option>
-            <option value="students_not_activated">Students — Not Activated</option>
-          </optgroup>
-          @if($groups && $groups->count())
-          <optgroup label="Groups">
-            @foreach($groups as $g)
-            <option value="group:{{ $g->id }}">{{ $g->name }}</option>
-            @endforeach
-          </optgroup>
-          @endif
-          @if($ministries && $ministries->count())
-          <optgroup label="Ministries">
-            @foreach($ministries as $m)
-            <option value="ministry:{{ $m->id }}">{{ $m->name }}</option>
-            @endforeach
-          </optgroup>
-          @endif
           <optgroup label="Pledges">
             <option value="pledge:">All Pledges</option>
             <option value="pledge:pending">Pledges — Pending</option>
@@ -150,7 +125,7 @@
       </div>
       <div style="display:flex;align-items:center;justify-content:center;gap:6px;flex-wrap:wrap">
         <span>No recipients selected.</span>
-        <span class="info-wrap" tabindex="0" aria-label="Empty help"><span class="info-ico">i</span><span class="info-bubble">Search above or add a group — each selection becomes its own independent row in the table below. You can mix Users, Members, Pledges, Registrations. Duplicates by phone are auto-removed.</span></span>
+        <span class="info-wrap" tabindex="0" aria-label="Empty help"><span class="info-ico">i</span><span class="info-bubble">Search above or add a group — each selection becomes its own independent row in the table below. You can mix Users, Pledges, Registrations. Duplicates by phone are auto-removed.</span></span>
       </div>
     </div>
     <div id="selectedListWrap" style="display:none">
