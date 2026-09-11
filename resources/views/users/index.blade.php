@@ -8,6 +8,14 @@
     $initials = fn($name) => collect(explode(' ', str_replace(['Fr. ','Dr. '], '', $name)))->map(fn($w) => mb_substr($w,0,1))->take(2)->implode('');
 @endphp
 
+<style>
+.info-wrap{position:relative;display:inline-flex;align-items:center;justify-content:center;vertical-align:middle}
+.info-wrap .info-ico{width:16px;height:16px;border-radius:50%;background:var(--blue-light);color:var(--blue-accent);display:inline-flex;align-items:center;justify-content:center;font-size:10px;font-weight:900;border:1px solid rgba(37,99,235,.18);cursor:help;flex-shrink:0}
+.info-bubble{position:absolute;left:50%;bottom:calc(100% + 8px);transform:translateX(-50%);background:#0f172a;color:#fff;font-size:11.5px;line-height:1.5;font-weight:500;padding:10px 12px;border-radius:9px;min-width:240px;max-width:320px;white-space:normal;box-shadow:0 10px 28px rgba(0,0,0,.22);opacity:0;visibility:hidden;transition:opacity .15s,visibility .15s;z-index:50;text-align:left;pointer-events:none}
+.info-bubble::after{content:'';position:absolute;top:100%;left:50%;transform:translateX(-50%);border:6px solid transparent;border-top-color:#0f172a}
+.info-wrap:hover .info-bubble,.info-wrap:focus-within .info-bubble{opacity:1;visibility:visible}
+.info-bubble code{background:rgba(255,255,255,.12);padding:1px 5px;border-radius:4px;font-family:ui-monospace,monospace;font-size:11px}
+</style>
 @section('content')
 <div class="fade-in">
   <div class="section-head">
@@ -149,7 +157,10 @@
         @csrf
         <div class="field" style="margin-top:8px">
           <textarea name="welcome_message" id="usrWelcomeMsg" rows="4" style="width:100%" placeholder="Karibu {name}! Login at https://opengatecamp.iccrtz.org/login with your phone number.">{{ $welcomeMessage }}</textarea>
-          <small style="color:var(--text-muted)">Placeholders: <code>{name}</code> and <code>{phone}</code> are replaced with this user's details. Edit freely — each user can get a different message.</small>
+          <div style="display:flex;align-items:center;gap:6px;margin-top:4px">
+            <small style="color:var(--text-muted)">Placeholders</small>
+            <span class="info-wrap" tabindex="0" aria-label="Placeholders help"><span class="info-ico">i</span><span class="info-bubble">Placeholders: <code>{name}</code> and <code>{phone}</code> are replaced with this user's details. Edit freely — each user can get a different message.</span></span>
+          </div>
         </div>
         <div class="flex gap-8" style="margin-top:12px;justify-content:flex-end">
           <button type="button" class="btn btn-secondary btn-sm" id="usrWelcomeSaveDefault">Save as Default Content</button>

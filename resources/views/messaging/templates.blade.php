@@ -3,6 +3,14 @@
 @section('crumb', 'Communication / Messaging / Templates')
 @section('page_title', 'Message Templates')
 
+<style>
+.info-wrap{position:relative;display:inline-flex;align-items:center;justify-content:center;vertical-align:middle}
+.info-wrap .info-ico{width:16px;height:16px;border-radius:50%;background:var(--blue-light);color:var(--blue-accent);display:inline-flex;align-items:center;justify-content:center;font-size:10px;font-weight:900;border:1px solid rgba(37,99,235,.18);cursor:help;flex-shrink:0}
+.info-bubble{position:absolute;left:50%;bottom:calc(100% + 8px);transform:translateX(-50%);background:#0f172a;color:#fff;font-size:11.5px;line-height:1.5;font-weight:500;padding:10px 12px;border-radius:9px;min-width:240px;max-width:320px;white-space:normal;box-shadow:0 10px 28px rgba(0,0,0,.22);opacity:0;visibility:hidden;transition:opacity .15s,visibility .15s;z-index:50;text-align:left;pointer-events:none}
+.info-bubble::after{content:'';position:absolute;top:100%;left:50%;transform:translateX(-50%);border:6px solid transparent;border-top-color:#0f172a}
+.info-wrap:hover .info-bubble,.info-wrap:focus-within .info-bubble{opacity:1;visibility:visible}
+.info-bubble code{background:rgba(255,255,255,.12);padding:1px 5px;border-radius:4px;font-family:ui-monospace,monospace;font-size:11px}
+</style>
 @section('content')
 <div class="fade-in">
   <div class="section-head">
@@ -90,10 +98,9 @@
           <div class="field full"><label>Template Name *</label>
             <input name="name" required maxlength="120" placeholder="e.g. Pledge Reminder" value="{{ old('name') }}">
           </div>
-          <div class="field full"><label>Message *</label>
+          <div class="field full"><label style="display:flex;align-items:center;gap:6px">Message * <span class="info-wrap" tabindex="0" aria-label="Placeholders help"><span class="info-ico">i</span><span class="info-bubble">Placeholders: <code>{name}</code> <code>{event}</code> <code>{year}</code> <code>{venue}</code> <code>{amount}</code> <code>{paid}</code> <code>{remaining}</code> <code>{link}</code> — replaced with real data when sending.</span></span></label>
             <textarea name="message" required maxlength="2000" placeholder="Type your template here. You can use placeholders like {name}, {event}, {date}..." style="min-height:110px" id="newTplMsg" oninput="updateTplCount()">{{ old('message') }}</textarea>
             <div style="display:flex;justify-content:space-between;margin-top:4px">
-              <small style="color:var(--text-muted)">Placeholders: {name} {event} {year} {venue} {amount} {paid} {remaining} {link}</small>
               <small id="tplCount" style="font-weight:700;color:var(--text-secondary)">0 / 2000</small>
             </div>
           </div>
@@ -122,10 +129,9 @@
           <div class="field full"><label>Template Name *</label>
             <input name="name" required maxlength="120" id="tplEditName">
           </div>
-          <div class="field full"><label>Message *</label>
+          <div class="field full"><label style="display:flex;align-items:center;gap:6px">Message * <span class="info-wrap" tabindex="0" aria-label="Placeholders help"><span class="info-ico">i</span><span class="info-bubble">Placeholders: <code>{name}</code> <code>{event}</code> <code>{year}</code> <code>{venue}</code> <code>{amount}</code> <code>{paid}</code> <code>{remaining}</code> <code>{link}</code> — replaced with real data when sending.</span></span></label>
             <textarea name="message" required maxlength="2000" style="min-height:110px" id="tplEditMsg">{{ old('message') }}</textarea>
             <div style="display:flex;justify-content:space-between;margin-top:4px">
-              <small style="color:var(--text-muted)">Placeholders: {name} {event} {year} {venue} {amount} {paid} {remaining} {link}</small>
               <small id="tplEditCount" style="font-weight:700;color:var(--text-secondary)">0 / 2000</small>
             </div>
           </div>
@@ -187,8 +193,7 @@
       <div style="font-size:11px;font-weight:700;letter-spacing:.05em;text-transform:uppercase;color:var(--text-tertiary)">Message</div>
       <div style="margin-top:8px;background:var(--bg-muted,#f8fafc);border:1px solid var(--border,#e5e7eb);border-radius:10px;padding:16px 18px;white-space:pre-wrap;word-break:break-word;line-height:1.7;font-size:14px" id="tplDBody">—</div>
       <div style="margin-top:18px">
-        <div style="font-size:11px;font-weight:700;letter-spacing:.05em;text-transform:uppercase;color:var(--text-tertiary)">Placeholders</div>
-        <p style="font-size:12.5px;color:var(--text-secondary);margin:6px 0 0;line-height:1.7">You can use <code>{name}</code>, <code>{event}</code>, <code>{year}</code>, <code>{venue}</code>, <code>{amount}</code>, <code>{paid}</code>, <code>{remaining}</code> and <code>{link}</code>. They are replaced with real member data when sending.</p>
+        <div style="font-size:11px;font-weight:700;letter-spacing:.05em;text-transform:uppercase;color:var(--text-tertiary);display:flex;align-items:center;gap:6px">Placeholders <span class="info-wrap" tabindex="0" aria-label="Placeholders details"><span class="info-ico">i</span><span class="info-bubble">You can use <code>{name}</code>, <code>{event}</code>, <code>{year}</code>, <code>{venue}</code>, <code>{amount}</code>, <code>{paid}</code>, <code>{remaining}</code> and <code>{link}</code>. They are replaced with real member data when sending.</span></span></div>
       </div>
       <details style="margin-top:18px;border:1px solid var(--border,#e5e7eb);border-radius:10px;padding:14px 18px">
         <summary style="cursor:pointer;font-size:11px;font-weight:700;letter-spacing:.05em;text-transform:uppercase;color:var(--text-secondary)">Template info</summary>
