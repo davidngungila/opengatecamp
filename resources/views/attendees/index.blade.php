@@ -104,7 +104,7 @@
                           data-fellowship="{{ $a->fellowship ?? '—' }}"
                           data-pickup="{{ $a->pickupLocation?->name ?? '—' }}"
                           data-notes="{{ $a->notes }}">View Details</button>
-                  <button type="button" data-update-att-status data-id="{{ $a->hashed_id }}" data-name="{{ $a->name }}" data-status="{{ $a->status }}">Update Status</button>
+                  <button type="button" data-update-att-status data-id="{{ $a->hashed_id }}" data-name="{{ $a->name }}" data-status="{{ $a->status }}" data-notes="{{ $a->notes }}">Update Status</button>
                   <button type="button" data-record-att-payment data-id="{{ $a->hashed_id }}" data-name="{{ $a->name }}" data-amount="{{ $a->amount_paid }}">Record Payment</button>
                   <button type="button" data-send-att-sms data-id="{{ $a->hashed_id }}" data-name="{{ $a->name }}" data-phone="{{ $a->phone }}">Send SMS</button>
                   @if($a->hasCompletedContribution())
@@ -334,6 +334,9 @@
             </select>
             <small style="color:var(--text-muted);margin-top:4px;display:block">Attended marks arrival and creates ticket if fully paid.</small>
           </div>
+          <div class="field full"><label>Note <span style="font-weight:400;color:var(--text-tertiary)">— optional</span></label>
+            <textarea name="notes" id="attStatusNotes" rows="3" placeholder="Add a note about this status change (e.g., reason, payment reference, follow-up)"></textarea>
+          </div>
         </div>
       </div>
       <div class="drawer-foot">
@@ -377,6 +380,7 @@ document.addEventListener('DOMContentLoaded', function(){
     closeDrawerById('attDetailDrawer');
     document.getElementById('attStatusName').textContent = curAtt.name || 'Attendee';
     document.getElementById('attStatusSelect').value = curAtt.statusKey || 'pending';
+    document.getElementById('attStatusNotes').value = curAtt.notes || '';
     document.getElementById('attStatusForm').action = "{{ url('/attendees') }}/" + curAtt.id + "/status";
     openDrawerById('attStatusDrawer');
   });
@@ -468,6 +472,7 @@ document.addEventListener('DOMContentLoaded', function(){
       var d = btn.dataset;
       document.getElementById('attStatusName').textContent = d.name || 'Attendee';
       document.getElementById('attStatusSelect').value = d.status || 'pending';
+      document.getElementById('attStatusNotes').value = d.notes || '';
       document.getElementById('attStatusForm').action = "{{ url('/attendees') }}/" + d.id + "/status";
       openDrawerById('attStatusDrawer');
     });

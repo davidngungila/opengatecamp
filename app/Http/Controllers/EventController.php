@@ -503,16 +503,23 @@ class EventController extends Controller
 
         $data = $request->validate([
             'status' => 'required|in:pending,confirmed,attended,no_show,cancelled',
+            'notes' => 'nullable|string|max:2000',
         ]);
 
         $oldStatus = $attendee->status;
         $newStatus = $data['status'];
+        $notes = $data['notes'] ?? null;
+        $notesChanged = $request->has('notes') && $notes !== $attendee->notes;
 
-        if ($oldStatus === $newStatus) {
+        if ($oldStatus === $newStatus && ! $notesChanged) {
             return back()->with('info', "Status is already ".EventAttendee::statuses()[$newStatus].".");
         }
 
-        $attendee->update(['status' => $newStatus]);
+        $updateData = ['status' => $newStatus];
+        if ($request->has('notes')) {
+            $updateData['notes'] = $notes;
+        }
+        $attendee->update($updateData);
 
         if ($newStatus === 'attended') {
             $attendee->update(['checked_in_at' => now(), 'checked_in_by' => $user?->name]);
@@ -525,7 +532,11 @@ class EventController extends Controller
             $this->ensureTicket($attendee);
         }
 
-        AuditLog::record('Updated attendee status', 'Events', "{$attendee->name} — {$oldStatus} → {$newStatus}".($attendee->fellowship ? " ({$attendee->fellowship})" : ""));
+        $auditDetails = "{$attendee->name} — {$oldStatus} → {$newStatus}".($attendee->fellowship ? " ({$attendee->fellowship})" : "");
+        if ($notesChanged) {
+            $auditDetails .= $notes !== null && $notes !== '' ? " — note updated" : " — note cleared";
+        }
+        AuditLog::record('Updated attendee status', 'Events', $auditDetails);
 
         return back()->with('success', "Status for {$attendee->name} updated to ".EventAttendee::statuses()[$newStatus].".");
     }
