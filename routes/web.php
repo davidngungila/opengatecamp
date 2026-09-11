@@ -116,10 +116,6 @@ Route::middleware(['auth', 'committee.readonly'])->group(function () {
         Route::get('/settings/audit', [SettingsController::class, 'auditPage'])->name('settings.page.audit');
         Route::get('/settings/backup/download', [SettingsController::class, 'backup'])->name('settings.backup');
 
-        Route::post('/fellowships', [FellowshipController::class, 'store'])->name('fellowships.store');
-        Route::put('/fellowships/{fellowship}', [FellowshipController::class, 'update'])->name('fellowships.update');
-        Route::delete('/fellowships/{fellowship}', [FellowshipController::class, 'destroy'])->name('fellowships.destroy');
-
         Route::post('/settings/general', [SettingsController::class, 'updateGeneral'])->name('settings.general');
         Route::post('/settings/digital-card', [SettingsController::class, 'updateDigitalCard'])->name('settings.digital-card');
         Route::post('/settings/organization', [SettingsController::class, 'updateOrganization'])->name('settings.organization');
@@ -157,10 +153,15 @@ Route::middleware(['auth', 'committee.readonly'])->group(function () {
     Route::get('/attendees/{attendee}/ticket', [EventController::class, 'ticketPdf'])->name('attendees.ticket.pdf');
     Route::post('/attendees/{attendee}/ticket/sms', [EventController::class, 'sendTicketSms'])->name('attendees.ticket.sms');
 
-    // ── Fellowships & Delegations ───────────────────────
-    Route::get('/fellowships', [FellowshipController::class, 'index'])->name('fellowships.index');
-    Route::get('/fellowships/{fellowship}/delegation', [FellowshipController::class, 'members'])->name('fellowships.members');
-    Route::get('/api/fellowships/{fellowship}/delegation', [FellowshipController::class, 'apiDelegation'])->name('api.fellowships.delegation');
+    // ── Fellowships & Delegations (admin, secretary, treasurer only) ───────────────────────
+    Route::middleware('fellowship.manage')->group(function () {
+        Route::get('/fellowships', [FellowshipController::class, 'index'])->name('fellowships.index');
+        Route::get('/fellowships/{fellowship}/delegation', [FellowshipController::class, 'members'])->name('fellowships.members');
+        Route::get('/api/fellowships/{fellowship}/delegation', [FellowshipController::class, 'apiDelegation'])->name('api.fellowships.delegation');
+        Route::post('/fellowships', [FellowshipController::class, 'store'])->name('fellowships.store');
+        Route::put('/fellowships/{fellowship}', [FellowshipController::class, 'update'])->name('fellowships.update');
+        Route::delete('/fellowships/{fellowship}', [FellowshipController::class, 'destroy'])->name('fellowships.destroy');
+    });
 
     Route::get('/pledges', [PledgeController::class, 'index'])->name('pledges.index');
     Route::get('/pledges/export', [PledgeController::class, 'exportPledgesPdf'])->name('pledges.export');

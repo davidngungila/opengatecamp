@@ -31,15 +31,17 @@
     <div class="table-card" style="box-shadow:none;border:1px solid var(--border,#e5e7eb)">
       <div class="table-scroll">
         <table class="data-table">
-          <thead><tr><th style="width:50px">#</th><th>Fellowship</th><th style="text-align:right">Actions</th></tr></thead>
+          <thead><tr><th style="width:50px">#</th><th>Fellowship</th><th>Diocese</th><th style="text-align:right">Actions</th></tr></thead>
           <tbody>
             @forelse($fellowships as $index => $f)
-            <tr style="cursor:pointer" data-fellowship-open-row data-mode="edit" data-index="{{ $index }}" data-name="{{ $f }}">
+            @php $dio = $dioceseMap[$f] ?? ''; @endphp
+            <tr style="cursor:pointer" data-fellowship-open-row data-mode="edit" data-index="{{ $index }}" data-name="{{ $f }}" data-diocese="{{ $dio }}">
               <td style="color:var(--text-tertiary);font-size:13px">{{ $index + 1 }}</td>
               <td><span class="cu-name">{{ $f }}</span></td>
+              <td>@if($dio)<span class="badge badge-info badge-dotted" style="font-size:11px">{{ $dio }}</span>@else<span style="color:var(--text-tertiary);font-size:12px">—</span>@endif</td>
               <td style="text-align:right">
                 <div class="flex gap-8" style="align-items:center;justify-content:flex-end;gap:8px">
-                  <button type="button" class="btn btn-ghost btn-sm" data-fellowship-open-btn data-mode="edit" data-index="{{ $index }}" data-name="{{ $f }}">View / Edit</button>
+                  <button type="button" class="btn btn-ghost btn-sm" data-fellowship-open-btn data-mode="edit" data-index="{{ $index }}" data-name="{{ $f }}" data-diocese="{{ $dio }}">View / Edit</button>
                   <form method="POST" action="{{ route('settings.fellowships.destroy', $index) }}"
                         data-confirm data-confirm-title="Remove fellowship?" data-confirm-message="This will remove '{{ $f }}' from the registration fellowship list.">
                     @csrf
@@ -50,7 +52,7 @@
               </td>
             </tr>
             @empty
-            <tr><td colspan="3"><div class="empty-state"><h3>No fellowships yet</h3><p>Click <b>Add Fellowship</b> to add your first university.</p></div></td></tr>
+            <tr><td colspan="4"><div class="empty-state"><h3>No fellowships yet</h3><p>Click <b>Add Fellowship</b> to add your first university.</p></div></td></tr>
             @endforelse
           </tbody>
         </table>
@@ -76,6 +78,15 @@
             <input name="name" id="fsName" required placeholder="e.g. MoCU" style="font-size:14px">
             <small style="color:var(--text-muted);margin-top:4px;display:block">This will appear as an option in the registration form's fellowship dropdown.</small>
           </div>
+          <div class="field full">
+            <label>Diocese</label>
+            <select name="diocese" id="fsDiocese">
+              @foreach($dioceses as $val => $label)
+                <option value="{{ $val }}">{{ $label }}</option>
+              @endforeach
+            </select>
+            <small style="color:var(--text-muted);margin-top:4px;display:block">Assign which diocese this university belongs to. Used for filtering registrations.</small>
+          </div>
         </div>
       </div>
       <div class="drawer-foot">
@@ -94,10 +105,11 @@ function spawnFellowshipFrom(el){
   var form = document.getElementById('fsForm');
 
   document.getElementById('fsTitle').textContent = isEdit ? 'Edit Fellowship' : 'Add Fellowship';
-  document.getElementById('fsSub').textContent = isEdit ? 'University fellowship name' : 'New university fellowship name';
+  document.getElementById('fsSub').textContent = isEdit ? 'University fellowship — diocese' : 'New university fellowship';
   document.getElementById('fsSubmit').textContent = isEdit ? 'Update Fellowship' : 'Save Fellowship';
   document.getElementById('fsIndex').value = isEdit ? (el.getAttribute('data-index') || '') : '';
   document.getElementById('fsName').value = isEdit ? (el.getAttribute('data-name') || '') : '';
+  document.getElementById('fsDiocese').value = isEdit ? (el.getAttribute('data-diocese') || '') : '';
 
   if(isEdit){
     document.getElementById('fsMethod').value = 'PUT';

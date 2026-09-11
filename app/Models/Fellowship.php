@@ -9,7 +9,7 @@ use Illuminate\Database\Eloquent\Relations\HasMany;
 class Fellowship extends Model
 {
     protected $fillable = [
-        'name', 'type', 'university', 'contact_name', 'contact_phone', 'contact_email',
+        'name', 'type', 'university', 'diocese', 'contact_name', 'contact_phone', 'contact_email',
         'notes', 'capacity', 'active',
     ];
 

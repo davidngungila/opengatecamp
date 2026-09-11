@@ -27,7 +27,7 @@
   <div class="table-card">
     <div class="table-scroll">
       <table class="data-table">
-        <thead><tr><th>Fellowship</th><th style="text-align:center">Leaders</th><th style="text-align:center">Delegation</th><th style="text-align:right">Paid (TZS)</th><th style="width:60px">Actions</th></tr></thead>
+        <thead><tr><th>Fellowship</th><th>Diocese</th><th style="text-align:center">Leaders</th><th style="text-align:center">Delegation</th><th style="text-align:right">Paid (TZS)</th><th style="width:60px">Actions</th></tr></thead>
         <tbody>
           @forelse($fellowships as $f)
           <tr style="cursor:pointer;background:{{ $f->active ? '' : 'rgba(148,163,184,.06)' }}"
@@ -35,6 +35,7 @@
               data-id="{{ $f->id }}"
               data-name="{{ $f->name }}"
               data-university="{{ $f->university }}"
+              data-diocese="{{ $f->diocese }}"
               data-type="{{ $f->type }}"
               data-type-label="{{ $f->getTypeLabel() }}"
               data-contact-name="{{ $f->contact_name }}"
@@ -50,7 +51,7 @@
               data-attended-count="{{ $f->attended_count ?? 0 }}"
               data-paid="{{ $f->attendees_sum_amount_paid ?? 0 }}"
               data-delegation-url="{{ route('fellowships.members', $f) }}"
-              data-edit-payload="{{ json_encode(['id'=>$f->id,'name'=>$f->name,'university'=>$f->university,'type'=>$f->type,'contact_name'=>$f->contact_name,'contact_phone'=>$f->contact_phone,'contact_email'=>$f->contact_email,'capacity'=>$f->capacity,'active'=>$f->active,'notes'=>$f->notes,'leaders'=>$f->leaders->pluck('id')->values(),'primary'=>$f->primaryLeader()?->id], JSON_HEX_APOS|JSON_HEX_QUOT|JSON_HEX_TAG|JSON_HEX_AMP) }}"
+              data-edit-payload="{{ json_encode(['id'=>$f->id,'name'=>$f->name,'university'=>$f->university,'diocese'=>$f->diocese,'type'=>$f->type,'contact_name'=>$f->contact_name,'contact_phone'=>$f->contact_phone,'contact_email'=>$f->contact_email,'capacity'=>$f->capacity,'active'=>$f->active,'notes'=>$f->notes,'leaders'=>$f->leaders->pluck('id')->values(),'primary'=>$f->primaryLeader()?->id], JSON_HEX_APOS|JSON_HEX_QUOT|JSON_HEX_TAG|JSON_HEX_AMP) }}"
               data-delete-url="{{ route('fellowships.destroy', $f) }}"
               data-delete-name="{{ $f->name }}">
             <td>
@@ -91,7 +92,7 @@
                 </button>
                 <div class="action-menu" id="am-fell-{{ $f->id }}">
                   <button type="button" data-view-delegation data-id="{{ $f->id }}">Delegation</button>
-                  <button type="button" data-fellowship-edit data-id="{{ $f->id }}" data-name="{{ $f->name }}" data-university="{{ $f->university }}" data-type="{{ $f->type }}" data-contact-name="{{ $f->contact_name }}" data-contact-phone="{{ $f->contact_phone }}" data-contact-email="{{ $f->contact_email }}" data-notes="{{ $f->notes }}" data-capacity="{{ $f->capacity }}" data-active="{{ $f->active ? 1 : 0 }}" data-leaders="{{ $f->leaders->pluck('id')->implode(',') }}" data-primary="{{ $f->primaryLeader()?->id }}">Edit</button>
+                  <button type="button" data-fellowship-edit data-id="{{ $f->id }}" data-name="{{ $f->name }}" data-university="{{ $f->university }}" data-diocese="{{ $f->diocese }}" data-type="{{ $f->type }}" data-contact-name="{{ $f->contact_name }}" data-contact-phone="{{ $f->contact_phone }}" data-contact-email="{{ $f->contact_email }}" data-notes="{{ $f->notes }}" data-capacity="{{ $f->capacity }}" data-active="{{ $f->active ? 1 : 0 }}" data-leaders="{{ $f->leaders->pluck('id')->implode(',') }}" data-primary="{{ $f->primaryLeader()?->id }}">Edit</button>
                   @if($isAdmin)
                   <form method="POST" action="{{ route('fellowships.destroy', $f) }}" data-confirm data-confirm-title="Delete fellowship?" data-confirm-message="This removes '{{ $f->name }}' from the system. Fellowships with registered delegates cannot be deleted." data-confirm-label="Delete">
                     @csrf
@@ -104,7 +105,7 @@
             </td>
           </tr>
           @empty
-          <tr><td colspan="5"><div class="empty-state" style="padding:40px 20px"><h3>No fellowships yet</h3><p>Create fellowships so leaders can build their delegations through the Member Portal.</p><button type="button" class="btn btn-accent" data-drawer-open="fellowshipNewDrawer">+ New Fellowship</button></div></td></tr>
+          <tr><td colspan="6"><div class="empty-state" style="padding:40px 20px"><h3>No fellowships yet</h3><p>Create fellowships so leaders can build their delegations through the Member Portal.</p><button type="button" class="btn btn-accent" data-drawer-open="fellowshipNewDrawer">+ New Fellowship</button></div></td></tr>
           @endforelse
         </tbody>
       </table>
@@ -133,6 +134,7 @@
             @foreach($types as $k=>$t)<option value="{{ $k }}">{{ $t }}</option>@endforeach
           </select></div>
           <div class="field"><label>University / Institution</label><input name="university" id="fsUniversity" placeholder="e.g. Mwenge Catholic University"></div>
+          <div class="field"><label>Diocese <span style="font-weight:400;color:var(--text-tertiary);font-size:11px">(Arusha / Moshi only)</span></label><select name="diocese" id="fsDiocese"><option value="">— Select Diocese —</option><option value="Arusha">Arusha</option><option value="Moshi">Moshi</option></select></div>
           <div class="field full"><label>Contact Person</label><input name="contact_name" id="fsContactName" placeholder="Fellowship head / representative"></div>
           <div class="field"><label>Contact Phone</label><input name="contact_phone" id="fsContactPhone" placeholder="+255 7XX XXX XXX"></div>
           <div class="field"><label>Contact Email</label><input name="contact_email" id="fsContactEmail" placeholder="email@example.com"></div>
@@ -199,6 +201,7 @@
       <div class="info-grid">
         <div class="info-row"><span>Type</span><b id="fellDrawerTypeVal">—</b></div>
         <div class="info-row"><span>University</span><b id="fellDrawerUniversityVal">—</b></div>
+        <div class="info-row"><span>Diocese</span><b id="fellDrawerDiocese">—</b></div>
         <div class="info-row"><span>Contact</span><b id="fellDrawerContact">—</b></div>
         <div class="info-row"><span>Phone</span><b id="fellDrawerPhone">—</b></div>
         <div class="info-row"><span>Email</span><b id="fellDrawerEmail">—</b></div>
@@ -347,6 +350,7 @@ document.addEventListener('click', function(e){
   document.getElementById('fsName').value = btn.dataset.name || '';
   document.getElementById('fsType').value = btn.dataset.type || '';
   document.getElementById('fsUniversity').value = btn.dataset.university || '';
+  document.getElementById('fsDiocese').value = btn.dataset.diocese || '';
   document.getElementById('fsContactName').value = btn.dataset.contactName || '';
   document.getElementById('fsContactPhone').value = btn.dataset.contactPhone || '';
   document.getElementById('fsContactEmail').value = btn.dataset.contactEmail || '';

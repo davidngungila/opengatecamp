@@ -82,7 +82,9 @@
             <span class="tt">Registrations</span>
         </div>
 
-        <!-- Fellowships -->
+        <!-- Fellowships — only admin, secretary, treasurer -->
+        @php $canFellowship = in_array(auth()->user()?->role?->name, ['Super Administrator','Chairperson','Secretary','Treasurer'], true); @endphp
+        @if($canFellowship)
         <div class="tooltip-wrap">
             <a href="{{ route('fellowships.index') }}" class="nav-single {{ $base === 'fellowships' ? 'active' : '' }}">
                 <span class="nav-icon">
@@ -96,6 +98,7 @@
             </a>
             <span class="tt">Fellowships</span>
         </div>
+        @endif
 
         <!-- Pledges -->
         <div class="tooltip-wrap">

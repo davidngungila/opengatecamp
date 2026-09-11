@@ -53,7 +53,31 @@ class SettingsController extends Controller
     {
         return view('settings.pages.fellowships', [
             'fellowships' => $this->fellowshipList(),
+            'dioceseMap' => $this->fellowshipDioceseMap(),
+            'dioceses' => $this->dioceseOptions(),
         ]);
+    }
+
+    private function dioceseOptions(): array
+    {
+        return [
+            '' => '— Select Diocese —',
+            'Arusha' => 'Arusha',
+            'Moshi' => 'Moshi',
+        ];
+    }
+
+    private function fellowshipDioceseMap(): array
+    {
+        $raw = (string) Setting::get('fellowships.dioceses', '');
+        if ($raw === '') return [];
+        $decoded = json_decode($raw, true);
+        return is_array($decoded) ? $decoded : [];
+    }
+
+    private function saveFellowshipDioceseMap(array $map): void
+    {
+        Setting::put('fellowships.dioceses', json_encode($map, JSON_UNESCAPED_UNICODE));
     }
 
     public function securityPage(Request $request)
@@ -108,34 +132,55 @@ class SettingsController extends Controller
 
     public function storeFellowship(Request $request)
     {
-        $data = $request->validate(['name' => 'required|string|max:255']);
+        $data = $request->validate([
+            'name' => 'required|string|max:255',
+            'diocese' => 'nullable|in:Arusha,Moshi',
+        ]);
 
         $list = $this->fellowshipList();
-        $list[] = trim($data['name']);
+        $name = trim($data['name']);
+        $list[] = $name;
 
         $this->saveFellowshipList($list);
 
-        AuditLog::record('Added university fellowship', 'Settings &mdash; Fellowships', $data['name']);
+        $map = $this->fellowshipDioceseMap();
+        $map[$name] = trim((string) ($data['diocese'] ?? ''));
+        $this->saveFellowshipDioceseMap($map);
 
-        return back()->with('success', "Fellowship '{$data['name']}' added.");
+        AuditLog::record('Added university fellowship', 'Settings &mdash; Fellowships', $name.(!empty($data['diocese']) ? " ({$data['diocese']})" : ''));
+
+        return back()->with('success', "Fellowship '{$name}' added.");
     }
 
     public function updateFellowship(Request $request, int $index)
     {
-        $data = $request->validate(['name' => 'required|string|max:255']);
+        $data = $request->validate([
+            'name' => 'required|string|max:255',
+            'diocese' => 'nullable|in:Arusha,Moshi',
+        ]);
 
         $list = $this->fellowshipList();
         if (! isset($list[$index])) {
             return back()->with('error', 'Fellowship not found.');
         }
 
-        $list[$index] = trim($data['name']);
+        $oldName = $list[$index];
+        $newName = trim($data['name']);
+        $list[$index] = $newName;
 
         $this->saveFellowshipList(array_values($list));
 
-        AuditLog::record('Updated university fellowship', 'Settings &mdash; Fellowships', $data['name']);
+        $map = $this->fellowshipDioceseMap();
+        // Remove old entry if name changed
+        if ($oldName !== $newName && isset($map[$oldName])) {
+            unset($map[$oldName]);
+        }
+        $map[$newName] = trim((string) ($data['diocese'] ?? ''));
+        $this->saveFellowshipDioceseMap($map);
 
-        return back()->with('success', "Fellowship '{$data['name']}' updated.");
+        AuditLog::record('Updated university fellowship', 'Settings &mdash; Fellowships', $newName.(!empty($data['diocese']) ? " ({$data['diocese']})" : ''));
+
+        return back()->with('success', "Fellowship '{$newName}' updated.");
     }
 
     public function destroyFellowship(int $index)
@@ -145,9 +190,16 @@ class SettingsController extends Controller
             return back()->with('error', 'Fellowship not found.');
         }
 
+        $name = $list[$index];
         unset($list[$index]);
 
         $this->saveFellowshipList(array_values($list));
+
+        $map = $this->fellowshipDioceseMap();
+        if (isset($map[$name])) {
+            unset($map[$name]);
+            $this->saveFellowshipDioceseMap($map);
+        }
 
         AuditLog::record('Removed university fellowship', 'Settings &mdash; Fellowships', 'Removed 1 fellowship');
 

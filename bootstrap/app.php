@@ -16,6 +16,7 @@ return Application::configure(basePath: dirname(__DIR__))
             'committee.readonly' => \App\Http\Middleware\CommitteeReadonly::class,
             'admin' => \App\Http\Middleware\IsAdmin::class,
             'not.committee' => \App\Http\Middleware\HideFromCommittee::class,
+            'fellowship.manage' => \App\Http\Middleware\CanManageFellowships::class,
         ]);
     })
     ->withExceptions(function (Exceptions $exceptions): void {

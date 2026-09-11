@@ -58,10 +58,14 @@ class FellowshipLeaderController extends Controller
             ->paginate(15)
             ->withQueryString();
 
-        $commonPickup = EventAttendee::where('fellowship_id', $fellowship->id)->select('pickup_location')->groupBy('pickup_location')->selectRaw('pickup_location, COUNT(*) as c')->orderByDesc('c')->value('pickup_location');
-        if (! $commonPickup) {
-            $hay = strtolower($fellowship->university.' '.$fellowship->name);
-            $commonPickup = str_contains($hay, 'moshi') ? 'moshi' : 'arusha';
+        if (! empty($fellowship->diocese)) {
+            $commonPickup = strtolower($fellowship->diocese) === 'moshi' ? 'moshi' : 'arusha';
+        } else {
+            $commonPickup = EventAttendee::where('fellowship_id', $fellowship->id)->select('pickup_location')->groupBy('pickup_location')->selectRaw('pickup_location, COUNT(*) as c')->orderByDesc('c')->value('pickup_location');
+            if (! $commonPickup) {
+                $hay = strtolower($fellowship->university.' '.$fellowship->name);
+                $commonPickup = str_contains($hay, 'moshi') ? 'moshi' : 'arusha';
+            }
         }
 
         return view('portal.fellowship.members', [

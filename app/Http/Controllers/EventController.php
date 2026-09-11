@@ -64,10 +64,21 @@ class EventController extends Controller
             $myFellowships = collect();
             $fellowshipsForSelect = $this->fellowshipList();
         }
-        // Build pickup auto-fill map: most common pickup per fellowship (so Coming From is filtered based on University Fellowship) or heuristic
+        // Build pickup auto-fill map: diocese (Arusha/Moshi) determines Coming From; fallback to most common pickup or heuristic
+        $settingsDioceseMap = [];
+        $rawDiocese = (string) \App\Models\Setting::get('fellowships.dioceses', '');
+        if ($rawDiocese !== '') {
+            $decoded = json_decode($rawDiocese, true);
+            if (is_array($decoded)) $settingsDioceseMap = $decoded;
+        }
         $pickupMap = [];
         foreach ($fellowshipsForSelect as $fname) {
-            $fellow = \App\Models\Fellowship::where('name', $fname)->first(['id', 'name', 'university']);
+            $fellow = \App\Models\Fellowship::where('name', $fname)->first(['id', 'name', 'university', 'diocese']);
+            $diocese = $fellow?->diocese ?: ($settingsDioceseMap[$fname] ?? null);
+            if ($diocese) {
+                $pickupMap[$fname] = strtolower($diocese) === 'moshi' ? 'moshi' : 'arusha';
+                continue;
+            }
             if ($fellow) {
                 $common = EventAttendee::where('fellowship_id', $fellow->id)->select('pickup_location')->groupBy('pickup_location')->selectRaw('pickup_location, COUNT(*) as c')->orderByDesc('c')->value('pickup_location');
                 if (! $common) {
@@ -76,7 +87,6 @@ class EventController extends Controller
                 }
                 $pickupMap[$fname] = $common ?: 'arusha';
             } else {
-                // No fellowship record — heuristic from name
                 $hay = strtolower($fname);
                 $pickupMap[$fname] = str_contains($hay, 'moshi') ? 'moshi' : 'arusha';
             }

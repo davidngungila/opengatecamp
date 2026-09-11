@@ -150,6 +150,7 @@ class FellowshipController extends Controller
             'name' => 'required|string|max:255|'.$unique,
             'type' => 'nullable|string|max:100',
             'university' => 'nullable|string|max:255',
+            'diocese' => 'nullable|in:Arusha,Moshi',
             'contact_name' => 'nullable|string|max:255',
             'contact_phone' => 'nullable|string|max:20',
             'contact_email' => 'nullable|email|max:255',
