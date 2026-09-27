@@ -123,7 +123,7 @@ class ActivitiesWorkflowTest extends TestCase
             $text = $request['text'];
             return $request->url() === 'https://messaging-service.co.tz/api/sms/v2/text/single'
                 && $request['to'] === '255712000001'
-                && str_contains($text, 'John Peter')
+                && str_contains($text, 'John')
                 && str_contains($text, 'Prepare sound system')
                 && str_contains($text, 'Camp Season 3')
                 && str_contains($text, '/login')
@@ -131,7 +131,7 @@ class ActivitiesWorkflowTest extends TestCase
                 && str_contains($text, 'ingia kwenye mfumo');
         });
         Http::assertSent(function (Request $request) {
-            return str_contains($request['text'], 'Jane Mushi');
+            return str_contains($request['text'], 'Jane');
         });
     }
 

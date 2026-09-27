@@ -30,11 +30,13 @@ class MessagingIndividualSmsTest extends TestCase
         $res = $this->get(route('messaging.sms'));
 
         $res->assertOk();
-        $res->assertSee('All Active Members');
-        $res->assertSee('recipient_filter" value="all_active"', false);
+        // Current compose UI: independent search + per-row recipients (works for single user too).
+        $res->assertSee('Compose SMS');
+        $res->assertSee('Recipients');
+        $res->assertSee('phones_json', false);
+        $res->assertSee('recipientSearch', false);
         $res->assertDontSee('Individual / Manual Number');
         $res->assertDontSee('recipientType', false);
-        $res->assertDontSee('Recipients Label');
     }
 
     public function test_sending_to_an_individual_phone_sends_one_sms(): void

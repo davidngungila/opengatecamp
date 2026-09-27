@@ -328,7 +328,7 @@ class DigitalCardController extends Controller
             return back()->with('error', 'SMS API token not configured.');
         }
 
-        $template = MessageTemplate::forUsage('card_invite', ['name' => '', 'link' => ''])
+        $template = MessageTemplate::rawForUsage('card_invite')
             ?? '';
         $success = 0;
         $fail = 0;
@@ -369,12 +369,20 @@ class DigitalCardController extends Controller
             $recipientsList .= '... (+'.(count($invitees) - 5).' more)';
         }
 
+        // For a single-user invite, log the actual personalised SMS that was sent
+        // so Messaging → History shows exactly what the person received.
+        // For bulk, keep the raw assigned template + per-recipient copies.
+        $loggedMessage = $template;
+        if (count($createdRecipients) === 1) {
+            $loggedMessage = $createdRecipients[0]->fresh()->message ?: $template;
+        }
+
         Message::create([
             'channel' => 'sms',
             'recipients' => $recipientsList,
             'phone' => $invitees[0]['phone'] ?? '',
             'subject' => "Digital card SMS — {$card->card_no}",
-            'message' => $template,
+            'message' => $loggedMessage,
             'status' => $success > 0 ? 'sent' : 'failed',
             'api_message_id' => $messageIds[0] ?? null,
             'api_response' => [
@@ -410,23 +418,22 @@ class DigitalCardController extends Controller
         return back()->with($success > 0 ? 'success' : 'error', $notice);
     }
 
-    private function sendRecipientSms(DigitalCardRecipient $recipient, string $template): array
+    private function sendRecipientSms(DigitalCardRecipient $recipient, string $rawTemplate): array
     {
         $sms = app(SmsService::class);
 
+        // Render per-recipient from the RAW assigned template so {name} and
+        // the personalised {link} are correct even for a single-user invite.
+        // forUsage() with empty data would have wiped these placeholders.
         $placeholders = [
-            'name'  => MessageTemplate::firstName($recipient->name ?? ''),
+            'name'  => $recipient->name ?? '',
             'link'  => $recipient->short_link,
             'event' => (string) Setting::get('event.name', 'Open Gate Camp'),
             'year'  => (string) (Setting::get('event.start_date') ? date('Y', strtotime(Setting::get('event.start_date'))) : date('Y')),
             'venue' => (string) Setting::get('event.venue', 'Arusha'),
         ];
 
-        $msg = str_replace(
-            array_map(fn ($k) => '{'.$k.'}', array_keys($placeholders)),
-            array_values($placeholders),
-            $template
-        );
+        $msg = MessageTemplate::renderText($rawTemplate, $placeholders);
 
         $result = $sms->send($recipient->phone, $msg);
 
@@ -545,7 +552,7 @@ class DigitalCardController extends Controller
             return back()->with('error', 'SMS API token not configured.');
         }
 
-        $template = MessageTemplate::forUsage('card_invite', ['name' => '', 'link' => ''])
+        $template = MessageTemplate::rawForUsage('card_invite')
             ?? '';
         $success = 0;
         $fail = 0;
@@ -698,22 +705,20 @@ class DigitalCardController extends Controller
             return back()->with('error', 'SMS API token not configured.');
         }
 
-        $template = MessageTemplate::forUsage('card_invite', ['name' => '', 'link' => ''])
+        $template = MessageTemplate::rawForUsage('card_invite')
             ?? '';
 
+        // Single-user resend must render with this recipient's data so the
+        // assigned template's {name}/{link} are personalised, not empty.
         $placeholders = [
-            'name'  => MessageTemplate::firstName($recipient->name ?? ''),
+            'name'  => $recipient->name ?? '',
             'link'  => $recipient->short_link,
             'event' => (string) Setting::get('event.name', 'Open Gate Camp'),
             'year'  => (string) (Setting::get('event.start_date') ? date('Y', strtotime(Setting::get('event.start_date'))) : date('Y')),
             'venue' => (string) Setting::get('event.venue', 'Arusha'),
         ];
 
-        $msg = str_replace(
-            array_map(fn ($k) => '{'.$k.'}', array_keys($placeholders)),
-            array_values($placeholders),
-            $template
-        );
+        $msg = MessageTemplate::renderText($template, $placeholders);
 
         $result = $sms->send($recipient->phone, $msg);
 
@@ -731,7 +736,7 @@ class DigitalCardController extends Controller
             'recipients' => $recipient->name ?? $recipient->phone,
             'phone' => $recipient->phone,
             'subject' => "Digital card SMS — {$card->card_no}",
-            'message' => $template,
+            'message' => $msg,
             'status' => $result['success'] ? 'sent' : 'failed',
             'api_message_id' => $result['api_message_id'] ?? null,
             'api_response' => $result['raw'],

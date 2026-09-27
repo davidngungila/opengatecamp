@@ -42,7 +42,7 @@
 html,body{height:100%;}
 body{
   margin:0;
-  font-family:'Manrope',-apple-system,BlinkMacSystemFont,sans-serif;
+  font-family:'Raleway',-apple-system,BlinkMacSystemFont,sans-serif;
   background:
     radial-gradient(1200px 600px at 100% -10%, rgba(37,99,235,.06), transparent 60%),
     radial-gradient(900px 500px at -10% 10%, rgba(11,31,58,.05), transparent 55%),

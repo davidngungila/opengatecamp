@@ -4,11 +4,13 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Preview — {{ $card->card_no }}</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Raleway:ital,wght@0,100..900;1,100..900&display=swap" rel="stylesheet">
 <style>
   *{box-sizing:border-box;margin:0;padding:0;}
   html,body{height:100%;}
   body{
-    font-family:'Segoe UI',Tahoma,Arial,sans-serif;
+    font-family:'Raleway','Segoe UI',Tahoma,Arial,sans-serif;
     background:radial-gradient(1100px 500px at 80% -10%, rgba(255,255,255,.05), transparent 60%), #0b1120;
     color:#e2e8f0;
   }

@@ -209,12 +209,19 @@ class PledgeController extends Controller
         $remaining = max(0, (float) $pledge->amount - (float) $pledge->paid_amount);
         $fulfilled = empty($remaining) || $pledge->status === 'fulfilled';
 
+        // Full placeholder set so ANY template assigned in
+        // Messaging → Templates → Manage Usage renders cleanly for this
+        // single-user SMS (no leftover {...} leaks).
         $placeholders = [
             'name'      => $pledge->name,
             'event'     => $event,
+            'year'      => (string) ($pledge->event?->start_date ? date('Y', strtotime($pledge->event->start_date)) : date('Y')),
+            'venue'     => (string) (\App\Models\Setting::get('event.venue', 'Arusha')),
             'amount'    => number_format($pledge->amount),
             'paid'      => number_format($pledge->paid_amount),
             'remaining' => number_format($remaining),
+            'link'      => '',
+            'phone'     => $pledge->phone,
         ];
 
         if ($type === 'remind') {
@@ -313,8 +320,13 @@ class PledgeController extends Controller
                 $placeholders = [
                     'name'      => $pledge->name,
                     'event'     => $event,
+                    'year'      => (string) ($pledge->event?->start_date ? date('Y', strtotime($pledge->event->start_date)) : date('Y')),
+                    'venue'     => (string) (\App\Models\Setting::get('event.venue', 'Arusha')),
                     'amount'    => number_format($payment->amount),
+                    'paid'      => number_format($pledge->paid_amount),
                     'remaining' => number_format($remaining),
+                    'link'      => '',
+                    'phone'     => $pledge->phone,
                 ];
 
                 $msg = MessageTemplate::forUsage(

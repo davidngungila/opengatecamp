@@ -190,26 +190,72 @@ class MessageTemplate extends Model
         })->all();
     }
 
+    /**
+     * Return the RAW (unrendered) template message configured for an SMS flow.
+     * Respects the stored assignment (template id) and falls back to the flow default.
+     * Use this when you need to render per-recipient (e.g. digital-card invites
+     * where each SMS has a different {name}/{link}). Rendering once with empty
+     * data would wipe the placeholders — so fetch raw once, then call
+     * renderText($raw, $placeholders) for each recipient, including single-user sends.
+     */
+    public static function rawForUsage(string $usage): ?string
+    {
+        $usages = static::usages();
+        $defaultKey = $usages[$usage]['default'] ?? $usage;
+
+        $assignedId = Setting::get('template.usage.'.$usage);
+        if ($assignedId !== null && $assignedId !== '') {
+            $assigned = static::find((int) $assignedId);
+            if ($assigned && trim($assigned->message) !== '') {
+                return $assigned->message;
+            }
+        }
+
+        $row = static::where('key', $defaultKey)->first();
+        if ($row && trim($row->message) !== '') {
+            return $row->message;
+        }
+
+        $defaults = static::defaultTemplates();
+
+        return $defaults[$defaultKey]['message'] ?? null;
+    }
+
+    /**
+     * Render a raw template string with the given placeholders.
+     * Public so per-recipient senders (digital cards, single-user SMS) can
+     * render from rawForUsage() without double-rendering.
+     */
+    public static function renderText(string $raw, array $data = []): string
+    {
+        return static::renderRow($raw, $data);
+    }
+
     private static function renderRow(string $raw, array $data): string
     {
+        // Greet by first name only — convert before replacement so the
+        // {name} placeholder is replaced exactly once with the first name.
+        if (array_key_exists('name', $data)) {
+            $data['name'] = self::firstName((string) $data['name']);
+        }
+
         $search = [];
         $replace = [];
         foreach ($data as $placeholder => $value) {
             $search[] = '{'.$placeholder.'}';
-            $replace[] = $value === null ? '' : $value;
+            $replace[] = $value === null ? '' : (string) $value;
         }
 
         $rendered = str_replace($search, $replace, $raw);
 
-        // Use only the first name whenever a full person name was supplied, so
-        // every message greets contacts by their first name only.
-        if (! empty($data['name'])) {
-            $rendered = str_replace(
-                '{name}',
-                self::firstName((string) $data['name']),
-                $rendered
-            );
-        }
+        // Never leak raw {placeholders} into a real SMS — even for a single
+        // user with a custom-assigned template that uses extra keys.
+        // Any known placeholder left unfilled becomes an empty string.
+        $rendered = preg_replace(
+            '/\{(name|event|year|venue|amount|paid|remaining|link|task|phone)\}/',
+            '',
+            $rendered
+        );
 
         return $rendered;
     }

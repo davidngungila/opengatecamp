@@ -21,6 +21,8 @@
 <meta property="og:title" content="{{ $card->title }}">
 <meta property="og:description" content="{{ Str::limit($card->message, 200) }}">
 <meta property="og:type" content="website">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Raleway:ital,wght@0,100..900;1,100..900&display=swap" rel="stylesheet">
 <style>
   :root {
     --card-bg: {{ $card->background_color }};
@@ -31,7 +33,7 @@
   *{box-sizing:border-box;margin:0;padding:0;}
   html,body{min-height:100%;}
   body{
-    font-family:'Manrope',-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;
+    font-family:'Raleway',-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;
     background:linear-gradient(180deg, #ffffff, #f4f7fb);
     color:#1f2937;
     -webkit-font-smoothing:antialiased;

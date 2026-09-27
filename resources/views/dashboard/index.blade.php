@@ -174,13 +174,13 @@ document.addEventListener('DOMContentLoaded', function(){
     new Chart(trendCv,{type:'bar',data:{labels:JSON.parse(trendCv.dataset.labels||'[]'),
       datasets:[{label:'Registrations',data:JSON.parse(trendCv.dataset.values||'[]'),backgroundColor:'rgba(124,58,237,.7)',borderRadius:6}]},
       options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{display:false}},
-        scales:{y:{beginAtZero:true,ticks:{precision:0,font:{family:'Manrope',size:11}},grid:{color:'rgba(15,23,42,.06)'}},x:{grid:{display:false},ticks:{maxRotation:45,font:{family:'Manrope',size:10}}}}}});
+        scales:{y:{beginAtZero:true,ticks:{precision:0,font:{family:'Raleway',size:11}},grid:{color:'rgba(15,23,42,.06)'}},x:{grid:{display:false},ticks:{maxRotation:45,font:{family:'Raleway',size:10}}}}}});
   }
   var stCv=document.getElementById('statusChart');
   if(stCv){
     new Chart(stCv,{type:'doughnut',data:{labels:JSON.parse(stCv.dataset.labels||'[]'),
       datasets:[{data:JSON.parse(stCv.dataset.values||'[]'),backgroundColor:JSON.parse(stCv.dataset.colors||'[]'),borderWidth:0}]},
-      options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{position:'bottom',labels:{boxWidth:9,font:{family:'Manrope',size:10.5,weight:600}}}}}});
+      options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{position:'bottom',labels:{boxWidth:9,font:{family:'Raleway',size:10.5,weight:600}}}}}});
   }
 });
 </script>
