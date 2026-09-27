@@ -149,14 +149,17 @@
 <div class="drawer-overlay" id="tplUsageDrawer">
   <div class="drawer-panel">
     <div class="drawer-head">
-      <div><h3>Where Templates Are Used</h3><p>Assign which template each automated SMS flow sends. Unassigned flows use the system default marked <code>Default</code>.</p></div>
+      <div><h3>Where Templates Are Used</h3><p>Define which message each automated SMS flow sends. Pick a template per flow below — preview shows the exact effective message with sample data. Unassigned flows use the system default marked <code>Default</code>.</p></div>
       <button type="button" class="modal-close" data-drawer-close><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><path d="M18 6L6 18M6 6l12 12"/></svg></button>
     </div>
     <form method="POST" action="{{ route('messaging.templates.usage') }}">
       @csrf
       <div class="drawer-body">
         @foreach($usages as $slug => $usage)
-        @php $uState = $usageAssign[$slug] ?? ['assigned_id' => null, 'status' => 'default']; @endphp
+        @php
+          $uState = $usageAssign[$slug] ?? ['assigned_id' => null, 'status' => 'default'];
+          $uPreview = $usagePreviews[$slug] ?? null;
+        @endphp
         <div style="border:1px solid var(--border,#e5e7eb);border-radius:10px;padding:12px 14px;margin-bottom:10px">
           <div style="display:flex;justify-content:space-between;align-items:center;gap:10px;flex-wrap:wrap">
             <div style="font-weight:700;font-size:13.5px">{{ $usage['label'] }} <code style="font-size:10.5px;color:var(--text-tertiary)">{{ $slug }}</code></div>
@@ -164,6 +167,7 @@
           </div>
           <div style="font-size:12px;color:var(--text-secondary);margin-top:3px;line-height:1.55">{{ $usage['description'] }}</div>
           <div style="margin-top:8px">
+            <label style="display:block;font-size:11px;font-weight:800;letter-spacing:.4px;text-transform:uppercase;color:var(--text-tertiary);margin-bottom:4px">Message used here</label>
             <select name="usage[{{ $slug }}]" class="tpl-usage-select" style="width:100%;padding:8px 10px;border:1px solid var(--border,#e5e7eb);border-radius:8px;background:var(--bg,#fff);color:var(--text-primary);font-size:13px">
               <option value="">System default ({{ $usage['default'] }})</option>
               @foreach($templates as $tpl)
@@ -171,6 +175,12 @@
               @endforeach
             </select>
           </div>
+          @if($uPreview)
+          <div style="margin-top:8px;background:var(--bg-muted,#f8fafc);border:1px solid var(--border,#e5e7eb);border-radius:8px;padding:10px 12px">
+            <div style="font-size:10.5px;font-weight:800;letter-spacing:.4px;text-transform:uppercase;color:var(--text-tertiary)">Currently sends · {{ $uPreview['source'] }}</div>
+            <div style="margin-top:4px;font-size:12.5px;line-height:1.6;color:var(--text-primary);white-space:pre-wrap">{{ $uPreview['message'] }}</div>
+          </div>
+          @endif
         </div>
         @endforeach
       </div>

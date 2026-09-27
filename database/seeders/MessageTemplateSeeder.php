@@ -17,6 +17,10 @@ class MessageTemplateSeeder extends Seeder
     public static function templates(): array
     {
         return [
+            'pledge_created' => [
+                'name' => 'Pledge — New Pledge Recorded',
+                'message' => 'Shaloom {name}. Tumepokea ahadi yako ya TZS {amount} kwa ajili ya {event}. Tunakushukuru kwa moyo wako wa kujitoa. Mungu akubariki sana.',
+            ],
             'pledge_received' => [
                 'name' => 'Pledge — Contribution Received (Partial)',
                 'message' => 'Shaloom {name}. Tumepokea mchango wako wa TZS {amount}, ikiwa ni sehemu ya kukamilisha ahadi yako kwa ajili ya {event}. Tunakushukuru kwa moyo wako wa kujitoa. Mungu akubariki sana.',

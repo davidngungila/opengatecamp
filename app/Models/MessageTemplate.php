@@ -64,6 +64,11 @@ class MessageTemplate extends Model
     public static function usages(): array
     {
         return [
+            'pledge_created' => [
+                'label' => 'Pledge — New pledge recorded',
+                'description' => 'Sent when a pledge promise is recorded (no money received yet).',
+                'default' => 'pledge_created',
+            ],
             'pledge_received' => [
                 'label' => 'Pledge — Contribution received',
                 'description' => 'Sent automatically when a pledge payment is recorded and the pledge is still partial.',
@@ -135,6 +140,62 @@ class MessageTemplate extends Model
         }
 
         return static::render($defaultKey, $data);
+    }
+
+    /**
+     * Sample placeholder data per flow so the Templates page can preview
+     * exactly which message each automated flow will send ("which message
+     * is used where") with realistic example values.
+     */
+    public static function sampleData(string $usage): array
+    {
+        $base = [
+            'name'      => 'Juma Komba',
+            'event'     => 'Open Gate Camp Season III',
+            'year'      => '2026',
+            'venue'     => 'Arusha',
+            'amount'    => '50,000',
+            'paid'      => '20,000',
+            'remaining' => '30,000',
+            'link'      => 'https://opengatecamp.iccrtz.org/c/ABC123',
+            'task'      => 'Prepare sound system',
+            'phone'     => '255712345678',
+        ];
+
+        return match ($usage) {
+            'pledge_received'  => array_replace($base, ['amount' => '20,000']),
+            'pledge_fulfilled' => array_replace($base, ['amount' => '50,000']),
+            'pledge_reminder'  => $base,
+            'pledge_created'   => array_replace($base, ['amount' => '50,000']),
+            'attendee_payment' => array_replace($base, ['amount' => '25,000']),
+            default            => $base,
+        };
+    }
+
+    /**
+     * Effective (currently-configured) rendered message per flow, using
+     * sample data — powers the "which message is used where" preview.
+     * Returns slug => ['message' => ..., 'source' => template name or default key].
+     */
+    public static function usagePreviews(): array
+    {
+        $out = [];
+        foreach (static::usages() as $slug => $usage) {
+            $assignedId = Setting::get('template.usage.'.$slug);
+            $source = null;
+            if ($assignedId !== null && $assignedId !== '') {
+                $tpl = static::find((int) $assignedId);
+                if ($tpl && trim($tpl->message) !== '') {
+                    $source = $tpl->name;
+                }
+            }
+            $out[$slug] = [
+                'message' => static::forUsage($slug, static::sampleData($slug)) ?? '—',
+                'source'  => $source ?? ('System default ('.$usage['default'].')'),
+            ];
+        }
+
+        return $out;
     }
 
     /**

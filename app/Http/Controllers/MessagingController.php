@@ -66,6 +66,7 @@ class MessagingController extends Controller
             'usages'         => MessageTemplate::usages(),
             'usageMap'       => MessageTemplate::usageMap($templates),
             'usageAssign'    => MessageTemplate::usageAssignments(),
+            'usagePreviews'  => MessageTemplate::usagePreviews(),
         ]);
     }
 
