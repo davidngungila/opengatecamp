@@ -541,6 +541,32 @@ class EventController extends Controller
         return back()->with('success', "Status for {$attendee->name} updated to ".EventAttendee::statuses()[$newStatus].".");
     }
 
+    public function destroyAttendee(Request $request, EventAttendee $attendee)
+    {
+        $user = auth()->user();
+        if ($user?->isFellowshipLeader() && ! in_array($user?->role?->name, ['Super Administrator', 'Chairperson'], true)) {
+            $fIds = $user->fellowships()->pluck('fellowships.id');
+            if (! $attendee->fellowship_id || ! $fIds->contains((int) $attendee->fellowship_id)) {
+                abort(403, 'You can only delete registrations from your own fellowship.');
+            }
+        } elseif ($user?->isCommitteeMember()) {
+            if ($attendee->registered_by !== $user->name) {
+                abort(403, 'You can only delete your own registrations.');
+            }
+        }
+
+        if ((float) ($attendee->amount_paid ?? 0) > 0 || $attendee->journal_entry_id) {
+            return back()->with('error', "Cannot delete {$attendee->name} — payments are recorded. Set status to Cancelled instead to keep the accounts intact.");
+        }
+
+        $label = "{$attendee->name}".($attendee->event?->title ? " — {$attendee->event->title}" : '');
+        $attendee->delete();
+
+        \App\Models\AuditLog::record('Deleted attendee registration', 'Events', $label);
+
+        return back()->with('success', "Registration for {$attendee->name} deleted.");
+    }
+
     public function apiAttendeeTransactions(Request $request, EventAttendee $attendee)
     {
         $user = auth()->user();

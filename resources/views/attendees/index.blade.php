@@ -119,6 +119,12 @@
                   <button type="button" data-open-att-ticket data-id="{{ $a->hashed_id }}" data-name="{{ $a->name }}" style="display:block;width:100%;padding:8px 14px;font-size:12.5px;color:var(--text-primary);text-decoration:none;box-sizing:border-box;background:none;border:none;text-align:left;cursor:pointer">Open Ticket (PDF)</button>
                   <button type="button" data-send-att-ticket data-id="{{ $a->hashed_id }}" data-name="{{ $a->name }}" data-phone="{{ $a->phone }}" data-ticket="{{ $a->getTicketNo() }}">Send Ticket SMS</button>
                   @endif
+                  <form method="POST" action="{{ route('attendees.destroy', $a->hashed_id) }}" data-confirm
+                        data-confirm-title="Delete registration?"
+                        data-confirm-message="Registration for {{ $a->name }} will be permanently removed. This cannot be undone."
+                        data-confirm-label="Delete">@csrf @method('DELETE')
+                    <button type="submit" class="danger">Delete</button>
+                  </form>
                 </div>
               </div>
             </td>
